@@ -10,8 +10,19 @@ export const Hub = ({ filter }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [works, setWorks] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Load local cache immediately on component mount
+  const getCachedWorks = () => {
+    try {
+      const cached = localStorage.getItem('real_thing_cached_hub_works');
+      if (cached) return JSON.parse(cached);
+    } catch (e) {
+      console.warn('Cache read error:', e);
+    }
+    return [];
+  };
+
+  const [works, setWorks] = useState(getCachedWorks);
+  const [loading, setLoading] = useState(() => getCachedWorks().length === 0);
   const [aboutBio, setAboutBio] = useState('');
 
   const currentPath = filter || location.pathname;
@@ -19,10 +30,9 @@ export const Hub = ({ filter }) => {
   const isStoriesOnly = currentPath === '/stories';
   const isAboutOnly = currentPath === '/about';
 
-  // Robust Works Fetcher with Local Storage Override priority for Sort Order
+  // Instant Cache + Silent Cloud Background Sync
   useEffect(() => {
     const loadAllWorks = async () => {
-      setLoading(true);
       let remoteWorks = [];
 
       try {
@@ -40,7 +50,6 @@ export const Hub = ({ filter }) => {
 
       const localCustom = JSON.parse(localStorage.getItem('real_thing_custom_works') || '[]');
       
-      // Merge remote works with local cache, giving priority to local sort_order if modified
       const map = new Map();
       [...remoteWorks, ...localCustom].forEach((item) => {
         if (item.status === 'published') {
@@ -49,18 +58,23 @@ export const Hub = ({ filter }) => {
       });
 
       let uniqueWorks = Array.from(map.values());
-
-      // Explicitly sort by sort_order ascending
       uniqueWorks.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
 
       setWorks(uniqueWorks);
       setLoading(false);
+
+      // Cache for instant loads next time
+      try {
+        localStorage.setItem('real_thing_cached_hub_works', JSON.stringify(uniqueWorks));
+      } catch (e) {
+        console.warn('Cache write notice:', e);
+      }
     };
 
     loadAllWorks();
   }, [location.pathname]);
 
-  // Fetch live About Bio instantly with local cache fallback
+  // Fetch live About Bio instantly
   useEffect(() => {
     const fetchLiveBio = async () => {
       const cachedBio = localStorage.getItem('real_thing_author_bio');
@@ -103,6 +117,17 @@ export const Hub = ({ filter }) => {
     visible: { opacity: 1, y: 0, transition: { duration: 0.25 } }
   };
 
+  // Skeleton UI for instant visual feedback on first-ever load
+  const CardSkeleton = () => (
+    <div className="h-[110px] rounded-xl border border-[#8A8177]/10 bg-[#0F1216]/50 p-6 flex flex-col justify-between animate-pulse">
+      <div className="space-y-2">
+        <div className="h-4 bg-[#8A8177]/20 rounded w-1/2"></div>
+        <div className="h-3 bg-[#8A8177]/10 rounded w-1/4"></div>
+      </div>
+      <div className="h-2 bg-[#8A8177]/10 rounded w-1/6"></div>
+    </div>
+  );
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -126,8 +151,11 @@ export const Hub = ({ filter }) => {
         </div>
 
         {loading && !isAboutOnly ? (
-          <div className="text-center py-20 font-sans text-xs uppercase tracking-widest text-[#D5B06C] animate-pulse">
-            Retrieving Inscriptions...
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <CardSkeleton />
+            <CardSkeleton />
+            <CardSkeleton />
+            <CardSkeleton />
           </div>
         ) : works.length === 0 && !isAboutOnly ? (
           <div className="text-center py-24 space-y-4">

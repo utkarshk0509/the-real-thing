@@ -70,12 +70,10 @@ export const AuthorPortal = () => {
 
   const handleSaveAboutBio = async (e) => {
     e.preventDefault();
-    // Save locally as a fallback
     localStorage.setItem('real_thing_author_bio', aboutBio);
 
     try {
       if (supabase) {
-        // Upsert the bio into the Supabase site_settings table so it syncs live to all users
         const { error } = await supabase
           .from('site_settings')
           .upsert({ key: 'author_bio', value: aboutBio, updated_at: new Date().toISOString() });

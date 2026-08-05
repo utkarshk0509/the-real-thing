@@ -12,12 +12,14 @@ export const Hub = ({ filter }) => {
 
   const [works, setWorks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [aboutBio, setAboutBio] = useState('');
 
   const currentPath = filter || location.pathname;
   const isPoemsOnly = currentPath === '/poems';
   const isStoriesOnly = currentPath === '/stories';
   const isAboutOnly = currentPath === '/about';
 
+  // Fetch works
   useEffect(() => {
     const loadAllWorks = async () => {
       setLoading(true);
@@ -50,6 +52,36 @@ export const Hub = ({ filter }) => {
     loadAllWorks();
   }, [location.pathname]);
 
+  // Fetch live About Bio from Supabase when on the about page
+  useEffect(() => {
+    const fetchLiveBio = async () => {
+      // Instant fallback to local storage
+      const cachedBio = localStorage.getItem('real_thing_author_bio');
+      if (cachedBio) setAboutBio(cachedBio);
+
+      if (supabase) {
+        try {
+          const { data, error } = await supabase
+            .from('site_settings')
+            .select('value')
+            .eq('key', 'author_bio')
+            .single();
+
+          if (!error && data?.value) {
+            setAboutBio(data.value);
+            localStorage.setItem('real_thing_author_bio', data.value);
+          }
+        } catch (err) {
+          console.warn('Could not fetch remote bio from cloud:', err);
+        }
+      }
+    };
+
+    if (isAboutOnly) {
+      fetchLiveBio();
+    }
+  }, [isAboutOnly]);
+
   const poems = works.filter((w) => w.category === 'poem');
   const stories = works.filter((w) => w.category === 'story');
 
@@ -75,7 +107,6 @@ export const Hub = ({ filter }) => {
       <AtmosphericBackground />
       <Navigation />
 
-      {/* Increased top padding (pt-36 md:pt-40) to guarantee clear separation below the fixed navigation header */}
       <main className="relative z-10 max-w-5xl mx-auto px-6 pt-36 md:pt-45 space-y-10">
         <div className="flex items-center">
           <button
@@ -87,7 +118,7 @@ export const Hub = ({ filter }) => {
           </button>
         </div>
 
-        {loading ? (
+        {loading && !isAboutOnly ? (
           <div className="text-center py-20 font-sans text-xs uppercase tracking-widest text-[#D5B06C] animate-pulse">
             Retrieving Inscriptions...
           </div>
@@ -199,7 +230,7 @@ export const Hub = ({ filter }) => {
                   </h2>
                 </div>
                 <p className="font-serif text-lg leading-relaxed text-[#FEEFFF]/90 whitespace-pre-line">
-                  {localStorage.getItem('real_thing_author_bio') || '"The Real Thing" is an open-access literary sanctuary designed for poetry, prose, and quiet contemplation.'}
+                  {aboutBio || '"The Real Thing" is an open-access literary sanctuary designed for poetry, prose, and quiet contemplation.'}
                 </p>
               </motion.section>
             )}

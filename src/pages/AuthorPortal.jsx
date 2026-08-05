@@ -137,15 +137,20 @@ export const AuthorPortal = () => {
     if (!workToDelete) return;
     const { id, slug } = workToDelete;
 
+    // 1. Immediately remove from local state UI
     setAllWorks((prev) => prev.filter((w) => w.id !== id && w.slug !== slug));
 
+    // 2. Wipe completely from localStorage so local website drops it instantly
     const localWorks = JSON.parse(localStorage.getItem('real_thing_custom_works') || '[]');
     const updatedLocal = localWorks.filter((w) => w.id !== id && w.slug !== slug);
     localStorage.setItem('real_thing_custom_works', JSON.stringify(updatedLocal));
 
+    // 3. Delete from Supabase database
     try {
       if (supabase) {
-        await supabase.from('works').delete().eq('slug', slug);
+        if (slug) {
+          await supabase.from('works').delete().eq('slug', slug);
+        }
         if (id) {
           await supabase.from('works').delete().eq('id', id);
         }

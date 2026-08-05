@@ -22,7 +22,7 @@ export default function Landing() {
 
   return (
     <motion.div 
-      className="absolute inset-0 min-h-screen w-full overflow-hidden bg-[#080A06] flex flex-col items-center justify-between z-10"
+      className="absolute inset-0 min-h-screen w-full overflow-hidden bg-[#080A06] flex flex-col items-center justify-center z-10"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0, filter: "blur(10px)", transition: { duration: 0.8 } }}
@@ -47,7 +47,7 @@ export default function Landing() {
         initial={{ opacity: 0, y: -10 }} 
         animate={{ opacity: 1, y: 0 }} 
         transition={{ duration: 1, delay: 0.5 }} 
-        className="absolute top-12 w-full flex justify-center gap-8 text-[#8A8177] font-sans text-[11px] uppercase tracking-[0.35em] z-20"
+        className="absolute top-10 w-full flex justify-center gap-8 text-[#8A8177] font-sans text-[11px] uppercase tracking-[0.35em] z-20"
       >
         <span onClick={() => navigate('/hub')} className="hover:text-[#D5B06C] transition-colors cursor-pointer">Home</span><span className="opacity-30">|</span>
         <span onClick={() => navigate('/poems')} className="hover:text-[#D5B06C] transition-colors cursor-pointer">Poems</span><span className="opacity-30">|</span>
@@ -75,9 +75,9 @@ export default function Landing() {
         <img src={mountainsImg} alt="Mountains" className="w-full h-full object-cover object-bottom [mask-image:linear-gradient(to_bottom,transparent_0%,black_20%)]" />
       </motion.div>
 
-      {/* Hero Title & Subtitle */}
+      {/* Hero Title, Subtitle, & Begin Reading Button in the Center */}
       <motion.div 
-        className="relative z-10 flex flex-col items-center text-center mt-[22vh]" 
+        className="relative z-10 flex flex-col items-center text-center space-y-8" 
         initial={{ y: 20, opacity: 0 }} 
         animate={{ y: 0, opacity: 1 }} 
         transition={{ duration: 0.8, delay: 0.2 }}
@@ -86,10 +86,11 @@ export default function Landing() {
           initial={{ filter: "blur(8px)" }} 
           animate={{ filter: "blur(0px)" }} 
           transition={{ duration: 1.2, ease: "easeOut" }} 
-          className="font-serif text-5xl md:text-7xl font-medium text-[#FEEFFF] tracking-wide mb-8"
+          className="font-serif text-5xl md:text-7xl font-medium text-[#FEEFFF] tracking-wide"
         >
           The Real Thing
         </motion.h1>
+
         <motion.p 
           initial={{ opacity: 0, y: 15 }} 
           animate={{ opacity: 1, y: 0 }} 
@@ -98,17 +99,15 @@ export default function Landing() {
         >
           Not every story asks to be remembered.<br/>Some only ask to be felt.
         </motion.p>
-      </motion.div>
 
-      {/* Begin Reading Action Trigger (No Missing Compass Images) */}
-      <div className="absolute bottom-16 w-full flex flex-col items-center z-50">
+        {/* Begin Reading Action Trigger brought right into the middle */}
         <motion.div 
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="flex flex-col items-center cursor-pointer group" 
+          className="flex flex-col items-center cursor-pointer group pt-4" 
           onClick={() => navigate('/hub')}
         >
-          <span className="font-sans text-[#8A8177] text-[11px] uppercase tracking-[0.35em] mb-3 group-hover:text-[#D5B06C] transition-colors">
+          <span className="font-sans text-[#8A8177] text-[11px] uppercase tracking-[0.35em] mb-2 group-hover:text-[#D5B06C] transition-colors">
             Begin Reading
           </span>
           <motion.div 
@@ -119,7 +118,7 @@ export default function Landing() {
             <MoveDown size={16} strokeWidth={1.5} />
           </motion.div>
         </motion.div>
-      </div>
+      </motion.div>
     </motion.div>
   );
 }

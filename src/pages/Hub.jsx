@@ -66,11 +66,16 @@ export const Hub = ({ filter }) => {
   };
 
   return (
-    <div className="relative min-h-screen bg-[#080A06] text-[#FEEFFF] selection:bg-[#D5B06C]/30 selection:text-[#FEEFFF] pb-24">
+    <motion.div
+      initial={{ opacity: 0, y: 20, filter: 'blur(6px)' }}
+      animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+      className="relative min-h-screen bg-[#080A06] text-[#FEEFFF] selection:bg-[#D5B06C]/30 selection:text-[#FEEFFF] pb-24"
+    >
       <AtmosphericBackground />
       <Navigation />
 
-      {/* Increased top padding (pt-28) to prevent navbar overlap */}
       <main className="relative z-10 max-w-5xl mx-auto px-6 pt-28 space-y-12">
         {loading ? (
           <div className="text-center py-20 font-sans text-xs uppercase tracking-widest text-[#D5B06C] animate-pulse">
@@ -191,7 +196,7 @@ export const Hub = ({ filter }) => {
           </AnimatePresence>
         )}
       </main>
-    </div>
+    </motion.div>
   );
 };
 

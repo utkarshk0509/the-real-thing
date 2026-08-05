@@ -1,15 +1,17 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
 import Landing from './pages/Landing';
 import Hub from './pages/Hub';
 import ReaderView from './pages/ReaderView';
 import AuthorPortal from './pages/AuthorPortal';
-import AuthorLockModal from './components/Shared/AuthorLockModal';
 
-function App() {
+function AnimatedRoutes() {
+  const location = useLocation();
+
   return (
-    <BrowserRouter>
-      <Routes>
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
         <Route path="/" element={<Landing />} />
         <Route path="/hub" element={<Hub />} />
         <Route path="/poems" element={<Hub filter="/poems" />} />
@@ -18,9 +20,14 @@ function App() {
         <Route path="/read/:slug" element={<ReaderView />} />
         <Route path="/portal" element={<AuthorPortal />} />
       </Routes>
+    </AnimatePresence>
+  );
+}
 
-      {/* Discrete Author Portal Access Available on Every Page */}
-      <AuthorLockModal />
+function App() {
+  return (
+    <BrowserRouter>
+      <AnimatedRoutes />
     </BrowserRouter>
   );
 }

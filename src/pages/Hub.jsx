@@ -10,19 +10,23 @@ export const Hub = ({ filter }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Load local cache immediately on component mount
-  const getCachedWorks = () => {
+  // Instantly load from cache so the page renders 0ms on arrival
+  const getInitialWorks = () => {
     try {
       const cached = localStorage.getItem('real_thing_cached_hub_works');
-      if (cached) return JSON.parse(cached);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed.length > 0) return parsed;
+      }
     } catch (e) {
-      console.warn('Cache read error:', e);
+      console.warn('Initial cache read error:', e);
     }
     return [];
   };
 
-  const [works, setWorks] = useState(getCachedWorks);
-  const [loading, setLoading] = useState(() => getCachedWorks().length === 0);
+  const [works, setWorks] = useState(getInitialWorks);
+  // If we already have cached works, loading is false instantly!
+  const [loading, setLoading] = useState(() => getInitialWorks().length === 0);
   const [aboutBio, setAboutBio] = useState('');
 
   const currentPath = filter || location.pathname;

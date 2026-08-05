@@ -47,6 +47,16 @@ export const AuthorPortal = () => {
     loadWorksAndAbout();
   }, []);
 
+  // Helper to instantly seed the public hub cache for 0ms page loads
+  const updateHubCache = (worksArray) => {
+    try {
+      const publishedOnly = worksArray.filter(w => w.status === 'published');
+      localStorage.setItem('real_thing_cached_hub_works', JSON.stringify(publishedOnly));
+    } catch (e) {
+      console.warn('Cache seed warning:', e);
+    }
+  };
+
   const loadWorksAndAbout = async () => {
     const savedBio = localStorage.getItem('real_thing_author_bio') || '"The Real Thing" is an open-access literary sanctuary designed for poetry, prose, and quiet contemplation.';
     setAboutBio(savedBio);
@@ -81,6 +91,7 @@ export const AuthorPortal = () => {
     // Sort cleanly by sort_order
     combinedWorks.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
     setAllWorks(combinedWorks);
+    updateHubCache(combinedWorks); // Seed cache instantly
   };
 
   const handleSaveAboutBio = async (e) => {
@@ -135,6 +146,7 @@ export const AuthorPortal = () => {
       }));
 
       setAllWorks(finalWorks);
+      updateHubCache(finalWorks); // Update cache immediately
 
       // 2. Save only lightweight references to localStorage to prevent quota breaches
       const lightweightMap = finalWorks.map(w => ({
@@ -230,7 +242,9 @@ export const AuthorPortal = () => {
     if (!workToDelete) return;
     const { id, slug } = workToDelete;
 
-    setAllWorks((prev) => prev.filter((w) => w.id !== id && w.slug !== slug));
+    const filteredWorks = allWorks.filter((w) => w.id !== id && w.slug !== slug);
+    setAllWorks(filteredWorks);
+    updateHubCache(filteredWorks);
 
     const localWorks = JSON.parse(localStorage.getItem('real_thing_custom_works') || '[]');
     const updatedLocal = localWorks.filter((w) => w.slug !== slug);

@@ -10,7 +10,7 @@ export const Hub = ({ filter }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Load local cache immediately for instant 0ms painting
+  // Load local cache immediately for instant 0ms painting (works for both poems and stories)
   const getCachedWorks = () => {
     try {
       const cached = localStorage.getItem('real_thing_cached_hub_works');
@@ -25,6 +25,7 @@ export const Hub = ({ filter }) => {
   };
 
   const [works, setWorks] = useState(getCachedWorks);
+  // If we already have cached works, loading is false instantly!
   const [loading, setLoading] = useState(() => getCachedWorks().length === 0);
   const [aboutBio, setAboutBio] = useState('');
 
@@ -33,30 +34,22 @@ export const Hub = ({ filter }) => {
   const isStoriesOnly = currentPath === '/stories';
   const isAboutOnly = currentPath === '/about';
 
-  // Instant Cache + Timeout-Protected Cloud Fetch
+  // Instant Cache + Self-Caching Background Sync
   useEffect(() => {
     const loadAllWorks = async () => {
       let remoteWorks = [];
 
       try {
         if (supabase) {
-          // Create a safety timeout promise (3 seconds max wait)
-          const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Supabase request timeout')), 3000)
-          );
-
-          const fetchPromise = supabase
+          const { data, error } = await supabase
             .from('works')
             .select('slug, title, category, author, image_url, published_at, read_time_minutes, status, sort_order')
             .eq('status', 'published');
 
-          // Race the fetch against the 3-second timeout
-          const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);
-
           if (!error && data) remoteWorks = data;
         }
       } catch (err) {
-        console.warn('Supabase fetch notice (falling back to local cache):', err.message);
+        console.warn('Supabase fetch failed:', err.message);
       }
 
       const localCustom = JSON.parse(localStorage.getItem('real_thing_custom_works') || '[]');
@@ -71,11 +64,10 @@ export const Hub = ({ filter }) => {
       let uniqueWorks = Array.from(map.values());
       uniqueWorks.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
 
-      // Always release the loading state instantly even if remote is empty
-      setWorks(uniqueWorks);
-      setLoading(false);
-
       if (uniqueWorks.length > 0) {
+        setWorks(uniqueWorks);
+        setLoading(false);
+        // Self-cache immediately so future reloads/visits to poems & stories are instant
         try {
           localStorage.setItem('real_thing_cached_hub_works', JSON.stringify(uniqueWorks));
         } catch (e) {
@@ -87,7 +79,7 @@ export const Hub = ({ filter }) => {
     loadAllWorks();
   }, [location.pathname]);
 
-  // Fetch live About Bio instantly with a safety timeout
+  // Fetch live About Bio instantly
   useEffect(() => {
     const fetchLiveBio = async () => {
       const cachedBio = localStorage.getItem('real_thing_author_bio');
@@ -95,24 +87,18 @@ export const Hub = ({ filter }) => {
 
       if (supabase) {
         try {
-          const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Bio timeout')), 3000)
-          );
-          
-          const fetchBio = supabase
+          const { data, error } = await supabase
             .from('site_settings')
             .select('value')
             .eq('key', 'author_bio')
             .single();
-
-          const { data, error } = await Promise.race([fetchBio, timeoutPromise]);
 
           if (!error && data?.value) {
             setAboutBio(data.value);
             localStorage.setItem('real_thing_author_bio', data.value);
           }
         } catch (err) {
-          console.warn('Cloud bio fetch notice:', err);
+          console.warn('Cloud bio fetch warning:', err);
         }
       }
     };

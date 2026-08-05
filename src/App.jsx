@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Landing from './pages/Landing';
 import Hub from './pages/Hub';
 import ReaderView from './pages/ReaderView';
+import AuthorPortal from './pages/AuthorPortal';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/stories" element={<Hub filter="/stories" />} />
         <Route path="/about" element={<Hub filter="/about" />} />
         <Route path="/read/:slug" element={<ReaderView />} />
+        <Route path="/portal" element={<AuthorPortal />} />
       </Routes>
     </BrowserRouter>
   );

@@ -1,5 +1,26 @@
+# ==========================
+# Dependencies
+# ==========================
+node_modules/
+
+# ==========================
+# Build Output
+# ==========================
+dist/
+dist-ssr/
+.vite/
+
+# ==========================
+# Environment Variables
+# ==========================
+.env
+.env.*
+!.env.example
+
+# ==========================
 # Logs
-logs
+# ==========================
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -7,18 +28,59 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
+# ==========================
+# Local Cache
+# ==========================
 *.local
 
-# Editor directories and files
+# ==========================
+# IDE
+# ==========================
 .vscode/*
 !.vscode/extensions.json
-.idea
-.DS_Store
+.idea/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+*.swp
+
+# ==========================
+# Operating System
+# ==========================
+.DS_Store
+Thumbs.db
+
+# ==========================
+# Firebase
+# ==========================
+.firebase/
+firebase-debug.log
+
+# ==========================
+# Supabase
+# ==========================
+.supabase/
+
+# ==========================
+# Coverage
+# ==========================
+coverage/
+
+# ==========================
+# Testing
+# ==========================
+playwright-report/
+test-results/
+
+# ==========================
+# Temporary Files
+# ==========================
+*.tmp
+*.temp
+
+# ==========================
+# Miscellaneous
+# ==========================
+.cache/

@@ -10,8 +10,8 @@ export const Hub = ({ filter }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Instantly load from cache so the page renders 0ms on arrival
-  const getInitialWorks = () => {
+  // Load local cache immediately for instant 0ms painting (works for both poems and stories)
+  const getCachedWorks = () => {
     try {
       const cached = localStorage.getItem('real_thing_cached_hub_works');
       if (cached) {
@@ -24,9 +24,9 @@ export const Hub = ({ filter }) => {
     return [];
   };
 
-  const [works, setWorks] = useState(getInitialWorks);
+  const [works, setWorks] = useState(getCachedWorks);
   // If we already have cached works, loading is false instantly!
-  const [loading, setLoading] = useState(() => getInitialWorks().length === 0);
+  const [loading, setLoading] = useState(() => getCachedWorks().length === 0);
   const [aboutBio, setAboutBio] = useState('');
 
   const currentPath = filter || location.pathname;
@@ -34,7 +34,7 @@ export const Hub = ({ filter }) => {
   const isStoriesOnly = currentPath === '/stories';
   const isAboutOnly = currentPath === '/about';
 
-  // Instant Cache + Silent Cloud Background Sync
+  // Instant Cache + Self-Caching Background Sync
   useEffect(() => {
     const loadAllWorks = async () => {
       let remoteWorks = [];
@@ -64,14 +64,15 @@ export const Hub = ({ filter }) => {
       let uniqueWorks = Array.from(map.values());
       uniqueWorks.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
 
-      setWorks(uniqueWorks);
-      setLoading(false);
-
-      // Cache for instant loads next time
-      try {
-        localStorage.setItem('real_thing_cached_hub_works', JSON.stringify(uniqueWorks));
-      } catch (e) {
-        console.warn('Cache write notice:', e);
+      if (uniqueWorks.length > 0) {
+        setWorks(uniqueWorks);
+        setLoading(false);
+        // Self-cache immediately so future reloads/visits to poems & stories are instant
+        try {
+          localStorage.setItem('real_thing_cached_hub_works', JSON.stringify(uniqueWorks));
+        } catch (e) {
+          console.warn('Cache write notice:', e);
+        }
       }
     };
 
@@ -121,7 +122,6 @@ export const Hub = ({ filter }) => {
     visible: { opacity: 1, y: 0, transition: { duration: 0.25 } }
   };
 
-  // Skeleton UI for instant visual feedback on first-ever load
   const CardSkeleton = () => (
     <div className="h-[110px] rounded-xl border border-[#8A8177]/10 bg-[#0F1216]/50 p-6 flex flex-col justify-between animate-pulse">
       <div className="space-y-2">

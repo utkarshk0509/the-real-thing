@@ -19,7 +19,7 @@ export const Hub = ({ filter }) => {
   const isStoriesOnly = currentPath === '/stories';
   const isAboutOnly = currentPath === '/about';
 
-  // Fetch works
+  // Optimized Supabase Query: fetching only needed fields instead of '*'
   useEffect(() => {
     const loadAllWorks = async () => {
       setLoading(true);
@@ -29,7 +29,7 @@ export const Hub = ({ filter }) => {
         if (supabase) {
           const { data, error } = await supabase
             .from('works')
-            .select('*')
+            .select('slug, title, category, author, image_url, published_at, read_time_minutes, status')
             .eq('status', 'published')
             .order('created_at', { ascending: false });
 
@@ -52,10 +52,9 @@ export const Hub = ({ filter }) => {
     loadAllWorks();
   }, [location.pathname]);
 
-  // Fetch live About Bio from Supabase when on the about page
+  // Fetch live About Bio instantly with local cache fallback
   useEffect(() => {
     const fetchLiveBio = async () => {
-      // Instant fallback to local storage
       const cachedBio = localStorage.getItem('real_thing_author_bio');
       if (cachedBio) setAboutBio(cachedBio);
 
@@ -72,7 +71,7 @@ export const Hub = ({ filter }) => {
             localStorage.setItem('real_thing_author_bio', data.value);
           }
         } catch (err) {
-          console.warn('Could not fetch remote bio from cloud:', err);
+          console.warn('Cloud bio fetch warning:', err);
         }
       }
     };
@@ -86,22 +85,22 @@ export const Hub = ({ filter }) => {
   const stories = works.filter((w) => w.category === 'story');
 
   const containerVariants = {
-    hidden: { opacity: 0, y: 15 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut', staggerChildren: 0.08 } },
-    exit: { opacity: 0, y: -15, transition: { duration: 0.3, ease: 'easeIn' } }
+    hidden: { opacity: 0, y: 10 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut', staggerChildren: 0.05 } },
+    exit: { opacity: 0, y: -10, transition: { duration: 0.2, ease: 'easeIn' } }
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 12 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
+    hidden: { opacity: 0, y: 8 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.25 } }
   };
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20, filter: 'blur(6px)' }}
-      animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
-      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: 0.3, ease: 'easeInOut' }} // Removed heavy blur filter for buttery smooth rendering
       className="relative min-h-screen bg-[#080A06] text-[#FEEFFF] selection:bg-[#D5B06C]/30 selection:text-[#FEEFFF] pb-24"
     >
       <AtmosphericBackground />

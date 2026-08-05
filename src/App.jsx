@@ -1,27 +1,31 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
-import Landing from './pages/Landing';
-import HomeConstellation from './pages/HomeConstellation';
-import Hub from './pages/Hub'; // Keep standard hub accessible for /poems or /stories filters
-import ReaderView from './pages/ReaderView';
-import AuthorPortal from './pages/AuthorPortal';
+
+// Lazy load pages for lightning-fast initial load
+const Landing = lazy(() => import('./pages/Landing'));
+const HomeConstellation = lazy(() => import('./pages/HomeConstellation'));
+const Hub = lazy(() => import('./pages/Hub'));
+const ReaderView = lazy(() => import('./pages/ReaderView'));
+const AuthorPortal = lazy(() => import('./pages/AuthorPortal'));
 
 function AnimatedRoutes() {
   const location = useLocation();
 
   return (
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<Landing />} />
-        <Route path="/hub" element={<HomeConstellation />} />
-        <Route path="/poems" element={<Hub filter="/poems" />} />
-        <Route path="/stories" element={<Hub filter="/stories" />} />
-        <Route path="/about" element={<Hub filter="/about" />} />
-        <Route path="/read/:slug" element={<ReaderView />} />
-        <Route path="/portal" element={<AuthorPortal />} />
-      </Routes>
-    </AnimatePresence>
+    <Suspense fallback={<div className="min-h-screen bg-[#080A06]" />}>
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
+          <Route path="/" element={<Landing />} />
+          <Route path="/hub" element={<HomeConstellation />} />
+          <Route path="/poems" element={<Hub filter="/poems" />} />
+          <Route path="/stories" element={<Hub filter="/stories" />} />
+          <Route path="/about" element={<Hub filter="/about" />} />
+          <Route path="/read/:slug" element={<ReaderView />} />
+          <Route path="/portal" element={<AuthorPortal />} />
+        </Routes>
+      </AnimatePresence>
+    </Suspense>
   );
 }
 

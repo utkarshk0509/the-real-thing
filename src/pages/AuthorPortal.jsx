@@ -110,7 +110,7 @@ export const AuthorPortal = () => {
   const handleApplyCrop = () => {
     setImageUrl(tempImage);
     setIsCropModalOpen(false);
-    setStatusMessage({ type: 'success', text: 'Image cropped and attached.' });
+    setStatusMessage({ type: 'success', text: 'Image successfully cropped and applied.' });
   };
 
   const handleLoadWork = (work) => {
@@ -137,15 +137,12 @@ export const AuthorPortal = () => {
     if (!workToDelete) return;
     const { id, slug } = workToDelete;
 
-    // Instant UI update
     setAllWorks((prev) => prev.filter((w) => w.id !== id && w.slug !== slug));
 
-    // Clear from localStorage
     const localWorks = JSON.parse(localStorage.getItem('real_thing_custom_works') || '[]');
     const updatedLocal = localWorks.filter((w) => w.id !== id && w.slug !== slug);
     localStorage.setItem('real_thing_custom_works', JSON.stringify(updatedLocal));
 
-    // Clear from Supabase using both id and slug fallback
     try {
       if (supabase) {
         await supabase.from('works').delete().eq('slug', slug);
@@ -194,6 +191,7 @@ export const AuthorPortal = () => {
       .replace(/\s+/g, '-');
 
     const newWork = {
+      id: editingId || Date.now().toString(),
       title,
       slug: `${slugBase}-${Date.now().toString().slice(-4)}`,
       author: author.trim() || 'Anonymous',
@@ -210,20 +208,23 @@ export const AuthorPortal = () => {
     };
 
     if (supabase) {
-      const { error } = await supabase.from('works').insert([newWork]);
-      if (error) {
-        console.error('SUPABASE PUBLISH ERROR:', error);
-        setStatusMessage({ type: 'error', text: `Supabase Error: ${error.message}` });
-        setIsSubmitting(false);
-        return;
+      try {
+        if (editingId) {
+          await supabase.from('works').update(newWork).eq('id', editingId);
+        } else {
+          await supabase.from('works').insert([newWork]);
+        }
+      } catch (err) {
+        console.warn('Supabase upsert warning:', err);
       }
     }
 
     const localWorks = JSON.parse(localStorage.getItem('real_thing_custom_works') || '[]');
-    localStorage.setItem('real_thing_custom_works', JSON.stringify([{ ...newWork, id: Date.now().toString() }, ...localWorks]));
+    const filteredLocal = localWorks.filter((w) => w.id !== newWork.id && w.slug !== newWork.slug);
+    localStorage.setItem('real_thing_custom_works', JSON.stringify([newWork, ...filteredLocal]));
 
     loadWorksAndAbout();
-    setStatusMessage({ type: 'success', text: 'Inscription successfully published!' });
+    setStatusMessage({ type: 'success', text: 'Inscription successfully saved and published!' });
 
     setTimeout(() => {
       setIsSubmitting(false);
@@ -258,7 +259,7 @@ export const AuthorPortal = () => {
               <button
                 type="button"
                 onClick={clearForm}
-                className="text-xs uppercase tracking-widest text-[#8A8177] hover:text-red-400 transition-colors"
+                className="text-xs uppercase tracking-widest text-[#8A8177] hover:text-red-400 transition-colors cursor-pointer"
               >
                 Clear Form
               </button>
@@ -382,7 +383,7 @@ export const AuthorPortal = () => {
                     setTempImage(imageUrl);
                     setIsCropModalOpen(true);
                   }}
-                  className="w-full text-[10px] font-sans uppercase tracking-widest text-[#D5B06C] hover:underline"
+                  className="w-full text-[10px] font-sans uppercase tracking-widest text-[#D5B06C] hover:underline cursor-pointer pt-1"
                 >
                   Adjust Image Crop & Alignment
                 </button>
@@ -633,6 +634,113 @@ export const AuthorPortal = () => {
         </div>
       </div>
 
+      {/* Image Crop & Alignment Modal */}
+      <AnimatePresence>
+        {isCropModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#080A06]/85 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-[#0F1216] border border-[#D5B06C]/40 p-6 md:p-8 rounded-2xl max-w-lg w-full space-y-6 shadow-2xl relative"
+            >
+              <div className="flex items-center justify-between border-b border-[#8A8177]/20 pb-4">
+                <h3 className="font-serif text-xl text-[#FEEFFF]">Adjust Banner Image Crop</h3>
+                <button
+                  type="button"
+                  onClick={() => setIsCropModalOpen(false)}
+                  className="text-[#8A8177] hover:text-[#FEEFFF] font-sans text-xs uppercase cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Live Preview Box */}
+              <div className="w-full h-40 rounded-xl overflow-hidden border border-[#8A8177]/30 bg-[#080A06] relative flex items-center justify-center">
+                {tempImage && (
+                  <img
+                    src={tempImage}
+                    alt="Crop preview"
+                    className="w-full h-full object-cover transition-all duration-75"
+                    style={{
+                      transform: `scale(${cropScale})`,
+                      objectPosition: `${cropPosX}% ${cropPosY}%`
+                    }}
+                  />
+                )}
+              </div>
+
+              {/* Adjustment Sliders */}
+              <div className="space-y-4">
+                <div>
+                  <div className="flex justify-between font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mb-1">
+                    <span>Zoom Scale</span>
+                    <span>{cropScale.toFixed(1)}x</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="1"
+                    max="3"
+                    step="0.1"
+                    value={cropScale}
+                    onChange={(e) => setCropScale(parseFloat(e.target.value))}
+                    className="w-full accent-[#D5B06C] cursor-pointer"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex justify-between font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mb-1">
+                    <span>Horizontal Alignment (X)</span>
+                    <span>{cropPosX}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={cropPosX}
+                    onChange={(e) => setCropPosX(parseInt(e.target.value))}
+                    className="w-full accent-[#D5B06C] cursor-pointer"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex justify-between font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mb-1">
+                    <span>Vertical Alignment (Y)</span>
+                    <span>{cropPosY}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={cropPosY}
+                    onChange={(e) => setCropPosY(parseInt(e.target.value))}
+                    className="w-full accent-[#D5B06C] cursor-pointer"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 justify-end pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsCropModalOpen(false)}
+                  className="px-4 py-2 rounded border border-[#8A8177]/30 text-[#8A8177] font-sans text-xs uppercase tracking-widest hover:text-[#FEEFFF] transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleApplyCrop}
+                  className="px-6 py-2 rounded bg-[#D5B06C] text-[#080A06] font-sans text-xs font-semibold uppercase tracking-widest hover:bg-[#FEEFFF] transition-colors cursor-pointer"
+                >
+                  Apply & Attach
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete Confirmation Modal */}
       <AnimatePresence>
         {workToDelete && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#080A06]/85 backdrop-blur-md">

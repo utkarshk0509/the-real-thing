@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Generates an atmospheric geometric SVG avatar deterministically based on seed
 const DeterministicAvatar = ({ seed }) => {
   const hash = useMemo(() => {
     let h = 0;
@@ -25,7 +24,7 @@ const DeterministicAvatar = ({ seed }) => {
   );
 };
 
-export const AnonymousComments = ({ comments = [], onAddComment }) => {
+export const AnonymousComments = ({ comments = [], onAddComment, onDeleteComment }) => {
   const [text, setText] = useState('');
   const [alias, setAlias] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -50,7 +49,6 @@ export const AnonymousComments = ({ comments = [], onAddComment }) => {
         Reflections <span className="text-xs font-sans text-[#8A8177] ml-2 tracking-widest uppercase">({comments.length})</span>
       </h3>
 
-      {/* Comment Form */}
       <form onSubmit={handleSubmit} className="mb-12 bg-[#0F1216] border border-[#8A8177]/20 rounded-lg p-5">
         <div className="mb-4">
           <input
@@ -80,7 +78,6 @@ export const AnonymousComments = ({ comments = [], onAddComment }) => {
         </div>
       </form>
 
-      {/* Reflections Stream */}
       <div className="space-y-6">
         <AnimatePresence>
           {comments.map((comment) => (
@@ -89,7 +86,7 @@ export const AnonymousComments = ({ comments = [], onAddComment }) => {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="flex items-start gap-4 p-4 rounded-md border border-[#8A8177]/10 bg-[#0F1216]/40"
+              className="flex items-start gap-4 p-4 rounded-md border border-[#8A8177]/10 bg-[#0F1216]/40 relative group"
             >
               <DeterministicAvatar seed={comment.avatar_seed || comment.id} />
               <div className="flex-1">
@@ -97,9 +94,20 @@ export const AnonymousComments = ({ comments = [], onAddComment }) => {
                   <span className="font-sans text-xs uppercase tracking-wider text-[#D5B06C]">
                     {comment.author_alias}
                   </span>
-                  <span className="font-sans text-[10px] text-[#8A8177]">
-                    {new Date(comment.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="font-sans text-[10px] text-[#8A8177]">
+                      {new Date(comment.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                    </span>
+                    {onDeleteComment && (
+                      <button
+                        onClick={() => onDeleteComment(comment.id)}
+                        title="Delete Reflection"
+                        className="text-[10px] font-sans uppercase tracking-wider text-red-400/70 hover:text-red-400 transition-colors cursor-pointer"
+                      >
+                        Delete
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <p className="font-serif text-sm text-[#FEEFFF]/90 leading-relaxed">{comment.content}</p>
               </div>

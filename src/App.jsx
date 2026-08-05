@@ -4,6 +4,7 @@ import Landing from './pages/Landing';
 import Hub from './pages/Hub';
 import ReaderView from './pages/ReaderView';
 import AuthorPortal from './pages/AuthorPortal';
+import AuthorLockModal from './components/Shared/AuthorLockModal';
 
 function App() {
   return (
@@ -17,6 +18,9 @@ function App() {
         <Route path="/read/:slug" element={<ReaderView />} />
         <Route path="/portal" element={<AuthorPortal />} />
       </Routes>
+
+      {/* Discrete Author Portal Access Available on Every Page */}
+      <AuthorLockModal />
     </BrowserRouter>
   );
 }

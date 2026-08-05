@@ -13,24 +13,23 @@ export const ReaderView = () => {
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Check if curator/author is logged in during this session
+  const isAuthorLoggedIn = sessionStorage.getItem('real_thing_author_auth') === 'true';
+
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 });
 
   useEffect(() => {
-    const loadWork = async () => {
+    const loadWorkAndComments = async () => {
       setLoading(true);
 
-      // 1. Check local storage for user created works
+      // 1. Check local storage for custom published works
       const localCustom = JSON.parse(localStorage.getItem('real_thing_custom_works') || '[]');
       const foundLocal = localCustom.find((w) => w.slug === slug);
 
-      if (foundLocal) {
-        setWork(foundLocal);
-        setLoading(false);
-        return;
-      }
+      let activeWork = foundLocal || null;
 
-      // 2. Try fetching from Supabase if connected
+      // 2. Fetch work & comments from Supabase if connected
       try {
         if (supabase) {
           const { data, error } = await supabase
@@ -40,22 +39,119 @@ export const ReaderView = () => {
             .single();
 
           if (!error && data) {
-            setWork(data);
-            setLoading(false);
-            return;
+            activeWork = data;
+          }
+
+          if (activeWork?.id) {
+            const { data: commentsData } = await supabase
+              .from('comments')
+              .select('*')
+              .eq('work_id', activeWork.id)
+              .order('created_at', { ascending: false });
+
+            if (commentsData) {
+              setComments(commentsData);
+            }
           }
         }
       } catch (err) {
         console.warn('Remote fetch failed:', err);
       }
 
-      // Work not found
-      setWork(null);
+      // Load local comments fallback if any
+      const localComments = JSON.parse(localStorage.getItem(`real_thing_comments_${slug}`) || '[]');
+      if (localComments.length > 0) {
+        setComments((prev) =>
+          Array.from(new Map([...localComments, ...prev].map((c) => [c.id, c])).values())
+        );
+      }
+
+      setWork(activeWork);
       setLoading(false);
     };
 
-    loadWork();
+    loadWorkAndComments();
   }, [slug]);
+
+  // Handle Like / Unlike Toggle
+  const handleToggleLike = async (isLiking, newCount) => {
+    if (!work) return;
+
+    // Update local state & localStorage for custom works
+    const updatedWork = { ...work, gilded_likes_count: newCount };
+    setWork(updatedWork);
+
+    const localWorks = JSON.parse(localStorage.getItem('real_thing_custom_works') || '[]');
+    const updatedLocal = localWorks.map((w) => (w.slug === slug ? updatedWork : w));
+    localStorage.setItem('real_thing_custom_works', JSON.stringify(updatedLocal));
+
+    // Sync to Supabase
+    try {
+      if (supabase && work.id) {
+        await supabase
+          .from('works')
+          .update({ gilded_likes_count: newCount })
+          .eq('id', work.id);
+      }
+    } catch (err) {
+      console.warn('Like sync failed:', err);
+    }
+  };
+
+  // Handle Adding a Reflection / Comment
+  const handleAddComment = async (newCommentData) => {
+    const newComment = {
+      id: Date.now().toString(),
+      work_id: work?.id || slug,
+      ...newCommentData,
+      created_at: new Date().toISOString(),
+    };
+
+    // Save locally
+    const existingLocal = JSON.parse(localStorage.getItem(`real_thing_comments_${slug}`) || '[]');
+    const updatedLocal = [newComment, ...existingLocal];
+    localStorage.setItem(`real_thing_comments_${slug}`, JSON.stringify(updatedLocal));
+
+    setComments((prev) => [newComment, ...prev]);
+
+    // Save to Supabase
+    try {
+      if (supabase && work?.id) {
+        await supabase.from('comments').insert([
+          {
+            work_id: work.id,
+            author_alias: newComment.author_alias,
+            avatar_seed: newComment.avatar_seed,
+            content: newComment.content,
+          },
+        ]);
+      }
+    } catch (err) {
+      console.warn('Comment sync failed:', err);
+    }
+  };
+
+  // Author Moderation: Delete Reflection / Comment
+  const handleDeleteComment = async (commentId) => {
+    if (!window.confirm('Remove this reflection permanently?')) return;
+
+    // 1. Update State & Local Storage
+    const updatedComments = comments.filter((c) => c.id !== commentId);
+    setComments(updatedComments);
+
+    const existingLocal = JSON.parse(localStorage.getItem(`real_thing_comments_${slug}`) || '[]');
+    const updatedLocal = existingLocal.filter((c) => c.id !== commentId);
+    localStorage.setItem(`real_thing_comments_${slug}`, JSON.stringify(updatedLocal));
+
+    // 2. Delete from Supabase
+    try {
+      if (supabase) {
+        await supabase.from('comments').delete().eq('id', commentId);
+      }
+    } catch (err) {
+      console.warn('Supabase comment deletion failed:', err);
+    }
+  };
 
   if (loading) {
     return (
@@ -89,9 +185,9 @@ export const ReaderView = () => {
     <article className="relative min-h-screen bg-[#080A06] text-[#FEEFFF] selection:bg-[#D5B06C]/30 selection:text-[#FEEFFF]">
       <AtmosphericBackground />
 
-      <motion.div 
-        className="fixed top-0 left-0 right-0 h-[2px] bg-[#D5B06C] origin-left z-50 shadow-[0_0_10px_#D5B06C]" 
-        style={{ scaleX }} 
+      <motion.div
+        className="fixed top-0 left-0 right-0 h-[2px] bg-[#D5B06C] origin-left z-50 shadow-[0_0_10px_#D5B06C]"
+        style={{ scaleX }}
       />
 
       <header className="relative z-10 max-w-4xl mx-auto px-6 py-8 flex items-center justify-between border-b border-[#8A8177]/10">
@@ -121,17 +217,21 @@ export const ReaderView = () => {
         </div>
 
         <div className="flex items-center justify-between border-t border-b border-[#8A8177]/15 py-6 my-12">
-          <GildedHeart initialCount={work.gilded_likes_count || 0} />
+          <GildedHeart
+            workId={work.id || work.slug}
+            initialCount={work.gilded_likes_count || 0}
+            onToggleLike={handleToggleLike}
+          />
           <span className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177]">
             Published {new Date(work.published_at || Date.now()).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
           </span>
         </div>
 
+        {/* Reflections / Comments Section with Author Moderation */}
         <AnonymousComments
           comments={comments}
-          onAddComment={async (newC) => {
-            setComments((prev) => [{ ...newC, id: Date.now().toString(), created_at: new Date().toISOString() }, ...prev]);
-          }}
+          onAddComment={handleAddComment}
+          onDeleteComment={isAuthorLoggedIn ? handleDeleteComment : null}
         />
       </main>
     </article>

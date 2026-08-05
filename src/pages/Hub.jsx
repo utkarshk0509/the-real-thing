@@ -37,7 +37,7 @@ export const Hub = ({ filter }) => {
             .eq('status', 'published')
             .order('created_at', { ascending: false });
 
-          if (!error && data && data.length > 0) {
+          if (!error && data) {
             remoteWorks = data;
           }
         }
@@ -86,7 +86,6 @@ export const Hub = ({ filter }) => {
             Retrieving Inscriptions...
           </div>
         ) : works.length === 0 && !isAboutOnly ? (
-          /* Empty Sanctuary State when no works are published yet */
           <div className="text-center py-24 space-y-4">
             <h3 className="font-serif text-2xl text-[#8A8177]">The Sanctuary is Silent</h3>
             <p className="font-sans text-xs uppercase tracking-widest text-[#8A8177]/60">

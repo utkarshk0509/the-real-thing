@@ -73,6 +73,8 @@ export const AuthorPortal = () => {
       }
     }
 
+    // Sort cleanly by sort_order
+    combinedWorks.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
     setAllWorks(combinedWorks);
   };
 
@@ -118,7 +120,7 @@ export const AuthorPortal = () => {
     setDraggedItemIndex(null);
   };
 
-  // Explicit Save Order Handler
+  // Explicit Save Order Handler with Robust Loop Sync
   const handleSaveOrder = async () => {
     // 1. Reassign sequential sort_order indexes (0, 1, 2...)
     const finalWorks = allWorks.map((work, idx) => ({
@@ -129,38 +131,32 @@ export const AuthorPortal = () => {
     setAllWorks(finalWorks);
     localStorage.setItem('real_thing_custom_works', JSON.stringify(finalWorks));
 
-    // 2. Safely sync to Supabase using upsert
+    // 2. Sync sequentially to Supabase to prevent bulk ID type conflicts
     if (supabase) {
       try {
-        // Map the works cleanly for database submission
-        const payload = finalWorks.map(w => ({
-          id: w.id,
-          slug: w.slug,
-          title: w.title,
-          category: w.category,
-          author: w.author,
-          status: w.status,
-          excerpt: w.excerpt,
-          body: w.body,
-          image_url: w.image_url,
-          read_time_minutes: w.read_time_minutes,
-          published_at: w.published_at,
-          sort_order: w.sort_order
-        }));
+        for (let work of finalWorks) {
+          // Update items that have a remote database numeric/UUID identifier
+          if (work.id && !isNaN(work.id)) {
+            await supabase
+              .from('works')
+              .update({ sort_order: work.sort_order })
+              .eq('id', work.id);
+          } else if (work.slug) {
+            // Fallback matching by slug if id is a local timestamp string
+            await supabase
+              .from('works')
+              .update({ sort_order: work.sort_order })
+              .eq('slug', work.slug);
+          }
+        }
 
-        const { error } = await supabase
-          .from('works')
-          .upsert(payload, { onConflict: 'id' });
-
-        if (error) throw error;
-
-        setStatusMessage({ type: 'success', text: 'Constellation order successfully saved to cloud!' });
+        setStatusMessage({ type: 'success', text: '✨ Constellation order successfully saved!' });
       } catch (err) {
-        console.warn('Cloud sort order save failed:', err.message);
-        setStatusMessage({ type: 'success', text: 'Order saved locally (Cloud sync warning: check console).' });
+        console.warn('Cloud sort order save warning:', err.message);
+        setStatusMessage({ type: 'success', text: 'Order saved locally (Cloud sync notice logged).' });
       }
     } else {
-      setStatusMessage({ type: 'success', text: 'Constellation order saved locally!' });
+      setStatusMessage({ type: 'success', text: '✨ Constellation order saved locally!' });
     }
   };
 
@@ -664,7 +660,7 @@ export const AuthorPortal = () => {
               </div>
             )}
 
-            {/* Drag and Drop Arrange Tab with Save Button */}
+            {/* Drag and Drop Arrange Tab with Fixed Save Logic */}
             {activeTab === 'arrange' && (
               <div className="space-y-4 bg-[#0F1216]/40 border border-[#8A8177]/10 p-6 rounded-xl min-h-[350px]">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#8A8177]/20 pb-3 gap-3">

@@ -19,7 +19,7 @@ export const Hub = ({ filter }) => {
   const isStoriesOnly = currentPath === '/stories';
   const isAboutOnly = currentPath === '/about';
 
-  // Optimized Supabase Query: fetching only needed fields instead of '*'
+  // Optimized Supabase Query: including sort_order and sorting by it
   useEffect(() => {
     const loadAllWorks = async () => {
       setLoading(true);
@@ -29,8 +29,9 @@ export const Hub = ({ filter }) => {
         if (supabase) {
           const { data, error } = await supabase
             .from('works')
-            .select('slug, title, category, author, image_url, published_at, read_time_minutes, status')
+            .select('slug, title, category, author, image_url, published_at, read_time_minutes, status, sort_order')
             .eq('status', 'published')
+            .order('sort_order', { ascending: true }) // Respects author custom drag-and-drop order
             .order('created_at', { ascending: false });
 
           if (!error && data) remoteWorks = data;
@@ -44,6 +45,9 @@ export const Hub = ({ filter }) => {
 
       const combined = [...remoteWorks, ...publishedLocal];
       const uniqueWorks = Array.from(new Map(combined.map((item) => [item.slug, item])).values());
+
+      // Ensure local or combined items respect the custom sort_order explicitly
+      uniqueWorks.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
 
       setWorks(uniqueWorks);
       setLoading(false);
@@ -100,7 +104,7 @@ export const Hub = ({ filter }) => {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
-      transition={{ duration: 0.3, ease: 'easeInOut' }} // Removed heavy blur filter for buttery smooth rendering
+      transition={{ duration: 0.3, ease: 'easeInOut' }}
       className="relative min-h-screen bg-[#080A06] text-[#FEEFFF] selection:bg-[#D5B06C]/30 selection:text-[#FEEFFF] pb-24"
     >
       <AtmosphericBackground />

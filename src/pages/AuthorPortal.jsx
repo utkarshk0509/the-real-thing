@@ -106,7 +106,7 @@ export const AuthorPortal = () => {
     e.dataTransfer.dropEffect = 'move';
   };
 
-  const handleDrop = async (e, targetIndex) => {
+  const handleDrop = (e, targetIndex) => {
     e.preventDefault();
     if (draggedItemIndex === null || draggedItemIndex === targetIndex) return;
 
@@ -114,19 +114,20 @@ export const AuthorPortal = () => {
     const [movedItem] = updatedWorks.splice(draggedItemIndex, 1);
     updatedWorks.splice(targetIndex, 0, movedItem);
 
-    // Reassign sequential sort order indexes
-    const finalWorks = updatedWorks.map((work, idx) => ({
+    setAllWorks(updatedWorks);
+    setDraggedItemIndex(null);
+  };
+
+  // Explicit Save Order Handler
+  const handleSaveOrder = async () => {
+    const finalWorks = allWorks.map((work, idx) => ({
       ...work,
       sort_order: idx
     }));
 
     setAllWorks(finalWorks);
-    setDraggedItemIndex(null);
-
-    // Update local storage cache
     localStorage.setItem('real_thing_custom_works', JSON.stringify(finalWorks));
 
-    // Sync new order to Supabase database
     if (supabase) {
       try {
         for (let work of finalWorks) {
@@ -137,10 +138,13 @@ export const AuthorPortal = () => {
               .eq('id', work.id);
           }
         }
-        setStatusMessage({ type: 'success', text: 'Constellation order updated successfully.' });
+        setStatusMessage({ type: 'success', text: 'Constellation order successfully saved to cloud!' });
       } catch (err) {
-        console.warn('Cloud sort order sync failed:', err);
+        console.warn('Cloud sort order save failed:', err);
+        setStatusMessage({ type: 'success', text: 'Order saved locally (Cloud sync warning).' });
       }
+    } else {
+      setStatusMessage({ type: 'success', text: 'Constellation order saved locally!' });
     }
   };
 
@@ -644,14 +648,23 @@ export const AuthorPortal = () => {
               </div>
             )}
 
-            {/* Drag and Drop Arrange Tab */}
+            {/* Drag and Drop Arrange Tab with Save Button */}
             {activeTab === 'arrange' && (
               <div className="space-y-4 bg-[#0F1216]/40 border border-[#8A8177]/10 p-6 rounded-xl min-h-[350px]">
-                <div className="border-b border-[#8A8177]/20 pb-3">
-                  <h3 className="font-serif text-xl text-[#FEEFFF]">Arrange Constellation Cards</h3>
-                  <p className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mt-1">
-                    Click and drag any card up or down to set the exact visual sequence for your readers.
-                  </p>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#8A8177]/20 pb-3 gap-3">
+                  <div>
+                    <h3 className="font-serif text-xl text-[#FEEFFF]">Arrange Constellation Cards</h3>
+                    <p className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mt-1">
+                      Drag cards to reorder your works, then click save.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleSaveOrder}
+                    className="px-5 py-2 rounded bg-[#D5B06C] text-[#080A06] font-sans text-xs font-semibold uppercase tracking-widest hover:bg-[#FEEFFF] transition-colors cursor-pointer shadow-md"
+                  >
+                    Save Order
+                  </button>
                 </div>
 
                 {allWorks.length === 0 ? (

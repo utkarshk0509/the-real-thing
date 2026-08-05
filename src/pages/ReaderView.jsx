@@ -160,9 +160,8 @@ export const ReaderView = () => {
         style={{ scaleX }}
       />
 
-      {/* Increased top padding (pt-32 md:pt-40) to guarantee clear separation from top header */}
-      {/* Increased top padding (pt-36 md:pt-48) to keep the poem title safely below the header */}
-      <main className="relative z-10 max-w-2xl mx-auto px-6 pt-36 md:pt-48 pb-24">
+      {/* Substantially increased top padding (pt-48 md:pt-56) to guarantee title sits comfortably below the header */}
+      <main className="relative z-10 max-w-2xl mx-auto px-6 pt-48 md:pt-56 pb-24">
         <header className="text-center mb-16 space-y-3">
           <h1 className="font-serif text-3xl md:text-5xl text-[#FEEFFF] font-normal leading-tight capitalize">
             {work.title}

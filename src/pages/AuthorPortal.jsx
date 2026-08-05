@@ -51,8 +51,7 @@ export const AuthorPortal = () => {
     const savedBio = localStorage.getItem('real_thing_author_bio') || '"The Real Thing" is an open-access literary sanctuary designed for poetry, prose, and quiet contemplation.';
     setAboutBio(savedBio);
 
-    const localWorks = JSON.parse(localStorage.getItem('real_thing_custom_works') || '[]');
-    let combinedWorks = localWorks;
+    let combinedWorks = [];
 
     if (supabase) {
       try {
@@ -62,16 +61,22 @@ export const AuthorPortal = () => {
           .order('sort_order', { ascending: true })
           .order('created_at', { ascending: false });
 
-        if (dbWorks && dbWorks.length > 0) {
-          combinedWorks = Array.from(new Map([...localWorks, ...dbWorks].map((item) => [item.slug, item])).values());
-        }
-
-        const { count } = await supabase.from('comments').select('*', { count: 'exact', head: true });
-        if (count !== null) setTotalCommentsCount(count);
+        if (dbWorks) combinedWorks = dbWorks;
       } catch (err) {
         console.warn('Analytics fetch error:', err);
       }
     }
+
+    // Apply any lightweight local sort order rules saved safely
+    const savedOrderMap = JSON.parse(localStorage.getItem('real_thing_custom_works') || '[]');
+    const orderMap = new Map(savedOrderMap.map(item => [item.slug, item.sort_order]));
+
+    combinedWorks = combinedWorks.map(work => {
+      if (orderMap.has(work.slug)) {
+        return { ...work, sort_order: orderMap.get(work.slug) };
+      }
+      return work;
+    });
 
     // Sort cleanly by sort_order
     combinedWorks.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
@@ -120,8 +125,7 @@ export const AuthorPortal = () => {
     setDraggedItemIndex(null);
   };
 
-  // Explicit Save Order Handler with Robust Loop Sync
-  // Explicit Save Order Handler (Fixed for Local & Cloud sync)
+  // Explicit Save Order Handler (Optimized with lightweight tracking to prevent quota errors)
   const handleSaveOrder = async () => {
     try {
       // 1. Reassign sequential sort_order indexes (0, 1, 2...)
@@ -130,19 +134,28 @@ export const AuthorPortal = () => {
         sort_order: idx
       }));
 
-      // 2. Update local state & localStorage immediately so it never fails
       setAllWorks(finalWorks);
-      localStorage.setItem('real_thing_custom_works', JSON.stringify(finalWorks));
 
-      // 3. Safely attempt to sync sort_order to Supabase for items that exist in the cloud
+      // 2. Save only lightweight references to localStorage to prevent quota breaches
+      const lightweightMap = finalWorks.map(w => ({
+        slug: w.slug,
+        sort_order: w.sort_order
+      }));
+      localStorage.setItem('real_thing_custom_works', JSON.stringify(lightweightMap));
+
+      // 3. Safely sync to Supabase
       if (supabase) {
         for (let work of finalWorks) {
-          // Only sync items that look like database rows (numeric IDs or standard UUIDs)
           if (work.id && !String(work.id).startsWith('17')) {
             await supabase
               .from('works')
               .update({ sort_order: work.sort_order })
               .eq('id', work.id);
+          } else if (work.slug) {
+            await supabase
+              .from('works')
+              .update({ sort_order: work.sort_order })
+              .eq('slug', work.slug);
           }
         }
       }
@@ -220,7 +233,7 @@ export const AuthorPortal = () => {
     setAllWorks((prev) => prev.filter((w) => w.id !== id && w.slug !== slug));
 
     const localWorks = JSON.parse(localStorage.getItem('real_thing_custom_works') || '[]');
-    const updatedLocal = localWorks.filter((w) => w.id !== id && w.slug !== slug);
+    const updatedLocal = localWorks.filter((w) => w.slug !== slug);
     localStorage.setItem('real_thing_custom_works', JSON.stringify(updatedLocal));
 
     try {
@@ -297,10 +310,6 @@ export const AuthorPortal = () => {
         console.warn('Supabase upsert warning:', err);
       }
     }
-
-    const localWorks = JSON.parse(localStorage.getItem('real_thing_custom_works') || '[]');
-    const filteredLocal = localWorks.filter((w) => w.id !== newWork.id && w.slug !== newWork.slug);
-    localStorage.setItem('real_thing_custom_works', JSON.stringify([newWork, ...filteredLocal]));
 
     loadWorksAndAbout();
     setStatusMessage({ type: 'success', text: 'Inscription successfully saved and published!' });
@@ -654,7 +663,7 @@ export const AuthorPortal = () => {
               </div>
             )}
 
-            {/* Drag and Drop Arrange Tab with Fixed Save Logic */}
+            {/* Drag and Drop Arrange Tab */}
             {activeTab === 'arrange' && (
               <div className="space-y-4 bg-[#0F1216]/40 border border-[#8A8177]/10 p-6 rounded-xl min-h-[350px]">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#8A8177]/20 pb-3 gap-3">

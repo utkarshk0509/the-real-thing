@@ -19,7 +19,7 @@ export const Hub = ({ filter }) => {
   const isStoriesOnly = currentPath === '/stories';
   const isAboutOnly = currentPath === '/about';
 
-  // Optimized Supabase Query: including sort_order and sorting by it
+  // Robust Works Fetcher with Local Storage Override priority for Sort Order
   useEffect(() => {
     const loadAllWorks = async () => {
       setLoading(true);
@@ -31,7 +31,7 @@ export const Hub = ({ filter }) => {
             .from('works')
             .select('slug, title, category, author, image_url, published_at, read_time_minutes, status, sort_order')
             .eq('status', 'published')
-            .order('sort_order', { ascending: true }) // Respects author custom drag-and-drop order
+            .order('sort_order', { ascending: true })
             .order('created_at', { ascending: false });
 
           if (!error && data) remoteWorks = data;
@@ -40,13 +40,30 @@ export const Hub = ({ filter }) => {
         console.warn('Supabase fetch failed:', err.message);
       }
 
+      // Load local custom arrangements
       const localCustom = JSON.parse(localStorage.getItem('real_thing_custom_works') || '[]');
       const publishedLocal = localCustom.filter((w) => w.status === 'published');
 
-      const combined = [...remoteWorks, ...publishedLocal];
+      // Create a lookup map from local storage to enforce custom sort_order over raw database rows
+      const localOrderMap = new Map();
+      publishedLocal.forEach((item) => {
+        if (item.slug && item.sort_order !== undefined) {
+          localOrderMap.set(item.slug, item.sort_order);
+        }
+      });
+
+      // Merge remote works, overriding sort_order if a local arrangement exists
+      const mergedRemote = remoteWorks.map((work) => {
+        if (localOrderMap.has(work.slug)) {
+          return { ...work, sort_order: localOrderMap.get(work.slug) };
+        }
+        return work;
+      });
+
+      const combined = [...mergedRemote, ...publishedLocal];
       const uniqueWorks = Array.from(new Map(combined.map((item) => [item.slug, item])).values());
 
-      // Ensure local or combined items respect the custom sort_order explicitly
+      // Explicitly sort everything by sort_order ascending
       uniqueWorks.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
 
       setWorks(uniqueWorks);

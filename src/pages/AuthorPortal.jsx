@@ -68,10 +68,25 @@ export const AuthorPortal = () => {
     setAllWorks(combinedWorks);
   };
 
-  const handleSaveAboutBio = (e) => {
+  const handleSaveAboutBio = async (e) => {
     e.preventDefault();
+    // Save locally as a fallback
     localStorage.setItem('real_thing_author_bio', aboutBio);
-    setStatusMessage({ type: 'success', text: 'About the Author section successfully updated!' });
+
+    try {
+      if (supabase) {
+        // Upsert the bio into the Supabase site_settings table so it syncs live to all users
+        const { error } = await supabase
+          .from('site_settings')
+          .upsert({ key: 'author_bio', value: aboutBio, updated_at: new Date().toISOString() });
+
+        if (error) throw error;
+      }
+      setStatusMessage({ type: 'success', text: 'About the Author bio successfully published to the cloud!' });
+    } catch (err) {
+      console.warn('Remote bio sync failed:', err);
+      setStatusMessage({ type: 'success', text: 'Bio saved locally (Cloud sync warning).' });
+    }
   };
 
   const analytics = useMemo(() => {

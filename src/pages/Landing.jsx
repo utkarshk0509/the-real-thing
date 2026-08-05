@@ -75,7 +75,7 @@ export default function Landing() {
         <img src={mountainsImg} alt="Mountains" className="w-full h-full object-cover object-bottom [mask-image:linear-gradient(to_bottom,transparent_0%,black_20%)]" />
       </motion.div>
 
-      {/* Hero Title, Subtitle, & Begin Reading Button in the Center */}
+      {/* Hero Title, Subtitle, & Begin Reading Button */}
       <motion.div 
         className="relative z-10 flex flex-col items-center text-center space-y-8" 
         initial={{ y: 20, opacity: 0 }} 
@@ -100,7 +100,7 @@ export default function Landing() {
           Not every story asks to be remembered.<br/>Some only ask to be felt.
         </motion.p>
 
-        {/* Begin Reading Action Trigger brought right into the middle */}
+        {/* Begin Reading Action Trigger */}
         <motion.div 
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}

@@ -11,12 +11,10 @@ export const Navigation = () => {
   const [userComments, setUserComments] = useState([]);
   const [userWorks, setUserWorks] = useState([]);
 
-  // Check if logged-in user is designated curator
   const CURATOR_EMAIL = import.meta.env.VITE_CURATOR_EMAIL || '';
   const isCurator = user && (user.email === CURATOR_EMAIL || sessionStorage.getItem('real_thing_author_auth') === 'true');
 
   useEffect(() => {
-    // Get current auth session
     if (supabase) {
       supabase.auth.getSession().then(({ data: { session } }) => {
         setUser(session?.user ?? null);
@@ -27,7 +25,6 @@ export const Navigation = () => {
         setUser(session?.user ?? null);
         if (session?.user) {
           fetchUserData(session.user.id);
-          // If curator logs in, grant portal access
           if (session.user.email === CURATOR_EMAIL) {
             sessionStorage.setItem('real_thing_author_auth', 'true');
           }
@@ -41,19 +38,16 @@ export const Navigation = () => {
   const fetchUserData = async (userId) => {
     if (!supabase) return;
 
-    // Fetch Liked Works
     const { data: likes } = await supabase
       .from('user_likes')
       .select('work_id, works(*)')
       .eq('user_id', userId);
 
-    // Fetch User Comments
     const { data: comments } = await supabase
       .from('comments')
       .select('*, works(title, slug)')
       .eq('user_id', userId);
 
-    // Fetch Personal Saved Works / Drafts
     const { data: works } = await supabase
       .from('works')
       .select('*')
@@ -85,10 +79,12 @@ export const Navigation = () => {
   return (
     <>
       <nav className="fixed top-0 left-0 right-0 z-40 bg-[#080A06]/80 backdrop-blur-md border-b border-[#8A8177]/10 px-6 py-4 flex items-center justify-between">
-        <Link to="/hub" className="font-serif text-xl tracking-wider text-[#FEEFFF] hover:text-[#D5B06C] transition-colors">
+        {/* Left: Clicking this redirects to the Constellation Homepage (/hub) */}
+        <Link to="/" className="font-serif text-xl tracking-wider text-[#FEEFFF] hover:text-[#D5B06C] transition-colors cursor-pointer">
           The Real Thing
         </Link>
 
+        {/* Right side navigation items (No extra duplicate text) */}
         <div className="flex items-center gap-6">
           <Link to="/poems" className="font-sans text-xs uppercase tracking-widest text-[#8A8177] hover:text-[#D5B06C] transition-colors">
             Poems
@@ -100,7 +96,6 @@ export const Navigation = () => {
             About
           </Link>
 
-          {/* Curator Direct Portal Button (Only visible if logged in as Curator) */}
           {isCurator && (
             <button
               onClick={() => {
@@ -113,7 +108,6 @@ export const Navigation = () => {
             </button>
           )}
 
-          {/* Google Auth / Reader Profile Drawer Trigger */}
           {user ? (
             <button
               onClick={() => setIsProfileOpen(true)}
@@ -243,7 +237,7 @@ export const Navigation = () => {
 
               <button
                 onClick={handleLogout}
-                className="w-full py-2 bg-red-500/20 border border-red-500/40 text-red-300 font-sans text-xs uppercase tracking-widest rounded hover:bg-red-500 hover:text-[#080A06] transition-colors cursor-pointer mt-6"
+                className="w-full py-2 bg-red-500/20 border border-red-500/40 text-red-300 font-sans text-xs uppercase tracking-widest rounded hover:bg-red-500 hover:text-[#080A06] transition-colors cursor-pointer"
               >
                 Sign Out
               </button>

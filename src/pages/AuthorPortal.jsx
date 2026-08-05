@@ -26,9 +26,12 @@ export const AuthorPortal = () => {
   const [body, setBody] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [isDraft, setIsDraft] = useState(false);
-  const [activeTab, setActiveTab] = useState('edit'); // 'edit' | 'preview' | 'manage' | 'analytics'
+  const [activeTab, setActiveTab] = useState('edit'); // 'edit' | 'preview' | 'manage' | 'about-editor' | 'analytics'
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null);
+
+  // About Section State
+  const [aboutBio, setAboutBio] = useState('');
 
   // Custom Delete Confirmation Modal State
   const [workToDelete, setWorkToDelete] = useState(null);
@@ -45,10 +48,14 @@ export const AuthorPortal = () => {
   const [totalCommentsCount, setTotalCommentsCount] = useState(0);
 
   useEffect(() => {
-    loadWorksAndAnalytics();
+    loadWorksAndAbout();
   }, []);
 
-  const loadWorksAndAnalytics = async () => {
+  const loadWorksAndAbout = async () => {
+    // Load saved About bio
+    const savedBio = localStorage.getItem('real_thing_author_bio') || '"The Real Thing" is an open-access literary sanctuary designed for poetry, prose, and quiet contemplation.';
+    setAboutBio(savedBio);
+
     const localWorks = JSON.parse(localStorage.getItem('real_thing_custom_works') || '[]');
     let combinedWorks = localWorks;
 
@@ -69,7 +76,12 @@ export const AuthorPortal = () => {
     setAllWorks(combinedWorks);
   };
 
-  // Analytics Computation
+  const handleSaveAboutBio = (e) => {
+    e.preventDefault();
+    localStorage.setItem('real_thing_author_bio', aboutBio);
+    setStatusMessage({ type: 'success', text: 'About the Author section successfully updated!' });
+  };
+
   const analytics = useMemo(() => {
     const totalWorks = allWorks.length;
     const publishedWorks = allWorks.filter((w) => w.status === 'published').length;
@@ -148,7 +160,7 @@ export const AuthorPortal = () => {
       console.warn('Remote delete failed:', err);
     }
 
-    loadWorksAndAnalytics();
+    loadWorksAndAbout();
     if (editingId === workId) clearForm();
     setStatusMessage({ type: 'success', text: 'Work permanently deleted.' });
     setWorkToDelete(null);
@@ -213,7 +225,7 @@ export const AuthorPortal = () => {
     const localWorks = JSON.parse(localStorage.getItem('real_thing_custom_works') || '[]');
     localStorage.setItem('real_thing_custom_works', JSON.stringify([{ ...newWork, id: Date.now().toString() }, ...localWorks]));
 
-    loadWorksAndAnalytics();
+    loadWorksAndAbout();
     setStatusMessage({ type: 'success', text: 'Inscription successfully published to Supabase Cloud!' });
 
     setTimeout(() => {
@@ -403,11 +415,11 @@ export const AuthorPortal = () => {
               className="w-full bg-transparent border-b border-[#8A8177]/30 py-3 text-3xl md:text-4xl font-serif text-[#FEEFFF] placeholder-[#8A8177]/40 focus:outline-none focus:border-[#D5B06C]"
             />
 
-            <div className="flex border-b border-[#8A8177]/20">
+            <div className="flex border-b border-[#8A8177]/20 overflow-x-auto">
               <button
                 type="button"
                 onClick={() => setActiveTab('edit')}
-                className={`px-4 py-2 font-sans text-xs uppercase tracking-widest transition-colors cursor-pointer ${
+                className={`px-4 py-2 font-sans text-xs uppercase tracking-widest transition-colors cursor-pointer whitespace-nowrap ${
                   activeTab === 'edit'
                     ? 'text-[#D5B06C] border-b-2 border-[#D5B06C]'
                     : 'text-[#8A8177] hover:text-[#FEEFFF]'
@@ -418,7 +430,7 @@ export const AuthorPortal = () => {
               <button
                 type="button"
                 onClick={() => setActiveTab('preview')}
-                className={`px-4 py-2 font-sans text-xs uppercase tracking-widest transition-colors cursor-pointer ${
+                className={`px-4 py-2 font-sans text-xs uppercase tracking-widest transition-colors cursor-pointer whitespace-nowrap ${
                   activeTab === 'preview'
                     ? 'text-[#D5B06C] border-b-2 border-[#D5B06C]'
                     : 'text-[#8A8177] hover:text-[#FEEFFF]'
@@ -429,7 +441,7 @@ export const AuthorPortal = () => {
               <button
                 type="button"
                 onClick={() => setActiveTab('manage')}
-                className={`px-4 py-2 font-sans text-xs uppercase tracking-widest transition-colors cursor-pointer ${
+                className={`px-4 py-2 font-sans text-xs uppercase tracking-widest transition-colors cursor-pointer whitespace-nowrap ${
                   activeTab === 'manage'
                     ? 'text-[#D5B06C] border-b-2 border-[#D5B06C]'
                     : 'text-[#8A8177] hover:text-[#FEEFFF]'
@@ -439,14 +451,25 @@ export const AuthorPortal = () => {
               </button>
               <button
                 type="button"
+                onClick={() => setActiveTab('about-editor')}
+                className={`px-4 py-2 font-sans text-xs uppercase tracking-widest transition-colors cursor-pointer whitespace-nowrap ${
+                  activeTab === 'about-editor'
+                    ? 'text-[#D5B06C] border-b-2 border-[#D5B06C]'
+                    : 'text-[#8A8177] hover:text-[#FEEFFF]'
+                }`}
+              >
+                ✍️ About Editor
+              </button>
+              <button
+                type="button"
                 onClick={() => setActiveTab('analytics')}
-                className={`px-4 py-2 font-sans text-xs uppercase tracking-widest transition-colors cursor-pointer ${
+                className={`px-4 py-2 font-sans text-xs uppercase tracking-widest transition-colors cursor-pointer whitespace-nowrap ${
                   activeTab === 'analytics'
                     ? 'text-[#D5B06C] border-b-2 border-[#D5B06C]'
                     : 'text-[#8A8177] hover:text-[#FEEFFF]'
                 }`}
               >
-                📊 Curator Analytics
+                📊 Analytics
               </button>
             </div>
 
@@ -555,6 +578,39 @@ export const AuthorPortal = () => {
               </div>
             )}
 
+            {/* ABOUT THE AUTHOR EDITOR TAB */}
+            {activeTab === 'about-editor' && (
+              <div className="space-y-6 bg-[#0F1216]/40 border border-[#8A8177]/10 p-6 rounded-xl min-h-[350px]">
+                <div className="border-b border-[#8A8177]/20 pb-3">
+                  <h3 className="font-serif text-xl text-[#FEEFFF]">Edit "About the Author" Section</h3>
+                  <p className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mt-1">
+                    Modify the bio text displayed on the About page
+                  </p>
+                </div>
+
+                <form onSubmit={handleSaveAboutBio} className="space-y-4">
+                  <div>
+                    <label className="block font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mb-2">
+                      About Page Content (Markdown / Text supported)
+                    </label>
+                    <textarea
+                      rows={8}
+                      value={aboutBio}
+                      onChange={(e) => setAboutBio(e.target.value)}
+                      className="w-full bg-[#080A06] border border-[#8A8177]/30 text-[#FEEFFF] font-serif text-base p-4 rounded-lg focus:outline-none focus:border-[#D5B06C] leading-relaxed"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="px-6 py-2.5 rounded bg-[#D5B06C] text-[#080A06] font-sans text-xs font-semibold uppercase tracking-widest hover:bg-[#FEEFFF] transition-colors cursor-pointer"
+                  >
+                    Save About Bio
+                  </button>
+                </form>
+              </div>
+            )}
+
             {/* CURATOR PRIVATE ANALYTICS TAB */}
             {activeTab === 'analytics' && (
               <div className="space-y-6 bg-[#0F1216]/40 border border-[#8A8177]/10 p-6 rounded-xl min-h-[350px]">
@@ -565,7 +621,6 @@ export const AuthorPortal = () => {
                   </p>
                 </div>
 
-                {/* KPI Metrics Cards Grid */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="p-4 bg-[#080A06]/80 border border-[#8A8177]/20 rounded-lg text-center space-y-1">
                     <span className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177]">Total Inscriptions</span>
@@ -588,7 +643,6 @@ export const AuthorPortal = () => {
                   </div>
                 </div>
 
-                {/* Per-Work Performance Breakdown Table */}
                 <div className="pt-4 space-y-3">
                   <h4 className="font-sans text-xs uppercase tracking-widest text-[#D5B06C]">Inscriptions Engagement Summary</h4>
                   <div className="overflow-x-auto border border-[#8A8177]/20 rounded-lg">
@@ -625,167 +679,6 @@ export const AuthorPortal = () => {
           </div>
         </div>
       </div>
-
-      <AnimatePresence>
-        {isCropModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#080A06]/90 backdrop-blur-md">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-[#0F1216] border border-[#8A8177]/30 p-6 md:p-8 rounded-2xl max-w-xl w-full space-y-6 shadow-2xl"
-            >
-              <div className="space-y-1">
-                <h3 className="font-serif text-2xl text-[#FEEFFF]">Crop & Align Thumbnail</h3>
-                <p className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177]">
-                  Previewing Exact Card Ratio for Content Hub
-                </p>
-              </div>
-
-              <div className="border border-[#D5B06C]/40 p-2 rounded-xl bg-[#080A06]/50">
-                <div className="relative overflow-hidden rounded-xl border border-[#8A8177]/20 bg-[#0F1216] p-6 h-[120px]">
-                  <div className="absolute right-0 top-0 bottom-0 w-2/5 overflow-hidden pointer-events-none opacity-60">
-                    <img
-                      src={tempImage}
-                      alt="Crop Preview"
-                      style={{
-                        objectFit: 'cover',
-                        objectPosition: `${cropPosX}% ${cropPosY}%`,
-                        transform: `scale(${cropScale})`,
-                      }}
-                      className="w-full h-full filter grayscale contrast-125 mix-blend-luminosity transition-all duration-150"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#0F1216] via-[#0F1216]/60 to-transparent" />
-                  </div>
-
-                  <div className="relative z-10 h-full flex flex-col justify-between">
-                    <div>
-                      <h4 className="font-serif text-lg text-[#FEEFFF]">
-                        {title || 'Sample Work Title'}
-                      </h4>
-                      <p className="font-sans text-xs text-[#D5B06C] mt-0.5">
-                        By {author || 'Author'}
-                      </p>
-                    </div>
-                    <div className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177]">
-                      {metrics.readTime} min read
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-4 bg-[#080A06] p-4 rounded-xl border border-[#8A8177]/20">
-                <div>
-                  <div className="flex justify-between font-sans text-xs text-[#8A8177] mb-1">
-                    <span>Zoom Scale</span>
-                    <span>{cropScale.toFixed(1)}x</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="1"
-                    max="2.5"
-                    step="0.05"
-                    value={cropScale}
-                    onChange={(e) => setCropScale(parseFloat(e.target.value))}
-                    className="w-full accent-[#D5B06C] cursor-pointer"
-                  />
-                </div>
-
-                <div>
-                  <div className="flex justify-between font-sans text-xs text-[#8A8177] mb-1">
-                    <span>Vertical Alignment</span>
-                    <span>{cropPosY}%</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={cropPosY}
-                    onChange={(e) => setCropPosY(parseInt(e.target.value))}
-                    className="w-full accent-[#D5B06C] cursor-pointer"
-                  />
-                </div>
-
-                <div>
-                  <div className="flex justify-between font-sans text-xs text-[#8A8177] mb-1">
-                    <span>Horizontal Focal Point</span>
-                    <span>{cropPosX}%</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={cropPosX}
-                    onChange={(e) => setCropPosX(parseInt(e.target.value))}
-                    className="w-full accent-[#D5B06C] cursor-pointer"
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-3 justify-end pt-2">
-                <button
-                  type="button"
-                  onClick={() => setIsCropModalOpen(false)}
-                  className="px-5 py-2.5 rounded border border-[#8A8177]/30 text-[#8A8177] font-sans text-xs uppercase tracking-widest hover:text-[#FEEFFF] transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleApplyCrop}
-                  className="px-6 py-2.5 rounded bg-[#D5B06C] text-[#080A06] font-sans text-xs font-semibold uppercase tracking-widest hover:bg-[#FEEFFF] transition-colors cursor-pointer"
-                >
-                  Apply Crop
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {workToDelete && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#080A06]/85 backdrop-blur-md">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-[#0F1216] border border-red-500/30 p-6 md:p-8 rounded-2xl max-w-md w-full space-y-6 text-center shadow-2xl relative"
-            >
-              <div className="space-y-2">
-                <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/30 text-red-400 mx-auto flex items-center justify-center text-xl font-serif">
-                  †
-                </div>
-                <h3 className="font-serif text-2xl text-[#FEEFFF]">Delete Inscription?</h3>
-                <p className="font-sans text-xs text-[#8A8177]">
-                  Are you sure you want to permanently delete{' '}
-                  <span className="text-[#D5B06C] italic font-serif">
-                    "{workToDelete.title || 'this work'}"
-                  </span>
-                  ?
-                </p>
-              </div>
-
-              <div className="flex gap-3 justify-center pt-2">
-                <button
-                  type="button"
-                  onClick={() => setWorkToDelete(null)}
-                  className="flex-1 py-2.5 rounded border border-[#8A8177]/30 text-[#8A8177] font-sans text-xs uppercase tracking-widest hover:text-[#FEEFFF] transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={confirmDeleteWork}
-                  className="flex-1 py-2.5 rounded bg-red-500/20 border border-red-500/50 text-red-300 font-sans text-xs font-semibold uppercase tracking-widest hover:bg-red-500 hover:text-[#080A06] transition-all cursor-pointer"
-                >
-                  Delete
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };

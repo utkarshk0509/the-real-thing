@@ -40,6 +40,9 @@ export const AuthorPortal = () => {
   const [allWorks, setAllWorks] = useState([]);
   const [totalCommentsCount, setTotalCommentsCount] = useState(0);
 
+  // Drag and drop sorting state
+  const [draggedItemIndex, setDraggedItemIndex] = useState(null);
+
   useEffect(() => {
     loadWorksAndAbout();
   }, []);
@@ -53,7 +56,12 @@ export const AuthorPortal = () => {
 
     if (supabase) {
       try {
-        const { data: dbWorks } = await supabase.from('works').select('*').order('created_at', { ascending: false });
+        const { data: dbWorks } = await supabase
+          .from('works')
+          .select('*')
+          .order('sort_order', { ascending: true })
+          .order('created_at', { ascending: false });
+
         if (dbWorks && dbWorks.length > 0) {
           combinedWorks = Array.from(new Map([...localWorks, ...dbWorks].map((item) => [item.slug, item])).values());
         }
@@ -84,6 +92,55 @@ export const AuthorPortal = () => {
     } catch (err) {
       console.warn('Remote bio sync failed:', err);
       setStatusMessage({ type: 'success', text: 'Bio saved locally (Cloud sync warning).' });
+    }
+  };
+
+  // Drag and Drop Handlers for Reordering
+  const handleDragStart = (e, index) => {
+    setDraggedItemIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = async (e, targetIndex) => {
+    e.preventDefault();
+    if (draggedItemIndex === null || draggedItemIndex === targetIndex) return;
+
+    const updatedWorks = [...allWorks];
+    const [movedItem] = updatedWorks.splice(draggedItemIndex, 1);
+    updatedWorks.splice(targetIndex, 0, movedItem);
+
+    // Reassign sequential sort order indexes
+    const finalWorks = updatedWorks.map((work, idx) => ({
+      ...work,
+      sort_order: idx
+    }));
+
+    setAllWorks(finalWorks);
+    setDraggedItemIndex(null);
+
+    // Update local storage cache
+    localStorage.setItem('real_thing_custom_works', JSON.stringify(finalWorks));
+
+    // Sync new order to Supabase database
+    if (supabase) {
+      try {
+        for (let work of finalWorks) {
+          if (work.id) {
+            await supabase
+              .from('works')
+              .update({ sort_order: work.sort_order })
+              .eq('id', work.id);
+          }
+        }
+        setStatusMessage({ type: 'success', text: 'Constellation order updated successfully.' });
+      } catch (err) {
+        console.warn('Cloud sort order sync failed:', err);
+      }
     }
   };
 
@@ -150,23 +207,16 @@ export const AuthorPortal = () => {
     if (!workToDelete) return;
     const { id, slug } = workToDelete;
 
-    // 1. Immediately remove from local state UI
     setAllWorks((prev) => prev.filter((w) => w.id !== id && w.slug !== slug));
 
-    // 2. Wipe completely from localStorage so local website drops it instantly
     const localWorks = JSON.parse(localStorage.getItem('real_thing_custom_works') || '[]');
     const updatedLocal = localWorks.filter((w) => w.id !== id && w.slug !== slug);
     localStorage.setItem('real_thing_custom_works', JSON.stringify(updatedLocal));
 
-    // 3. Delete from Supabase database
     try {
       if (supabase) {
-        if (slug) {
-          await supabase.from('works').delete().eq('slug', slug);
-        }
-        if (id) {
-          await supabase.from('works').delete().eq('id', id);
-        }
+        if (slug) await supabase.from('works').delete().eq('slug', slug);
+        if (id) await supabase.from('works').delete().eq('id', id);
       }
     } catch (err) {
       console.warn('Remote delete failed:', err);
@@ -222,7 +272,8 @@ export const AuthorPortal = () => {
       published_at: isDraft ? null : new Date().toISOString(),
       crop_scale: cropScale,
       crop_pos_x: cropPosX,
-      crop_pos_y: cropPosY
+      crop_pos_y: cropPosY,
+      sort_order: allWorks.length
     };
 
     if (supabase) {
@@ -461,12 +512,21 @@ export const AuthorPortal = () => {
               </button>
               <button
                 type="button"
+                onClick={() => setActiveTab('arrange')}
+                className={`px-4 py-2 font-sans text-xs uppercase tracking-widest transition-colors cursor-pointer whitespace-nowrap ${
+                  activeTab === 'arrange' ? 'text-[#D5B06C] border-b-2 border-[#D5B06C]' : 'text-[#8A8177] hover:text-[#FEEFFF]'
+                }`}
+              >
+                Arrange Constellation
+              </button>
+              <button
+                type="button"
                 onClick={() => setActiveTab('about-editor')}
                 className={`px-4 py-2 font-sans text-xs uppercase tracking-widest transition-colors cursor-pointer whitespace-nowrap ${
                   activeTab === 'about-editor' ? 'text-[#D5B06C] border-b-2 border-[#D5B06C]' : 'text-[#8A8177] hover:text-[#FEEFFF]'
                 }`}
               >
-                ✍️ About Editor
+                About Editor
               </button>
               <button
                 type="button"
@@ -475,7 +535,7 @@ export const AuthorPortal = () => {
                   activeTab === 'analytics' ? 'text-[#D5B06C] border-b-2 border-[#D5B06C]' : 'text-[#8A8177] hover:text-[#FEEFFF]'
                 }`}
               >
-                📊 Analytics
+                Analytics
               </button>
             </div>
 
@@ -577,6 +637,50 @@ export const AuthorPortal = () => {
                             Delete
                           </button>
                         </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Drag and Drop Arrange Tab */}
+            {activeTab === 'arrange' && (
+              <div className="space-y-4 bg-[#0F1216]/40 border border-[#8A8177]/10 p-6 rounded-xl min-h-[350px]">
+                <div className="border-b border-[#8A8177]/20 pb-3">
+                  <h3 className="font-serif text-xl text-[#FEEFFF]">Arrange Constellation Cards</h3>
+                  <p className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mt-1">
+                    Click and drag any card up or down to set the exact visual sequence for your readers.
+                  </p>
+                </div>
+
+                {allWorks.length === 0 ? (
+                  <p className="font-sans text-xs uppercase tracking-widest text-[#8A8177] py-8 text-center">
+                    No published works to arrange.
+                  </p>
+                ) : (
+                  <div className="space-y-2 pt-2">
+                    {allWorks.map((work, index) => (
+                      <div
+                        key={work.id || work.slug}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, index)}
+                        onDragOver={(e) => handleDragOver(e, index)}
+                        onDrop={(e) => handleDrop(e, index)}
+                        className="flex items-center justify-between p-3.5 rounded-lg border border-[#8A8177]/20 bg-[#080A06] hover:border-[#D5B06C]/50 transition-all cursor-grab active:cursor-grabbing shadow-sm"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="text-[#8A8177] text-xs font-mono select-none">⠿</span>
+                          <span className="font-serif text-sm text-[#FEEFFF] truncate max-w-[320px]">
+                            {index + 1}. {work.title || 'Untitled Work'}
+                          </span>
+                          <span className="text-[10px] uppercase font-sans tracking-wider px-2 py-0.5 rounded bg-[#D5B06C]/10 text-[#D5B06C]">
+                            {work.category}
+                          </span>
+                        </div>
+                        <span className="text-xs font-sans text-[#8A8177]/50 uppercase tracking-widest select-none pr-2">
+                          Drag to Reorder
+                        </span>
                       </div>
                     ))}
                   </div>

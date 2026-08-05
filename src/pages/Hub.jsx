@@ -22,13 +22,8 @@ export const Hub = ({ filter }) => {
   useEffect(() => {
     const loadAllWorks = async () => {
       setLoading(true);
-
-      // 1. Get locally saved custom published works
-      const localCustom = JSON.parse(localStorage.getItem('real_thing_custom_works') || '[]');
-      const publishedLocal = localCustom.filter((w) => w.status === 'published');
-
-      // 2. Fetch from Supabase if connected
       let remoteWorks = [];
+
       try {
         if (supabase) {
           const { data, error } = await supabase
@@ -37,19 +32,18 @@ export const Hub = ({ filter }) => {
             .eq('status', 'published')
             .order('created_at', { ascending: false });
 
-          if (!error && data) {
-            remoteWorks = data;
-          }
+          if (!error && data) remoteWorks = data;
         }
       } catch (err) {
-        console.warn('Supabase fetch skipped:', err.message);
+        console.warn('Supabase fetch failed:', err.message);
       }
 
-      // Combine published items (Local -> Remote)
-      const combined = [...publishedLocal, ...remoteWorks];
-      
-      // Deduplicate by slug
+      const localCustom = JSON.parse(localStorage.getItem('real_thing_custom_works') || '[]');
+      const publishedLocal = localCustom.filter((w) => w.status === 'published');
+
+      const combined = [...remoteWorks, ...publishedLocal];
       const uniqueWorks = Array.from(new Map(combined.map((item) => [item.slug, item])).values());
+
       setWorks(uniqueWorks);
       setLoading(false);
     };
@@ -62,11 +56,7 @@ export const Hub = ({ filter }) => {
 
   const containerVariants = {
     hidden: { opacity: 0, y: 15 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.5, ease: 'easeOut', staggerChildren: 0.08 }
-    },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut', staggerChildren: 0.08 } },
     exit: { opacity: 0, y: -15, transition: { duration: 0.3, ease: 'easeIn' } }
   };
 
@@ -80,7 +70,8 @@ export const Hub = ({ filter }) => {
       <AtmosphericBackground />
       <Navigation />
 
-      <main className="relative z-10 max-w-5xl mx-auto px-6 pt-20 space-y-12">
+      {/* Increased top padding (pt-28) to prevent navbar overlap */}
+      <main className="relative z-10 max-w-5xl mx-auto px-6 pt-28 space-y-12">
         {loading ? (
           <div className="text-center py-20 font-sans text-xs uppercase tracking-widest text-[#D5B06C] animate-pulse">
             Retrieving Inscriptions...
@@ -89,18 +80,11 @@ export const Hub = ({ filter }) => {
           <div className="text-center py-24 space-y-4">
             <h3 className="font-serif text-2xl text-[#8A8177]">The Sanctuary is Silent</h3>
             <p className="font-sans text-xs uppercase tracking-widest text-[#8A8177]/60">
-              No inscriptions published yet. Inscribe your first work in the Author Portal.
+              No inscriptions published yet.
             </p>
-            <button
-              onClick={() => navigate('/portal')}
-              className="mt-4 px-6 py-2.5 rounded border border-[#D5B06C]/40 text-[#D5B06C] font-sans text-xs uppercase tracking-widest hover:bg-[#D5B06C] hover:text-[#080A06] transition-all cursor-pointer"
-            >
-              Inscribe New Work
-            </button>
           </div>
         ) : (
           <AnimatePresence mode="wait">
-            {/* POEMS SECTION */}
             {(isHome || isPoemsOnly) && poems.length > 0 && (
               <motion.section
                 key="poems-section"
@@ -142,7 +126,6 @@ export const Hub = ({ filter }) => {
               </motion.section>
             )}
 
-            {/* STORIES SECTION */}
             {(isHome || isStoriesOnly) && stories.length > 0 && (
               <motion.section
                 key="stories-section"
@@ -186,7 +169,6 @@ export const Hub = ({ filter }) => {
               </motion.section>
             )}
 
-            {/* ABOUT SECTION */}
             {isAboutOnly && (
               <motion.section
                 key="about-section"
@@ -202,7 +184,7 @@ export const Hub = ({ filter }) => {
                   </h2>
                 </div>
                 <p className="font-serif text-lg leading-relaxed text-[#FEEFFF]/90">
-                  "The Real Thing" is an open-access literary sanctuary designed for poetry, prose, and quiet contemplation. Free from algorithms, distraction, and identity barriers.
+                  "The Real Thing" is an open-access literary sanctuary designed for poetry, prose, and quiet contemplation.
                 </p>
               </motion.section>
             )}

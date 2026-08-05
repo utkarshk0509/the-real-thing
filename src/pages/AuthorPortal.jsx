@@ -26,41 +26,67 @@ export const AuthorPortal = () => {
   const [body, setBody] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [isDraft, setIsDraft] = useState(false);
-  const [activeTab, setActiveTab] = useState('edit'); // 'edit' | 'preview' | 'manage'
+  const [activeTab, setActiveTab] = useState('edit'); // 'edit' | 'preview' | 'manage' | 'analytics'
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null);
 
   // Custom Delete Confirmation Modal State
-  const [workToDelete, setWorkToDelete] = useState(null); // { id, title }
+  const [workToDelete, setWorkToDelete] = useState(null);
 
-  // Image Crop & Modal State
+  // Image Crop Modal State
   const [tempImage, setTempImage] = useState(null);
   const [isCropModalOpen, setIsCropModalOpen] = useState(false);
   const [cropScale, setCropScale] = useState(1);
-  const [cropPosX, setCropPosX] = useState(50); // % horizontal focal point
-  const [cropPosY, setCropPosY] = useState(50); // % vertical focal point
+  const [cropPosX, setCropPosX] = useState(50);
+  const [cropPosY, setCropPosY] = useState(50);
 
-  // Inscriptions / Works List State
+  // Works & Analytics State
   const [allWorks, setAllWorks] = useState([]);
+  const [totalCommentsCount, setTotalCommentsCount] = useState(0);
 
-  // Load saved works on mount
   useEffect(() => {
-    loadWorks();
+    loadWorksAndAnalytics();
   }, []);
 
-  const loadWorks = () => {
+  const loadWorksAndAnalytics = async () => {
     const localWorks = JSON.parse(localStorage.getItem('real_thing_custom_works') || '[]');
-    setAllWorks(localWorks);
+    let combinedWorks = localWorks;
+
+    if (supabase) {
+      try {
+        const { data: dbWorks } = await supabase.from('works').select('*').order('created_at', { ascending: false });
+        if (dbWorks && dbWorks.length > 0) {
+          combinedWorks = Array.from(new Map([...localWorks, ...dbWorks].map((item) => [item.slug, item])).values());
+        }
+
+        const { count } = await supabase.from('comments').select('*', { count: 'exact', head: true });
+        if (count !== null) setTotalCommentsCount(count);
+      } catch (err) {
+        console.warn('Analytics fetch error:', err);
+      }
+    }
+
+    setAllWorks(combinedWorks);
   };
 
-  // Words & Reading Time Calculator
+  // Analytics Computation
+  const analytics = useMemo(() => {
+    const totalWorks = allWorks.length;
+    const publishedWorks = allWorks.filter((w) => w.status === 'published').length;
+    const draftWorks = allWorks.filter((w) => w.status === 'draft').length;
+    const totalResonances = allWorks.reduce((acc, w) => acc + (w.gilded_likes_count || 0), 0);
+    const totalWords = allWorks.reduce((acc, w) => acc + (w.body ? w.body.trim().split(/\s+/).length : 0), 0);
+    const avgWords = totalWorks > 0 ? Math.round(totalWords / totalWorks) : 0;
+
+    return { totalWorks, publishedWorks, draftWorks, totalResonances, avgWords };
+  }, [allWorks]);
+
   const metrics = useMemo(() => {
     const words = body.trim() ? body.trim().split(/\s+/).length : 0;
     const readTime = Math.max(1, Math.ceil(words / 180));
     return { words, readTime };
   }, [body]);
 
-  // Handle File Select & Open Crop Modal
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -80,14 +106,12 @@ export const AuthorPortal = () => {
     }
   };
 
-  // Confirm Crop Settings from Modal
   const handleApplyCrop = () => {
     setImageUrl(tempImage);
     setIsCropModalOpen(false);
-    setStatusMessage({ type: 'success', text: 'Image cropped and attached to work.' });
+    setStatusMessage({ type: 'success', text: 'Image cropped and attached.' });
   };
 
-  // Load an existing work into the Editor
   const handleLoadWork = (work) => {
     setEditingId(work.id);
     setTitle(work.title || '');
@@ -104,37 +128,28 @@ export const AuthorPortal = () => {
     setStatusMessage({ type: 'success', text: `Loaded: "${work.title || 'Untitled'}"` });
   };
 
-  // Trigger Delete Confirmation Modal
   const promptDeleteWork = (workId, workTitle) => {
     setWorkToDelete({ id: workId, title: workTitle });
   };
 
-  // Execute Deletion
   const confirmDeleteWork = async () => {
     if (!workToDelete) return;
-
     const workId = workToDelete.id;
 
-    // 1. Delete from local storage
     const localWorks = JSON.parse(localStorage.getItem('real_thing_custom_works') || '[]');
     const updated = localWorks.filter((w) => w.id !== workId);
     localStorage.setItem('real_thing_custom_works', JSON.stringify(updated));
 
-    // 2. Delete from Supabase if connected
     try {
       if (supabase) {
         await supabase.from('works').delete().eq('id', workId);
       }
     } catch (err) {
-      console.warn('Remote delete skipped:', err);
+      console.warn('Remote delete failed:', err);
     }
 
-    loadWorks();
-
-    if (editingId === workId) {
-      clearForm();
-    }
-
+    loadWorksAndAnalytics();
+    if (editingId === workId) clearForm();
     setStatusMessage({ type: 'success', text: 'Work permanently deleted.' });
     setWorkToDelete(null);
   };
@@ -153,7 +168,6 @@ export const AuthorPortal = () => {
     setCropPosY(50);
   };
 
-  // Handle Form Submission (Save Draft or Publish)
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!title.trim() || !body.trim()) {
@@ -171,7 +185,6 @@ export const AuthorPortal = () => {
       .replace(/\s+/g, '-');
 
     const newWork = {
-      id: editingId || Date.now().toString(),
       title,
       slug: `${slugBase}-${Date.now().toString().slice(-4)}`,
       author: author.trim() || 'Anonymous',
@@ -187,35 +200,26 @@ export const AuthorPortal = () => {
       crop_pos_y: cropPosY
     };
 
-    try {
-      // 1. Save locally
-      const localWorks = JSON.parse(localStorage.getItem('real_thing_custom_works') || '[]');
-      const filtered = localWorks.filter((w) => w.id !== newWork.id);
-      localStorage.setItem('real_thing_custom_works', JSON.stringify([newWork, ...filtered]));
-
-      // 2. Save to Supabase if connected
-      if (supabase && !isDraft) {
-        await supabase.from('works').upsert([newWork]);
+    if (supabase) {
+      const { error } = await supabase.from('works').insert([newWork]);
+      if (error) {
+        console.error('SUPABASE PUBLISH ERROR:', error);
+        setStatusMessage({ type: 'error', text: `Supabase Error: ${error.message}` });
+        setIsSubmitting(false);
+        return;
       }
-
-      loadWorks();
-
-      if (isDraft) {
-        setStatusMessage({ type: 'success', text: 'Draft saved successfully!' });
-      } else {
-        setStatusMessage({ type: 'success', text: 'Inscription successfully published!' });
-        setTimeout(() => navigate('/hub'), 1000);
-      }
-
-    } catch (err) {
-      console.warn('Saved locally:', err.message);
-      setStatusMessage({ type: 'success', text: isDraft ? 'Draft saved locally!' : 'Inscription published locally!' });
-      if (!isDraft) {
-        setTimeout(() => navigate('/hub'), 1000);
-      }
-    } finally {
-      setIsSubmitting(false);
     }
+
+    const localWorks = JSON.parse(localStorage.getItem('real_thing_custom_works') || '[]');
+    localStorage.setItem('real_thing_custom_works', JSON.stringify([{ ...newWork, id: Date.now().toString() }, ...localWorks]));
+
+    loadWorksAndAnalytics();
+    setStatusMessage({ type: 'success', text: 'Inscription successfully published to Supabase Cloud!' });
+
+    setTimeout(() => {
+      setIsSubmitting(false);
+      navigate('/hub');
+    }, 1200);
   };
 
   return (
@@ -223,7 +227,6 @@ export const AuthorPortal = () => {
       <AtmosphericBackground />
 
       <div className="relative z-10 max-w-5xl mx-auto space-y-8">
-        {/* Header Bar */}
         <header className="flex flex-col md:flex-row md:items-center justify-between border-b border-[#8A8177]/20 pb-6 gap-4">
           <div>
             <button
@@ -261,14 +264,13 @@ export const AuthorPortal = () => {
           </div>
         </header>
 
-        {/* Status Notification */}
         {statusMessage && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             className={`p-4 rounded-lg font-sans text-xs uppercase tracking-wider text-center border ${
               statusMessage.type === 'error'
-                ? 'bg-red-900/20 border-red-500/40 text-red-300'
+                ? 'bg-red-900/40 border-red-500 text-red-200'
                 : 'bg-[#D5B06C]/10 border-[#D5B06C] text-[#D5B06C]'
             }`}
           >
@@ -276,15 +278,12 @@ export const AuthorPortal = () => {
           </motion.div>
         )}
 
-        {/* Main Editor Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Metadata Sidebar */}
           <div className="bg-[#0F1216] border border-[#8A8177]/20 p-6 rounded-xl h-fit space-y-6">
             <h2 className="font-sans text-xs uppercase tracking-widest text-[#D5B06C]">
               Work Metadata
             </h2>
 
-            {/* Author Name */}
             <div>
               <label className="block font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mb-2">
                 Author Name / Alias
@@ -298,7 +297,6 @@ export const AuthorPortal = () => {
               />
             </div>
 
-            {/* Category Select */}
             <div>
               <label className="block font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mb-2">
                 Category
@@ -314,7 +312,6 @@ export const AuthorPortal = () => {
               </select>
             </div>
 
-            {/* Visibility Toggle */}
             <div>
               <label className="block font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mb-2">
                 State
@@ -341,7 +338,6 @@ export const AuthorPortal = () => {
               </div>
             </div>
 
-            {/* Image Upload & Crop Trigger */}
             <div className="space-y-3 pt-2 border-t border-[#8A8177]/10">
               <label className="block font-sans text-[10px] uppercase tracking-widest text-[#8A8177]">
                 Card Image Banner
@@ -384,7 +380,6 @@ export const AuthorPortal = () => {
               )}
             </div>
 
-            {/* Excerpt */}
             <div>
               <label className="block font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mb-2">
                 Short Excerpt
@@ -399,7 +394,6 @@ export const AuthorPortal = () => {
             </div>
           </div>
 
-          {/* Right Editor, Preview, and Management Pane */}
           <div className="lg:col-span-2 space-y-6">
             <input
               type="text"
@@ -409,7 +403,6 @@ export const AuthorPortal = () => {
               className="w-full bg-transparent border-b border-[#8A8177]/30 py-3 text-3xl md:text-4xl font-serif text-[#FEEFFF] placeholder-[#8A8177]/40 focus:outline-none focus:border-[#D5B06C]"
             />
 
-            {/* Tab Controls */}
             <div className="flex border-b border-[#8A8177]/20">
               <button
                 type="button"
@@ -444,9 +437,19 @@ export const AuthorPortal = () => {
               >
                 Saved Inscriptions ({allWorks.length})
               </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('analytics')}
+                className={`px-4 py-2 font-sans text-xs uppercase tracking-widest transition-colors cursor-pointer ${
+                  activeTab === 'analytics'
+                    ? 'text-[#D5B06C] border-b-2 border-[#D5B06C]'
+                    : 'text-[#8A8177] hover:text-[#FEEFFF]'
+                }`}
+              >
+                📊 Curator Analytics
+              </button>
             </div>
 
-            {/* EDITOR TAB */}
             {activeTab === 'edit' && (
               <textarea
                 rows={16}
@@ -457,14 +460,12 @@ export const AuthorPortal = () => {
               />
             )}
 
-            {/* PREVIEW TAB */}
             {activeTab === 'preview' && (
               <div className="space-y-6">
                 <div className="p-4 bg-[#0F1216]/30 border border-[#8A8177]/10 rounded-xl space-y-2">
                   <span className="font-sans text-[10px] uppercase tracking-widest text-[#D5B06C]">
                     Content Hub Card Preview
                   </span>
-                  
                   <div className="max-w-md">
                     <GlowingCard
                       image={imageUrl || 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=80&w=600&auto=format&fit=crop'}
@@ -497,11 +498,9 @@ export const AuthorPortal = () => {
               </div>
             )}
 
-            {/* SAVED WORKS & DELETE MANAGER TAB */}
             {activeTab === 'manage' && (
               <div className="space-y-4 bg-[#0F1216]/40 border border-[#8A8177]/10 p-6 rounded-xl min-h-[350px]">
                 <h3 className="font-serif text-xl text-[#FEEFFF] mb-4">Inscriptions & Drafts</h3>
-                
                 {allWorks.length === 0 ? (
                   <p className="font-sans text-xs uppercase tracking-widest text-[#8A8177] py-8 text-center">
                     No inscriptions stored yet.
@@ -555,11 +554,78 @@ export const AuthorPortal = () => {
                 )}
               </div>
             )}
+
+            {/* CURATOR PRIVATE ANALYTICS TAB */}
+            {activeTab === 'analytics' && (
+              <div className="space-y-6 bg-[#0F1216]/40 border border-[#8A8177]/10 p-6 rounded-xl min-h-[350px]">
+                <div className="border-b border-[#8A8177]/20 pb-3">
+                  <h3 className="font-serif text-xl text-[#FEEFFF]">Curator Insights & Analytics</h3>
+                  <p className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mt-1">
+                    Private Performance Overview for Inscriptions
+                  </p>
+                </div>
+
+                {/* KPI Metrics Cards Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="p-4 bg-[#080A06]/80 border border-[#8A8177]/20 rounded-lg text-center space-y-1">
+                    <span className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177]">Total Inscriptions</span>
+                    <p className="font-serif text-3xl text-[#D5B06C]">{analytics.totalWorks}</p>
+                  </div>
+
+                  <div className="p-4 bg-[#080A06]/80 border border-[#8A8177]/20 rounded-lg text-center space-y-1">
+                    <span className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177]">Total Resonances</span>
+                    <p className="font-serif text-3xl text-[#D5B06C]">{analytics.totalResonances}</p>
+                  </div>
+
+                  <div className="p-4 bg-[#080A06]/80 border border-[#8A8177]/20 rounded-lg text-center space-y-1">
+                    <span className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177]">Total Reflections</span>
+                    <p className="font-serif text-3xl text-[#D5B06C]">{totalCommentsCount}</p>
+                  </div>
+
+                  <div className="p-4 bg-[#080A06]/80 border border-[#8A8177]/20 rounded-lg text-center space-y-1">
+                    <span className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177]">Avg Words / Work</span>
+                    <p className="font-serif text-3xl text-[#D5B06C]">{analytics.avgWords}</p>
+                  </div>
+                </div>
+
+                {/* Per-Work Performance Breakdown Table */}
+                <div className="pt-4 space-y-3">
+                  <h4 className="font-sans text-xs uppercase tracking-widest text-[#D5B06C]">Inscriptions Engagement Summary</h4>
+                  <div className="overflow-x-auto border border-[#8A8177]/20 rounded-lg">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="border-b border-[#8A8177]/20 bg-[#080A06]/80 font-sans text-[10px] uppercase tracking-widest text-[#8A8177]">
+                          <th className="p-3">Work Title</th>
+                          <th className="p-3">Category</th>
+                          <th className="p-3">Status</th>
+                          <th className="p-3">Resonances (Likes)</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[#8A8177]/10 font-serif text-xs">
+                        {allWorks.map((work) => (
+                          <tr key={work.id} className="hover:bg-[#080A06]/40 transition-colors">
+                            <td className="p-3 text-[#FEEFFF]">{work.title || 'Untitled'}</td>
+                            <td className="p-3 uppercase font-sans text-[10px] text-[#8A8177]">{work.category}</td>
+                            <td className="p-3">
+                              <span className={`text-[9px] font-sans uppercase px-2 py-0.5 rounded ${
+                                work.status === 'published' ? 'text-[#D5B06C] bg-[#D5B06C]/10 border border-[#D5B06C]/30' : 'text-[#8A8177] bg-[#8A8177]/20'
+                              }`}>
+                                {work.status}
+                              </span>
+                            </td>
+                            <td className="p-3 font-sans text-xs text-[#D5B06C]">{work.gilded_likes_count || 0}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* POPUP IMAGE CROPPER MODAL */}
       <AnimatePresence>
         {isCropModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#080A06]/90 backdrop-blur-md">
@@ -677,7 +743,6 @@ export const AuthorPortal = () => {
         )}
       </AnimatePresence>
 
-      {/* POPUP DELETE CONFIRMATION MODAL */}
       <AnimatePresence>
         {workToDelete && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#080A06]/85 backdrop-blur-md">
@@ -697,7 +762,7 @@ export const AuthorPortal = () => {
                   <span className="text-[#D5B06C] italic font-serif">
                     "{workToDelete.title || 'this work'}"
                   </span>
-                  ? This action cannot be undone.
+                  ?
                 </p>
               </div>
 

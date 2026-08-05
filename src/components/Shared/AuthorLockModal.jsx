@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -8,13 +8,28 @@ export const AuthorLockModal = () => {
   const [passcode, setPasscode] = useState('');
   const [error, setError] = useState(false);
 
-  // Set your secret author passcode here (or in .env as VITE_AUTHOR_PASSCODE)
   const AUTHOR_PASSCODE = import.meta.env.VITE_AUTHOR_PASSCODE || '1234';
+
+  // Secret Keyboard Shortcut Trigger: Ctrl + Shift + K (or Cmd + Shift + K)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        if (sessionStorage.getItem('real_thing_author_auth') === 'true') {
+          navigate('/portal');
+        } else {
+          setIsOpen(true);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [navigate]);
 
   const handleAccess = (e) => {
     e.preventDefault();
     if (passcode === AUTHOR_PASSCODE) {
-      // Store session token so you remain authenticated during the session
       sessionStorage.setItem('real_thing_author_auth', 'true');
       setIsOpen(false);
       setError(false);
@@ -27,39 +42,12 @@ export const AuthorLockModal = () => {
 
   return (
     <>
-      {/* Discrete Floating Key Access Trigger (Bottom-Right) */}
-      <button
-        onClick={() => {
-          // If already authenticated this session, bypass password prompt
-          if (sessionStorage.getItem('real_thing_author_auth') === 'true') {
-            navigate('/portal');
-          } else {
-            setIsOpen(true);
-          }
-        }}
-        aria-label="Curator Access"
-        className="fixed bottom-6 right-6 z-50 p-2.5 rounded-full bg-[#0F1216]/80 border border-[#8A8177]/20 text-[#8A8177] hover:text-[#D5B06C] hover:border-[#D5B06C]/50 backdrop-blur-md transition-all duration-300 opacity-40 hover:opacity-100 cursor-pointer shadow-lg"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          className="w-4 h-4"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1 1 21.75 8.25Z"
-          />
-        </svg>
-      </button>
+      {/* Note: The floating button UI element is completely deleted from here */}
 
-      {/* Secret Passcode Modal */}
+      {/* Secret Modal Triggered ONLY via Ctrl + Shift + K */}
       <AnimatePresence>
         {isOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#080A06]/80 backdrop-blur-md">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#080A06]/85 backdrop-blur-md">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}

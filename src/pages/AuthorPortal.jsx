@@ -9,7 +9,6 @@ export const AuthorPortal = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
 
-  // Authentication Check
   useEffect(() => {
     const isAuth = sessionStorage.getItem('real_thing_author_auth');
     if (isAuth !== 'true') {
@@ -17,7 +16,6 @@ export const AuthorPortal = () => {
     }
   }, [navigate]);
 
-  // Form State
   const [editingId, setEditingId] = useState(null);
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
@@ -26,24 +24,19 @@ export const AuthorPortal = () => {
   const [body, setBody] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [isDraft, setIsDraft] = useState(false);
-  const [activeTab, setActiveTab] = useState('edit'); // 'edit' | 'preview' | 'manage' | 'about-editor' | 'analytics'
+  const [activeTab, setActiveTab] = useState('manage'); 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null);
 
-  // About Section State
   const [aboutBio, setAboutBio] = useState('');
-
-  // Custom Delete Confirmation Modal State
   const [workToDelete, setWorkToDelete] = useState(null);
 
-  // Image Crop Modal State
   const [tempImage, setTempImage] = useState(null);
   const [isCropModalOpen, setIsCropModalOpen] = useState(false);
   const [cropScale, setCropScale] = useState(1);
   const [cropPosX, setCropPosX] = useState(50);
   const [cropPosY, setCropPosY] = useState(50);
 
-  // Works & Analytics State
   const [allWorks, setAllWorks] = useState([]);
   const [totalCommentsCount, setTotalCommentsCount] = useState(0);
 
@@ -52,7 +45,6 @@ export const AuthorPortal = () => {
   }, []);
 
   const loadWorksAndAbout = async () => {
-    // Load saved About bio
     const savedBio = localStorage.getItem('real_thing_author_bio') || '"The Real Thing" is an open-access literary sanctuary designed for poetry, prose, and quiet contemplation.';
     setAboutBio(savedBio);
 
@@ -84,13 +76,10 @@ export const AuthorPortal = () => {
 
   const analytics = useMemo(() => {
     const totalWorks = allWorks.length;
-    const publishedWorks = allWorks.filter((w) => w.status === 'published').length;
-    const draftWorks = allWorks.filter((w) => w.status === 'draft').length;
     const totalResonances = allWorks.reduce((acc, w) => acc + (w.gilded_likes_count || 0), 0);
     const totalWords = allWorks.reduce((acc, w) => acc + (w.body ? w.body.trim().split(/\s+/).length : 0), 0);
     const avgWords = totalWorks > 0 ? Math.round(totalWords / totalWorks) : 0;
-
-    return { totalWorks, publishedWorks, draftWorks, totalResonances, avgWords };
+    return { totalWorks, totalResonances, avgWords };
   }, [allWorks]);
 
   const metrics = useMemo(() => {
@@ -140,30 +129,38 @@ export const AuthorPortal = () => {
     setStatusMessage({ type: 'success', text: `Loaded: "${work.title || 'Untitled'}"` });
   };
 
-  const promptDeleteWork = (workId, workTitle) => {
-    setWorkToDelete({ id: workId, title: workTitle });
+  const promptDeleteWork = (work) => {
+    setWorkToDelete(work);
   };
 
   const confirmDeleteWork = async () => {
     if (!workToDelete) return;
-    const workId = workToDelete.id;
+    const { id, slug } = workToDelete;
 
+    // Instant UI update
+    setAllWorks((prev) => prev.filter((w) => w.id !== id && w.slug !== slug));
+
+    // Clear from localStorage
     const localWorks = JSON.parse(localStorage.getItem('real_thing_custom_works') || '[]');
-    const updated = localWorks.filter((w) => w.id !== workId);
-    localStorage.setItem('real_thing_custom_works', JSON.stringify(updated));
+    const updatedLocal = localWorks.filter((w) => w.id !== id && w.slug !== slug);
+    localStorage.setItem('real_thing_custom_works', JSON.stringify(updatedLocal));
 
+    // Clear from Supabase using both id and slug fallback
     try {
       if (supabase) {
-        await supabase.from('works').delete().eq('id', workId);
+        await supabase.from('works').delete().eq('slug', slug);
+        if (id) {
+          await supabase.from('works').delete().eq('id', id);
+        }
       }
     } catch (err) {
       console.warn('Remote delete failed:', err);
     }
 
-    loadWorksAndAbout();
-    if (editingId === workId) clearForm();
-    setStatusMessage({ type: 'success', text: 'Work permanently deleted.' });
+    if (editingId === id) clearForm();
+    setStatusMessage({ type: 'success', text: 'Inscription permanently deleted.' });
     setWorkToDelete(null);
+    loadWorksAndAbout();
   };
 
   const clearForm = () => {
@@ -226,7 +223,7 @@ export const AuthorPortal = () => {
     localStorage.setItem('real_thing_custom_works', JSON.stringify([{ ...newWork, id: Date.now().toString() }, ...localWorks]));
 
     loadWorksAndAbout();
-    setStatusMessage({ type: 'success', text: 'Inscription successfully published to Supabase Cloud!' });
+    setStatusMessage({ type: 'success', text: 'Inscription successfully published!' });
 
     setTimeout(() => {
       setIsSubmitting(false);
@@ -420,9 +417,7 @@ export const AuthorPortal = () => {
                 type="button"
                 onClick={() => setActiveTab('edit')}
                 className={`px-4 py-2 font-sans text-xs uppercase tracking-widest transition-colors cursor-pointer whitespace-nowrap ${
-                  activeTab === 'edit'
-                    ? 'text-[#D5B06C] border-b-2 border-[#D5B06C]'
-                    : 'text-[#8A8177] hover:text-[#FEEFFF]'
+                  activeTab === 'edit' ? 'text-[#D5B06C] border-b-2 border-[#D5B06C]' : 'text-[#8A8177] hover:text-[#FEEFFF]'
                 }`}
               >
                 Editor
@@ -431,9 +426,7 @@ export const AuthorPortal = () => {
                 type="button"
                 onClick={() => setActiveTab('preview')}
                 className={`px-4 py-2 font-sans text-xs uppercase tracking-widest transition-colors cursor-pointer whitespace-nowrap ${
-                  activeTab === 'preview'
-                    ? 'text-[#D5B06C] border-b-2 border-[#D5B06C]'
-                    : 'text-[#8A8177] hover:text-[#FEEFFF]'
+                  activeTab === 'preview' ? 'text-[#D5B06C] border-b-2 border-[#D5B06C]' : 'text-[#8A8177] hover:text-[#FEEFFF]'
                 }`}
               >
                 Live Card Preview
@@ -442,9 +435,7 @@ export const AuthorPortal = () => {
                 type="button"
                 onClick={() => setActiveTab('manage')}
                 className={`px-4 py-2 font-sans text-xs uppercase tracking-widest transition-colors cursor-pointer whitespace-nowrap ${
-                  activeTab === 'manage'
-                    ? 'text-[#D5B06C] border-b-2 border-[#D5B06C]'
-                    : 'text-[#8A8177] hover:text-[#FEEFFF]'
+                  activeTab === 'manage' ? 'text-[#D5B06C] border-b-2 border-[#D5B06C]' : 'text-[#8A8177] hover:text-[#FEEFFF]'
                 }`}
               >
                 Saved Inscriptions ({allWorks.length})
@@ -453,9 +444,7 @@ export const AuthorPortal = () => {
                 type="button"
                 onClick={() => setActiveTab('about-editor')}
                 className={`px-4 py-2 font-sans text-xs uppercase tracking-widest transition-colors cursor-pointer whitespace-nowrap ${
-                  activeTab === 'about-editor'
-                    ? 'text-[#D5B06C] border-b-2 border-[#D5B06C]'
-                    : 'text-[#8A8177] hover:text-[#FEEFFF]'
+                  activeTab === 'about-editor' ? 'text-[#D5B06C] border-b-2 border-[#D5B06C]' : 'text-[#8A8177] hover:text-[#FEEFFF]'
                 }`}
               >
                 ✍️ About Editor
@@ -464,9 +453,7 @@ export const AuthorPortal = () => {
                 type="button"
                 onClick={() => setActiveTab('analytics')}
                 className={`px-4 py-2 font-sans text-xs uppercase tracking-widest transition-colors cursor-pointer whitespace-nowrap ${
-                  activeTab === 'analytics'
-                    ? 'text-[#D5B06C] border-b-2 border-[#D5B06C]'
-                    : 'text-[#8A8177] hover:text-[#FEEFFF]'
+                  activeTab === 'analytics' ? 'text-[#D5B06C] border-b-2 border-[#D5B06C]' : 'text-[#8A8177] hover:text-[#FEEFFF]'
                 }`}
               >
                 📊 Analytics
@@ -532,7 +519,7 @@ export const AuthorPortal = () => {
                   <div className="space-y-3">
                     {allWorks.map((work) => (
                       <div
-                        key={work.id}
+                        key={work.id || work.slug}
                         className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-lg border border-[#8A8177]/20 bg-[#080A06]/60 hover:border-[#D5B06C]/40 transition-colors gap-4"
                       >
                         <div>
@@ -565,7 +552,7 @@ export const AuthorPortal = () => {
                           </button>
                           <button
                             type="button"
-                            onClick={() => promptDeleteWork(work.id, work.title)}
+                            onClick={() => promptDeleteWork(work)}
                             className="px-3 py-1.5 rounded border border-red-500/30 text-red-400 font-sans text-xs uppercase tracking-widest hover:bg-red-500/20 transition-colors cursor-pointer"
                           >
                             Delete
@@ -578,7 +565,6 @@ export const AuthorPortal = () => {
               </div>
             )}
 
-            {/* ABOUT THE AUTHOR EDITOR TAB */}
             {activeTab === 'about-editor' && (
               <div className="space-y-6 bg-[#0F1216]/40 border border-[#8A8177]/10 p-6 rounded-xl min-h-[350px]">
                 <div className="border-b border-[#8A8177]/20 pb-3">
@@ -591,7 +577,7 @@ export const AuthorPortal = () => {
                 <form onSubmit={handleSaveAboutBio} className="space-y-4">
                   <div>
                     <label className="block font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mb-2">
-                      About Page Content (Markdown / Text supported)
+                      About Page Content
                     </label>
                     <textarea
                       rows={8}
@@ -611,7 +597,6 @@ export const AuthorPortal = () => {
               </div>
             )}
 
-            {/* CURATOR PRIVATE ANALYTICS TAB */}
             {activeTab === 'analytics' && (
               <div className="space-y-6 bg-[#0F1216]/40 border border-[#8A8177]/10 p-6 rounded-xl min-h-[350px]">
                 <div className="border-b border-[#8A8177]/20 pb-3">
@@ -642,43 +627,55 @@ export const AuthorPortal = () => {
                     <p className="font-serif text-3xl text-[#D5B06C]">{analytics.avgWords}</p>
                   </div>
                 </div>
-
-                <div className="pt-4 space-y-3">
-                  <h4 className="font-sans text-xs uppercase tracking-widest text-[#D5B06C]">Inscriptions Engagement Summary</h4>
-                  <div className="overflow-x-auto border border-[#8A8177]/20 rounded-lg">
-                    <table className="w-full text-left border-collapse">
-                      <thead>
-                        <tr className="border-b border-[#8A8177]/20 bg-[#080A06]/80 font-sans text-[10px] uppercase tracking-widest text-[#8A8177]">
-                          <th className="p-3">Work Title</th>
-                          <th className="p-3">Category</th>
-                          <th className="p-3">Status</th>
-                          <th className="p-3">Resonances (Likes)</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-[#8A8177]/10 font-serif text-xs">
-                        {allWorks.map((work) => (
-                          <tr key={work.id} className="hover:bg-[#080A06]/40 transition-colors">
-                            <td className="p-3 text-[#FEEFFF]">{work.title || 'Untitled'}</td>
-                            <td className="p-3 uppercase font-sans text-[10px] text-[#8A8177]">{work.category}</td>
-                            <td className="p-3">
-                              <span className={`text-[9px] font-sans uppercase px-2 py-0.5 rounded ${
-                                work.status === 'published' ? 'text-[#D5B06C] bg-[#D5B06C]/10 border border-[#D5B06C]/30' : 'text-[#8A8177] bg-[#8A8177]/20'
-                              }`}>
-                                {work.status}
-                              </span>
-                            </td>
-                            <td className="p-3 font-sans text-xs text-[#D5B06C]">{work.gilded_likes_count || 0}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
               </div>
             )}
           </div>
         </div>
       </div>
+
+      <AnimatePresence>
+        {workToDelete && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#080A06]/85 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-[#0F1216] border border-red-500/30 p-6 md:p-8 rounded-2xl max-w-md w-full space-y-6 text-center shadow-2xl relative"
+            >
+              <div className="space-y-2">
+                <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/30 text-red-400 mx-auto flex items-center justify-center text-xl font-serif">
+                  †
+                </div>
+                <h3 className="font-serif text-2xl text-[#FEEFFF]">Delete Inscription?</h3>
+                <p className="font-sans text-xs text-[#8A8177]">
+                  Are you sure you want to permanently delete{' '}
+                  <span className="text-[#D5B06C] italic font-serif">
+                    "{workToDelete.title || 'this work'}"
+                  </span>
+                  ?
+                </p>
+              </div>
+
+              <div className="flex gap-3 justify-center pt-2">
+                <button
+                  type="button"
+                  onClick={() => setWorkToDelete(null)}
+                  className="flex-1 py-2.5 rounded border border-[#8A8177]/30 text-[#8A8177] font-sans text-xs uppercase tracking-widest hover:text-[#FEEFFF] transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmDeleteWork}
+                  className="flex-1 py-2.5 rounded bg-red-500/20 border border-red-500/50 text-red-300 font-sans text-xs font-semibold uppercase tracking-widest hover:bg-red-500 hover:text-[#080A06] transition-all cursor-pointer"
+                >
+                  Delete
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

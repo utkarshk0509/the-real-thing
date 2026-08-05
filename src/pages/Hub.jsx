@@ -17,7 +17,6 @@ export const Hub = ({ filter }) => {
   const isPoemsOnly = currentPath === '/poems';
   const isStoriesOnly = currentPath === '/stories';
   const isAboutOnly = currentPath === '/about';
-  const isHome = currentPath === '/hub' || (!isPoemsOnly && !isStoriesOnly && !isAboutOnly);
 
   useEffect(() => {
     const loadAllWorks = async () => {
@@ -76,7 +75,18 @@ export const Hub = ({ filter }) => {
       <AtmosphericBackground />
       <Navigation />
 
-      <main className="relative z-10 max-w-5xl mx-auto px-6 pt-28 space-y-12">
+      {/* Increased top padding (pt-36 md:pt-40) to guarantee clear separation below the fixed navigation header */}
+      <main className="relative z-10 max-w-5xl mx-auto px-6 pt-36 md:pt-45 space-y-10">
+        <div className="flex items-center">
+          <button
+            onClick={() => navigate('/hub')}
+            className="group flex items-center gap-2 font-sans text-xs uppercase tracking-[0.25em] text-[#8A8177] hover:text-[#D5B06C] transition-colors cursor-pointer bg-[#0F1216]/50 border border-[#8A8177]/20 hover:border-[#D5B06C]/40 px-4 py-2 rounded-lg backdrop-blur-sm"
+          >
+            <span className="group-hover:-translate-x-1 transition-transform">←</span>
+            <span>Return to Constellation</span>
+          </button>
+        </div>
+
         {loading ? (
           <div className="text-center py-20 font-sans text-xs uppercase tracking-widest text-[#D5B06C] animate-pulse">
             Retrieving Inscriptions...
@@ -90,7 +100,7 @@ export const Hub = ({ filter }) => {
           </div>
         ) : (
           <AnimatePresence mode="wait">
-            {(isHome || isPoemsOnly) && poems.length > 0 && (
+            {isPoemsOnly && (
               <motion.section
                 key="poems-section"
                 variants={containerVariants}
@@ -101,7 +111,7 @@ export const Hub = ({ filter }) => {
               >
                 <div className="flex items-center gap-3 border-l-2 border-[#D5B06C] pl-3">
                   <h2 className="font-sans text-sm md:text-base font-medium uppercase tracking-[0.3em] text-[#D5B06C]">
-                    {isPoemsOnly ? 'All Poems' : 'Latest Poems'}
+                    All Poems
                   </h2>
                 </div>
 
@@ -131,7 +141,7 @@ export const Hub = ({ filter }) => {
               </motion.section>
             )}
 
-            {(isHome || isStoriesOnly) && stories.length > 0 && (
+            {isStoriesOnly && (
               <motion.section
                 key="stories-section"
                 variants={containerVariants}
@@ -142,7 +152,7 @@ export const Hub = ({ filter }) => {
               >
                 <div className="flex items-center gap-3 border-l-2 border-[#D5B06C] pl-3">
                   <h2 className="font-sans text-sm md:text-base font-medium uppercase tracking-[0.3em] text-[#D5B06C]">
-                    {isStoriesOnly ? 'All Stories' : 'Stories'}
+                    Stories
                   </h2>
                 </div>
 
@@ -185,11 +195,11 @@ export const Hub = ({ filter }) => {
               >
                 <div className="border-b border-[#D5B06C]/30 pb-4 inline-block">
                   <h2 className="font-sans text-sm md:text-base font-medium uppercase tracking-[0.3em] text-[#D5B06C]">
-                    About The Real Thing
+                    About the Author
                   </h2>
                 </div>
-                <p className="font-serif text-lg leading-relaxed text-[#FEEFFF]/90">
-                  "The Real Thing" is an open-access literary sanctuary designed for poetry, prose, and quiet contemplation.
+                <p className="font-serif text-lg leading-relaxed text-[#FEEFFF]/90 whitespace-pre-line">
+                  {localStorage.getItem('real_thing_author_bio') || '"The Real Thing" is an open-access literary sanctuary designed for poetry, prose, and quiet contemplation.'}
                 </p>
               </motion.section>
             )}

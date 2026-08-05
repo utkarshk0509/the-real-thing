@@ -120,6 +120,7 @@ export const AuthorPortal = () => {
 
   // Explicit Save Order Handler
   const handleSaveOrder = async () => {
+    // 1. Reassign sequential sort_order indexes (0, 1, 2...)
     const finalWorks = allWorks.map((work, idx) => ({
       ...work,
       sort_order: idx
@@ -128,20 +129,35 @@ export const AuthorPortal = () => {
     setAllWorks(finalWorks);
     localStorage.setItem('real_thing_custom_works', JSON.stringify(finalWorks));
 
+    // 2. Safely sync to Supabase using upsert
     if (supabase) {
       try {
-        for (let work of finalWorks) {
-          if (work.id) {
-            await supabase
-              .from('works')
-              .update({ sort_order: work.sort_order })
-              .eq('id', work.id);
-          }
-        }
+        // Map the works cleanly for database submission
+        const payload = finalWorks.map(w => ({
+          id: w.id,
+          slug: w.slug,
+          title: w.title,
+          category: w.category,
+          author: w.author,
+          status: w.status,
+          excerpt: w.excerpt,
+          body: w.body,
+          image_url: w.image_url,
+          read_time_minutes: w.read_time_minutes,
+          published_at: w.published_at,
+          sort_order: w.sort_order
+        }));
+
+        const { error } = await supabase
+          .from('works')
+          .upsert(payload, { onConflict: 'id' });
+
+        if (error) throw error;
+
         setStatusMessage({ type: 'success', text: 'Constellation order successfully saved to cloud!' });
       } catch (err) {
-        console.warn('Cloud sort order save failed:', err);
-        setStatusMessage({ type: 'success', text: 'Order saved locally (Cloud sync warning).' });
+        console.warn('Cloud sort order save failed:', err.message);
+        setStatusMessage({ type: 'success', text: 'Order saved locally (Cloud sync warning: check console).' });
       }
     } else {
       setStatusMessage({ type: 'success', text: 'Constellation order saved locally!' });

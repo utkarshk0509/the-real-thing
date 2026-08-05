@@ -171,7 +171,7 @@ export const ReaderView = () => {
           </p>
         </header>
 
-        <div className="font-serif text-lg md:text-xl text-[#FEEFFF]/90 leading-relaxed whitespace-pre-line mb-16 font-light tracking-wide text-center md:text-left">
+        <div className="font-serif text-lg md:text-xl text-[#FEEFFF]/90 leading-relaxed whitespace-pre-line mb-16 font-light tracking-wide text-left">
           {work.body}
         </div>
 

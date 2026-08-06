@@ -5,7 +5,7 @@ import useAuth from '../../hooks/useAuth';
 import { CACHE_KEYS } from '../../config/constants';
 import readerProgressService from '../../services/readerProgressService';
 
-export const Navigation = () => {
+export const Navigation = ({ readingPercent, scrollLinePercent, readingWork }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, userData, isCurator, login, logout } = useAuth();
@@ -53,32 +53,94 @@ export const Navigation = () => {
 
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-40 bg-[#080A06]/90 backdrop-blur-md border-b border-[#8A8177]/10 px-4 md:px-6 py-3.5 flex items-center justify-between">
+      <nav
+        style={{ transform: 'none' }}
+        className="fixed top-0 left-0 right-0 z-50 bg-[#080A06]/95 backdrop-blur-xl border-b border-[#8A8177]/20 px-4 md:px-6 py-3 flex items-center justify-between shadow-2xl"
+      >
         {/* Left Logo */}
-        <Link to="/" className="font-serif text-base md:text-xl tracking-wider text-[#FEEFFF] hover:text-[#D5B06C] transition-colors whitespace-nowrap cursor-pointer">
-          The Real Thing
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link to="/" className="font-serif text-base md:text-xl tracking-wider text-[#FEEFFF] hover:text-[#D5B06C] transition-colors whitespace-nowrap cursor-pointer">
+            The Real Thing
+          </Link>
+          {readingWork && (
+            <span className="hidden md:inline-block font-sans text-[10px] uppercase tracking-widest text-[#D5B06C] border-l border-[#8A8177]/30 pl-3">
+              Reading • {readingWork.title}
+            </span>
+          )}
+        </div>
 
         {/* Right side navigation items */}
-        <div className="flex items-center gap-3 md:gap-6">
+        <div className="flex items-center gap-3 md:gap-5">
+          <button
+            onClick={() => handleCategoryNav('/hub')}
+            className={`relative py-1 font-sans text-[11px] md:text-xs uppercase tracking-widest transition-colors cursor-pointer ${
+              location.pathname === '/hub' ? 'text-[#D5B06C] font-semibold' : 'text-[#8A8177] hover:text-[#D5B06C]'
+            }`}
+          >
+            Hub
+            {location.pathname === '/hub' && (
+              <motion.div
+                layoutId="navActiveGlider"
+                className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#D5B06C] shadow-[0_0_8px_#D5B06C] rounded-full"
+                transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+              />
+            )}
+          </button>
+
           <button
             onClick={() => handleCategoryNav('/poems')}
-            className="font-sans text-[11px] md:text-xs uppercase tracking-widest text-[#8A8177] hover:text-[#D5B06C] transition-colors cursor-pointer"
+            className={`relative py-1 font-sans text-[11px] md:text-xs uppercase tracking-widest transition-colors cursor-pointer ${
+              location.pathname === '/poems' ? 'text-[#D5B06C] font-semibold' : 'text-[#8A8177] hover:text-[#D5B06C]'
+            }`}
           >
             Poems
+            {location.pathname === '/poems' && (
+              <motion.div
+                layoutId="navActiveGlider"
+                className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#D5B06C] shadow-[0_0_8px_#D5B06C] rounded-full"
+                transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+              />
+            )}
           </button>
+
           <button
             onClick={() => handleCategoryNav('/stories')}
-            className="font-sans text-[11px] md:text-xs uppercase tracking-widest text-[#8A8177] hover:text-[#D5B06C] transition-colors cursor-pointer"
+            className={`relative py-1 font-sans text-[11px] md:text-xs uppercase tracking-widest transition-colors cursor-pointer ${
+              location.pathname === '/stories' ? 'text-[#7CB9E8] font-semibold' : 'text-[#8A8177] hover:text-[#7CB9E8]'
+            }`}
           >
             Stories
+            {location.pathname === '/stories' && (
+              <motion.div
+                layoutId="navActiveGlider"
+                className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#7CB9E8] shadow-[0_0_8px_#7CB9E8] rounded-full"
+                transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+              />
+            )}
           </button>
+
           <button
             onClick={() => handleCategoryNav('/about')}
-            className="hidden sm:inline-block font-sans text-xs uppercase tracking-widest text-[#8A8177] hover:text-[#D5B06C] transition-colors cursor-pointer"
+            className={`hidden sm:inline-block relative py-1 font-sans text-xs uppercase tracking-widest transition-colors cursor-pointer ${
+              location.pathname === '/about' ? 'text-[#C9A9FF] font-semibold' : 'text-[#8A8177] hover:text-[#C9A9FF]'
+            }`}
           >
             About
+            {location.pathname === '/about' && (
+              <motion.div
+                layoutId="navActiveGlider"
+                className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#C9A9FF] shadow-[0_0_8px_#C9A9FF] rounded-full"
+                transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+              />
+            )}
           </button>
+
+          {/* Live Reading Percentage Count Badge */}
+          {readingPercent !== undefined && (
+            <div className="flex items-center gap-1 bg-[#0F1216] border border-[#D5B06C]/50 px-2.5 py-1 rounded-full text-[#D5B06C] font-sans text-[10px] uppercase tracking-widest font-semibold shadow-[0_0_12px_rgba(213,176,108,0.25)]">
+              <span>{readingPercent}% READ</span>
+            </div>
+          )}
 
           {isCurator && (
             <button
@@ -108,10 +170,20 @@ export const Navigation = () => {
               onClick={handleGoogleLogin}
               className="px-3 py-1.5 rounded border border-[#8A8177]/30 text-[#FEEFFF] font-sans text-[10px] md:text-xs uppercase tracking-widest hover:border-[#D5B06C] hover:text-[#D5B06C] transition-colors cursor-pointer"
             >
-              Login
+              Sign In
             </button>
           )}
         </div>
+
+        {/* Bottom edge: Clamped Golden Progress Line */}
+        {(scrollLinePercent !== undefined || readingPercent !== undefined) && (
+          <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#8A8177]/20 overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-amber-600 via-[#D5B06C] to-amber-400 transition-all duration-150 shadow-[0_0_10px_rgba(213,176,108,0.8)]"
+              style={{ width: `${scrollLinePercent !== undefined ? scrollLinePercent : readingPercent}%` }}
+            />
+          </div>
+        )}
       </nav>
 
       {/* Reader Activity & Goodreads Personal Library Drawer */}

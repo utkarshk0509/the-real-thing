@@ -1,7 +1,10 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { readerProgressService } from '../../services/readerProgressService';
 
 export const BookshelfView = ({ works, onSelectWork }) => {
+  const allProgress = readerProgressService.getAllProgress();
+
   if (!works || works.length === 0) {
     return (
       <div className="text-center py-20 text-[#8A8177]">
@@ -54,6 +57,7 @@ export const BookshelfView = ({ works, onSelectWork }) => {
               {row.map((work, idx) => {
                 const bookHeightClass = heightClasses[idx % heightClasses.length];
                 const restingTilt = tiltAngles[idx % tiltAngles.length];
+                const progress = allProgress[work.slug] || 0;
 
                 return (
                   <motion.div
@@ -109,15 +113,21 @@ export const BookshelfView = ({ works, onSelectWork }) => {
                       <div className="absolute inset-0 bg-gradient-to-t from-[#080A06] via-[#0F1216]/65 to-transparent z-10" />
                       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(213,176,108,0.12),transparent_70%)] z-15" />
 
-                      {/* Cover Typography */}
+                      {/* Cover Typography & Reading Percentage Tag */}
                       <div className="relative z-20 p-4 md:p-5 h-full flex flex-col justify-between pl-6 md:pl-7">
                         <div className="flex items-center justify-between border-b border-[#D5B06C]/30 pb-2">
                           <span className="font-sans text-[8px] md:text-[9px] uppercase tracking-[0.25em] text-[#D5B06C] font-semibold">
                             {work.category}
                           </span>
-                          <span className="font-sans text-[8px] text-[#8A8177]">
-                            {work.read_time_minutes}m
-                          </span>
+                          {progress > 0 ? (
+                            <span className="bg-[#D5B06C]/25 border border-[#D5B06C]/60 px-1.5 py-0.5 rounded text-[8px] md:text-[9px] font-sans text-[#D5B06C] uppercase tracking-wider font-semibold shadow-[0_0_8px_rgba(213,176,108,0.3)]">
+                              {progress >= 90 ? '100%' : `${progress}%`}
+                            </span>
+                          ) : (
+                            <span className="font-sans text-[8px] text-[#8A8177]">
+                              {work.read_time_minutes}m
+                            </span>
+                          )}
                         </div>
 
                         <div className="space-y-2">
@@ -129,6 +139,16 @@ export const BookshelfView = ({ works, onSelectWork }) => {
                           </p>
                         </div>
                       </div>
+
+                      {/* Bottom Edge Mini Progress Line */}
+                      {progress > 0 && (
+                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#8A8177]/20 z-30 overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-amber-600 via-[#D5B06C] to-amber-400 shadow-[0_0_8px_#D5B06C]"
+                            style={{ width: `${progress}%` }}
+                          />
+                        </div>
+                      )}
                     </div>
 
                     {/* Realistic Book Shadow Beneath Shelf */}

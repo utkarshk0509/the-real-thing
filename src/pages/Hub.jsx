@@ -5,6 +5,7 @@ import Navigation from '../components/Shared/Navigation';
 import CosmicNebulaBackground from '../components/Shared/CosmicNebulaBackground';
 import { GlowingCard } from '../components/Shared/GlowingCard';
 import BookshelfView from '../components/Hub/BookshelfView';
+import AboutAuthorSanctuary from '../components/About/AboutAuthorSanctuary';
 import useWorks from '../hooks/useWorks';
 import siteService from '../services/siteService';
 import readerProgressService from '../services/readerProgressService';
@@ -16,6 +17,7 @@ export const Hub = ({ filter }) => {
   const { works, loading } = useWorks();
   const [aboutBio, setAboutBio] = useState('');
   const [lastRead, setLastRead] = useState(null);
+  const [allProgress, setAllProgress] = useState({});
   const [viewMode, setViewMode] = useState(() => readerProgressService.getViewPreference()); // 'grid' | 'bookshelf'
 
   const handleViewModeChange = (mode) => {
@@ -37,6 +39,8 @@ export const Hub = ({ filter }) => {
     if (isAboutOnly) {
       fetchLiveBio();
     }
+
+    setAllProgress(readerProgressService.getAllProgress());
 
     const categoryFilter = isPoemsOnly ? 'poem' : isStoriesOnly ? 'story' : null;
     const savedLastRead = readerProgressService.getLastRead(categoryFilter);
@@ -223,8 +227,13 @@ export const Hub = ({ filter }) => {
                                 By {poem.author}
                               </p>
                             </div>
-                            <div className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177]">
-                              {poem.read_time_minutes} min <span className="mx-1 text-[#D5B06C]">•</span> {new Date(poem.published_at || Date.now()).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}
+                            <div className="flex items-center justify-between font-sans text-[10px] uppercase tracking-widest text-[#8A8177]">
+                              <span>{poem.read_time_minutes} min <span className="mx-1 text-[#D5B06C]">•</span> {new Date(poem.published_at || Date.now()).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</span>
+                              {allProgress[poem.slug] > 0 && (
+                                <span className="inline-flex items-center gap-1 bg-[#D5B06C]/10 border border-[#D5B06C]/40 px-2 py-0.5 rounded-full text-[#D5B06C] font-sans text-[9px] uppercase tracking-widest font-semibold shadow-[0_0_10px_rgba(213,176,108,0.2)]">
+                                  <span>{allProgress[poem.slug] >= 90 ? '100% Completed' : `${allProgress[poem.slug]}% Read`}</span>
+                                </span>
+                              )}
                             </div>
                           </GlowingCard>
                         </motion.div>
@@ -269,8 +278,13 @@ export const Hub = ({ filter }) => {
                                   By {story.author}
                                 </p>
                               </div>
-                              <div className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177]">
-                                {story.read_time_minutes} min read
+                              <div className="flex items-center justify-between font-sans text-[10px] uppercase tracking-widest text-[#8A8177]">
+                                <span>{story.read_time_minutes} min read</span>
+                                {allProgress[story.slug] > 0 && (
+                                  <span className="inline-flex items-center gap-1 bg-[#7CB9E8]/10 border border-[#7CB9E8]/40 px-2 py-0.5 rounded-full text-[#7CB9E8] font-sans text-[9px] uppercase tracking-widest font-semibold shadow-[0_0_10px_rgba(124,185,232,0.2)]">
+                                    <span>{allProgress[story.slug] >= 90 ? '100% Completed' : `${allProgress[story.slug]}% Read`}</span>
+                                  </span>
+                                )}
                               </div>
                             </div>
                           </GlowingCard>
@@ -288,16 +302,8 @@ export const Hub = ({ filter }) => {
                     initial="hidden"
                     animate="visible"
                     exit="exit"
-                    className="space-y-6 max-w-2xl mx-auto py-12 text-center"
                   >
-                    <div className="border-b border-[#D5B06C]/30 pb-4 inline-block">
-                      <h2 className="font-sans text-sm md:text-base font-medium uppercase tracking-[0.3em] text-[#D5B06C]">
-                        About the Author
-                      </h2>
-                    </div>
-                    <p className="font-serif text-lg leading-relaxed text-[#FEEFFF]/90 whitespace-pre-line">
-                      {aboutBio || '"The Real Thing" is an open-access literary sanctuary designed for poetry, prose, and quiet contemplation.'}
-                    </p>
+                    <AboutAuthorSanctuary works={works} bio={aboutBio} />
                   </motion.section>
                 )}
               </>

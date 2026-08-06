@@ -7,11 +7,13 @@ export const CustomCelestialCursor = () => {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    // Check if touch device
-    if ('ontouchstart' in window && window.innerWidth < 768) {
-      setIsMobile(true);
-      return;
-    }
+    // Check if mobile screen (< 768px)
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
 
     const handleMouseMove = (e) => {
       setPos({ x: e.clientX, y: e.clientY });
@@ -29,7 +31,10 @@ export const CustomCelestialCursor = () => {
     };
 
     window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
   }, []);
 
   if (isMobile) return null;

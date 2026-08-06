@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Feather, BookOpen, Compass, User, BarChart2, Sparkles, Upload, Trash2, Edit3, Eye, Check, RotateCcw, Scissors, Layers, ArrowLeft } from 'lucide-react';
+import { Feather, BookOpen, Compass, User, BarChart2, Sparkles, Upload, Trash2, Edit3, Eye, Check, RotateCcw, Scissors, Layers, ArrowLeft, MessageSquare } from 'lucide-react';
 import CosmicNebulaBackground from '../components/Shared/CosmicNebulaBackground';
 import { GlowingCard } from '../components/Shared/GlowingCard';
 import workService from '../services/workService';
@@ -39,8 +39,17 @@ export const AuthorPortal = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null);
 
-  // About Bio & Delete Modal State
+  // About Section Full Editor State
   const [aboutBio, setAboutBio] = useState('');
+  const [aboutAuthorName, setAboutAuthorName] = useState('Utkarsh');
+  const [aboutAuthorTagline, setAboutAuthorTagline] = useState('Sanctuary Curator & Author');
+  const [aboutWhyTitle, setAboutWhyTitle] = useState('Why I Write');
+  const [aboutWhyFull, setAboutWhyFull] = useState('Writing is the act of catching fleeting moments before they dissolve into silence. Each stanza is an attempt to capture authentic human emotion, preserving feelings of longing, wonder, and quiet truth.');
+  const [aboutPhilosophyTitle, setAboutPhilosophyTitle] = useState('The Real Thing');
+  const [aboutPhilosophyFull, setAboutPhilosophyFull] = useState('In a world driven by rapid feeds and noise, "The Real Thing" offers a slower space. Here, words are given room to breathe in a dark cosmic galaxy, where poetry and stories exist as living constellations.');
+  const [aboutInfluencesTitle, setAboutInfluencesTitle] = useState('Literary Influences');
+  const [aboutInfluencesFull, setAboutInfluencesFull] = useState('Drawing inspiration from classical romantic poets, modern magical realism, and atmospheric space aesthetics — blending timeless themes of love, time, and starlight into contemporary verse.');
+  const [aboutSpotlightSlug, setAboutSpotlightSlug] = useState('');
   const [workToDelete, setWorkToDelete] = useState(null);
 
   // Image Crop Modal State (Dual-Crop: Grid View + Bookshelf View)
@@ -71,6 +80,24 @@ export const AuthorPortal = () => {
   // Constellation Arranger Category State
   const [arrangerCategory, setArrangerCategory] = useState('poem'); // 'poem' | 'story'
   const [draggedItemIndex, setDraggedItemIndex] = useState(null);
+
+  // Reader Messages / Whispers State
+  const [readerMessages, setReaderMessages] = useState([]);
+
+  useEffect(() => {
+    try {
+      const msgs = JSON.parse(localStorage.getItem('real_thing_author_messages') || '[]');
+      setReaderMessages(msgs);
+    } catch (e) {
+      setReaderMessages([]);
+    }
+  }, [activeView]);
+
+  const handleDeleteMessage = (id) => {
+    const updated = readerMessages.filter((m) => m.id !== id);
+    setReaderMessages(updated);
+    localStorage.setItem('real_thing_author_messages', JSON.stringify(updated));
+  };
 
   useEffect(() => {
     loadWorksAndAbout();
@@ -169,6 +196,20 @@ export const AuthorPortal = () => {
     const bio = await siteService.getAuthorBio();
     setAboutBio(bio);
 
+    const fullAbout = await siteService.getAboutData();
+    if (fullAbout) {
+      if (fullAbout.name) setAboutAuthorName(fullAbout.name);
+      if (fullAbout.tagline) setAboutAuthorTagline(fullAbout.tagline);
+      if (fullAbout.bio) setAboutBio(fullAbout.bio);
+      if (fullAbout.whyTitle) setAboutWhyTitle(fullAbout.whyTitle);
+      if (fullAbout.whyFull) setAboutWhyFull(fullAbout.whyFull);
+      if (fullAbout.philosophyTitle) setAboutPhilosophyTitle(fullAbout.philosophyTitle);
+      if (fullAbout.philosophyFull) setAboutPhilosophyFull(fullAbout.philosophyFull);
+      if (fullAbout.influencesTitle) setAboutInfluencesTitle(fullAbout.influencesTitle);
+      if (fullAbout.influencesFull) setAboutInfluencesFull(fullAbout.influencesFull);
+      if (fullAbout.spotlightSlug) setAboutSpotlightSlug(fullAbout.spotlightSlug);
+    }
+
     const combinedWorks = await workService.getAllWorksAdmin();
     setAllWorks(combinedWorks);
 
@@ -209,11 +250,25 @@ export const AuthorPortal = () => {
   const handleSaveAboutBio = async (e) => {
     e.preventDefault();
     try {
+      const payload = {
+        name: aboutAuthorName,
+        tagline: aboutAuthorTagline,
+        bio: aboutBio,
+        whyTitle: aboutWhyTitle,
+        whyFull: aboutWhyFull,
+        philosophyTitle: aboutPhilosophyTitle,
+        philosophyFull: aboutPhilosophyFull,
+        influencesTitle: aboutInfluencesTitle,
+        influencesFull: aboutInfluencesFull,
+        spotlightSlug: aboutSpotlightSlug,
+      };
+
+      await siteService.updateAboutData(payload);
       await siteService.updateAuthorBio(aboutBio);
-      setStatusMessage({ type: 'success', text: 'About the Author bio successfully published.' });
+      setStatusMessage({ type: 'success', text: 'All About Author Sanctuary content successfully published!' });
     } catch (err) {
       console.warn('Bio save notice:', err);
-      setStatusMessage({ type: 'success', text: 'Bio saved locally.' });
+      setStatusMessage({ type: 'success', text: 'About section saved locally.' });
     }
   };
 
@@ -497,6 +552,7 @@ export const AuthorPortal = () => {
             { id: 'arrange', label: 'Constellation Arranger', icon: Compass },
             { id: 'about', label: 'Sanctuary Bio', icon: User },
             { id: 'analytics', label: 'Reader Insights', icon: BarChart2 },
+            { id: 'whispers', label: `Reader Whispers (${readerMessages.length})`, icon: MessageSquare },
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeView === tab.id;
@@ -969,34 +1025,151 @@ export const AuthorPortal = () => {
           </div>
         )}
 
-        {/* 4. ABOUT BIO EDITOR VIEW */}
+        {/* 4. ABOUT SANCTUARY EDITOR VIEW */}
         {activeView === 'about' && (
-          <div className="space-y-6 bg-[#0F1216]/40 border border-[#8A8177]/10 p-6 rounded-xl min-h-[400px]">
-            <div className="border-b border-[#8A8177]/20 pb-3">
-              <h3 className="font-serif text-xl text-[#FEEFFF]">Edit "About the Author" Section</h3>
-              <p className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mt-1">
-                Modify the public biography text displayed on the About page.
-              </p>
+          <div className="space-y-6 bg-[#0F1216]/40 border border-[#8A8177]/10 p-6 md:p-8 rounded-xl min-h-[400px]">
+            <div className="border-b border-[#8A8177]/20 pb-3 flex items-center justify-between">
+              <div>
+                <h3 className="font-serif text-2xl text-[#FEEFFF]">Edit "About the Author" Sanctuary Page</h3>
+                <p className="font-sans text-[10px] uppercase tracking-widest text-[#D5B06C] mt-1">
+                  Full Control Over Author Profile, Manifesto Cards & Featured Spotlight
+                </p>
+              </div>
             </div>
 
-            <form onSubmit={handleSaveAboutBio} className="space-y-4">
-              <div>
-                <label className="block font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mb-2">
-                  About Page Content
-                </label>
-                <textarea
-                  rows={10}
-                  value={aboutBio}
-                  onChange={(e) => setAboutBio(e.target.value)}
-                  className="w-full bg-[#080A06] border border-[#8A8177]/30 text-[#FEEFFF] font-serif text-base p-4 rounded-lg focus:outline-none focus:border-[#D5B06C] leading-relaxed"
-                />
+            <form onSubmit={handleSaveAboutBio} className="space-y-6">
+              {/* Section 1: Header Profile */}
+              <div className="space-y-4 border-b border-[#8A8177]/15 pb-6">
+                <h4 className="font-sans text-xs uppercase tracking-widest text-[#D5B06C] font-semibold">
+                  1. Author Profile Header
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mb-1">
+                      Author Name
+                    </label>
+                    <input
+                      type="text"
+                      value={aboutAuthorName}
+                      onChange={(e) => setAboutAuthorName(e.target.value)}
+                      className="w-full bg-[#080A06] border border-[#8A8177]/30 text-[#FEEFFF] font-serif text-base p-3 rounded-lg focus:outline-none focus:border-[#D5B06C]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mb-1">
+                      Title / Role Tagline
+                    </label>
+                    <input
+                      type="text"
+                      value={aboutAuthorTagline}
+                      onChange={(e) => setAboutAuthorTagline(e.target.value)}
+                      className="w-full bg-[#080A06] border border-[#8A8177]/30 text-[#FEEFFF] font-sans text-xs p-3 rounded-lg focus:outline-none focus:border-[#D5B06C]"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mb-1">
+                    Author Bio Quote
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={aboutBio}
+                    onChange={(e) => setAboutBio(e.target.value)}
+                    className="w-full bg-[#080A06] border border-[#8A8177]/30 text-[#FEEFFF] font-serif text-base p-3 rounded-lg focus:outline-none focus:border-[#D5B06C] leading-relaxed"
+                  />
+                </div>
+              </div>
+
+              {/* Section 2: Manifesto Cards */}
+              <div className="space-y-4 border-b border-[#8A8177]/15 pb-6">
+                <h4 className="font-sans text-xs uppercase tracking-widest text-[#D5B06C] font-semibold">
+                  2. Living Manifesto Cards
+                </h4>
+
+                <div className="space-y-4">
+                  {/* Card 1 */}
+                  <div className="p-4 rounded-xl bg-[#080A06]/60 border border-[#D5B06C]/30 space-y-3">
+                    <span className="font-sans text-[10px] uppercase tracking-widest text-[#D5B06C]">Card 1: Why I Write</span>
+                    <input
+                      type="text"
+                      placeholder="Card Title"
+                      value={aboutWhyTitle}
+                      onChange={(e) => setAboutWhyTitle(e.target.value)}
+                      className="w-full bg-black/40 border border-[#8A8177]/20 text-[#FEEFFF] font-serif text-sm p-2.5 rounded focus:outline-none focus:border-[#D5B06C]"
+                    />
+                    <textarea
+                      rows={3}
+                      placeholder="Expanded Full Text"
+                      value={aboutWhyFull}
+                      onChange={(e) => setAboutWhyFull(e.target.value)}
+                      className="w-full bg-black/40 border border-[#8A8177]/20 text-[#8A8177] font-sans text-xs p-2.5 rounded focus:outline-none focus:border-[#D5B06C]"
+                    />
+                  </div>
+
+                  {/* Card 2 */}
+                  <div className="p-4 rounded-xl bg-[#080A06]/60 border border-[#7CB9E8]/30 space-y-3">
+                    <span className="font-sans text-[10px] uppercase tracking-widest text-[#7CB9E8]">Card 2: The Real Thing</span>
+                    <input
+                      type="text"
+                      placeholder="Card Title"
+                      value={aboutPhilosophyTitle}
+                      onChange={(e) => setAboutPhilosophyTitle(e.target.value)}
+                      className="w-full bg-black/40 border border-[#8A8177]/20 text-[#FEEFFF] font-serif text-sm p-2.5 rounded focus:outline-none focus:border-[#7CB9E8]"
+                    />
+                    <textarea
+                      rows={3}
+                      placeholder="Expanded Full Text"
+                      value={aboutPhilosophyFull}
+                      onChange={(e) => setAboutPhilosophyFull(e.target.value)}
+                      className="w-full bg-black/40 border border-[#8A8177]/20 text-[#8A8177] font-sans text-xs p-2.5 rounded focus:outline-none focus:border-[#7CB9E8]"
+                    />
+                  </div>
+
+                  {/* Card 3 */}
+                  <div className="p-4 rounded-xl bg-[#080A06]/60 border border-[#C9A9FF]/30 space-y-3">
+                    <span className="font-sans text-[10px] uppercase tracking-widest text-[#C9A9FF]">Card 3: Literary Influences</span>
+                    <input
+                      type="text"
+                      placeholder="Card Title"
+                      value={aboutInfluencesTitle}
+                      onChange={(e) => setAboutInfluencesTitle(e.target.value)}
+                      className="w-full bg-black/40 border border-[#8A8177]/20 text-[#FEEFFF] font-serif text-sm p-2.5 rounded focus:outline-none focus:border-[#C9A9FF]"
+                    />
+                    <textarea
+                      rows={3}
+                      placeholder="Expanded Full Text"
+                      value={aboutInfluencesFull}
+                      onChange={(e) => setAboutInfluencesFull(e.target.value)}
+                      className="w-full bg-black/40 border border-[#8A8177]/20 text-[#8A8177] font-sans text-xs p-2.5 rounded focus:outline-none focus:border-[#C9A9FF]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 3: Spotlight Work Selection */}
+              <div className="space-y-3">
+                <h4 className="font-sans text-xs uppercase tracking-widest text-[#D5B06C] font-semibold">
+                  3. Author's Choice Spotlight Inscription
+                </h4>
+                <select
+                  value={aboutSpotlightSlug}
+                  onChange={(e) => setAboutSpotlightSlug(e.target.value)}
+                  className="w-full bg-[#080A06] border border-[#8A8177]/30 text-[#FEEFFF] font-sans text-xs p-3 rounded-lg focus:outline-none focus:border-[#D5B06C]"
+                >
+                  <option value="">-- Automatic Default (First Poem) --</option>
+                  {allWorks.map((w) => (
+                    <option key={w.slug} value={w.slug}>
+                      {w.title} ({w.category})
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <button
                 type="submit"
-                className="px-6 py-2.5 rounded bg-[#D5B06C] text-[#080A06] font-sans text-xs font-semibold uppercase tracking-widest hover:bg-[#FEEFFF] transition-colors cursor-pointer"
+                className="w-full py-3.5 rounded-lg bg-[#D5B06C] text-[#080A06] font-sans text-xs font-semibold uppercase tracking-widest hover:bg-[#FEEFFF] transition-colors cursor-pointer shadow-lg"
               >
-                Save About Bio
+                Publish All About Sanctuary Changes →
               </button>
             </form>
           </div>
@@ -1043,6 +1216,60 @@ export const AuthorPortal = () => {
                 <p className="font-serif text-3xl text-[#D5B06C]">{analytics.avgWords}</p>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* 6. READER WHISPERS VIEW */}
+        {activeView === 'whispers' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between border-b border-[#8A8177]/20 pb-4">
+              <div>
+                <h2 className="font-serif text-2xl text-[#FEEFFF]">Reader Whispers</h2>
+                <p className="font-sans text-xs text-[#8A8177]">
+                  Notes and impressions left by quiet readers on your About page.
+                </p>
+              </div>
+            </div>
+
+            {readerMessages.length === 0 ? (
+              <div className="p-12 text-center border border-[#8A8177]/20 rounded-2xl bg-[#0F1216]/50 space-y-2">
+                <p className="font-serif text-xl text-[#8A8177]">The Sanctuary is quiet.</p>
+                <p className="font-sans text-xs uppercase tracking-widest text-[#8A8177]/60">
+                  No reader whispers received yet.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4">
+                {readerMessages.map((msg) => (
+                  <div
+                    key={msg.id}
+                    className="p-5 rounded-xl bg-[#0F1216] border border-[#D5B06C]/30 flex flex-col justify-between gap-4 relative group"
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-serif text-lg text-[#D5B06C]">{msg.sender}</span>
+                        <span className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177]">
+                          {msg.timestamp}
+                        </span>
+                      </div>
+                      <p className="font-serif text-sm leading-relaxed text-[#FEEFFF]/90 italic">
+                        “{msg.text}”
+                      </p>
+                    </div>
+
+                    <div className="flex justify-end pt-2 border-t border-[#8A8177]/10">
+                      <button
+                        onClick={() => handleDeleteMessage(msg.id)}
+                        className="text-[#8A8177] hover:text-red-400 font-sans text-xs flex items-center gap-1 cursor-pointer transition-colors"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Delete Note</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>

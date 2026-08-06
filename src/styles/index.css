@@ -11,14 +11,16 @@
     scroll-behavior: smooth;
   }
   
-  /* Custom Celestial Mouse Pointer Everywhere */
-  *, *::before, *::after, html, body, button, a, [role="button"], input, textarea, select, .cursor-pointer {
-    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M12 0L14.5 9.5L24 12L14.5 14.5L12 24L9.5 14.5L0 12L9.5 9.5L12 0Z' fill='%23D5B06C' stroke='%23080A06' stroke-width='1.5'/%3E%3Ccircle cx='12' cy='12' r='2' fill='%23FEEFFF'/%3E%3C/svg%3E") 12 12, auto !important;
-  }
+  /* Custom Celestial Mouse Pointer (Desktop view only: >= 768px) */
+  @media (min-width: 768px) {
+    *, *::before, *::after, html, body, button, a, [role="button"], input, textarea, select, .cursor-pointer {
+      cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M12 0L14.5 9.5L24 12L14.5 14.5L12 24L9.5 14.5L0 12L9.5 9.5L12 0Z' fill='%23D5B06C' stroke='%23080A06' stroke-width='1.5'/%3E%3Ccircle cx='12' cy='12' r='2' fill='%23FEEFFF'/%3E%3C/svg%3E") 12 12, auto !important;
+    }
 
-  /* Glowing Starlight Hover Cursor */
-  a:hover, button:hover, [role="button"]:hover, .cursor-pointer:hover, svg:hover, circle:hover {
-    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28' fill='none'%3E%3Cpath d='M14 0L17 11L28 14L17 17L14 28L11 17L0 14L11 11L14 0Z' fill='%23FEEFFF' stroke='%23D5B06C' stroke-width='1.8'/%3E%3Ccircle cx='14' cy='14' r='3.5' fill='%23D5B06C'/%3E%3C/svg%3E") 14 14, pointer !important;
+    /* Glowing Starlight Hover Cursor */
+    a:hover, button:hover, [role="button"]:hover, .cursor-pointer:hover, svg:hover, circle:hover {
+      cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28' fill='none'%3E%3Cpath d='M14 0L17 11L28 14L17 17L14 28L11 17L0 14L11 11L14 0Z' fill='%23FEEFFF' stroke='%23D5B06C' stroke-width='1.8'/%3E%3Ccircle cx='14' cy='14' r='3.5' fill='%23D5B06C'/%3E%3C/svg%3E") 14 14, pointer !important;
+    }
   }
 }
 

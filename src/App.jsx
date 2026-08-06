@@ -1,6 +1,6 @@
 import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
-import { AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 import { CustomCelestialCursor } from './components/Shared/CustomCelestialCursor';
 import { MagicStardustTrail } from './components/Shared/MagicStardustTrail';
@@ -13,6 +13,19 @@ const Hub = lazy(() => import('./pages/Hub'));
 const ReaderView = lazy(() => import('./pages/ReaderView'));
 const AuthorPortal = lazy(() => import('./pages/AuthorPortal'));
 
+function PageTransitionWrapper({ children }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
 function AnimatedRoutes() {
   const location = useLocation();
 
@@ -20,13 +33,13 @@ function AnimatedRoutes() {
     <Suspense fallback={<div className="min-h-screen bg-[#080A06]" />}>
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
-          <Route path="/" element={<Landing />} />
-          <Route path="/hub" element={<HomeConstellation />} />
-          <Route path="/poems" element={<Hub filter="/poems" />} />
-          <Route path="/stories" element={<Hub filter="/stories" />} />
-          <Route path="/about" element={<Hub filter="/about" />} />
-          <Route path="/read/:slug" element={<ReaderView />} />
-          <Route path="/portal" element={<AuthorPortal />} />
+          <Route path="/" element={<PageTransitionWrapper><Landing /></PageTransitionWrapper>} />
+          <Route path="/hub" element={<PageTransitionWrapper><HomeConstellation /></PageTransitionWrapper>} />
+          <Route path="/poems" element={<PageTransitionWrapper><Hub filter="/poems" /></PageTransitionWrapper>} />
+          <Route path="/stories" element={<PageTransitionWrapper><Hub filter="/stories" /></PageTransitionWrapper>} />
+          <Route path="/about" element={<PageTransitionWrapper><Hub filter="/about" /></PageTransitionWrapper>} />
+          <Route path="/read/:slug" element={<PageTransitionWrapper><ReaderView /></PageTransitionWrapper>} />
+          <Route path="/portal" element={<PageTransitionWrapper><AuthorPortal /></PageTransitionWrapper>} />
         </Routes>
       </AnimatePresence>
     </Suspense>

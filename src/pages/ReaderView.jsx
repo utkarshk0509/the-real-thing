@@ -23,7 +23,8 @@ export const ReaderView = () => {
   const [isCoverOpen, setIsCoverOpen] = useState(false);
   const [isClosingBook, setIsClosingBook] = useState(false);
 
-  const [scrollProgressPercent, setScrollProgressPercent] = useState(0);
+  const [scrollProgressPercent, setScrollProgressPercent] = useState(0); // Instantaneous live scroll %
+  const [maxProgressPercent, setMaxProgressPercent] = useState(0); // Permanent max high-water mark
 
   // Reader Settings (Theme & Typography Customizer)
   const [readerSettings, setReaderSettings] = useState(() =>
@@ -58,13 +59,21 @@ export const ReaderView = () => {
 
   useEffect(() => {
     if (work && work.slug) {
+      // Load existing max reading percentage for this work
+      const existingLastRead = readerProgressService.getLastRead(work.category);
+      const savedMaxPercentage = (existingLastRead && existingLastRead.slug === work.slug)
+        ? (existingLastRead.scrollPercentage || 0)
+        : 0;
+
+      setMaxProgressPercent(savedMaxPercentage);
+
       // Immediately register clicked work so Continue Reading card appears on Hub
       readerProgressService.saveLastRead({
         slug: work.slug,
         title: work.title,
         author: work.author,
         category: work.category,
-        scrollPercentage: 0,
+        scrollPercentage: savedMaxPercentage,
         paragraphIndex: 0,
       });
 
@@ -108,7 +117,9 @@ export const ReaderView = () => {
     return () => window.removeEventListener('popstate', handlePopState);
   }, [work, isBookshelfMode, navigate]);
 
-  // Track scroll percentage and save progress
+  // Track scroll percentage:
+  // - scrollProgressPercent: live growing line moves up & down dynamically
+  // - maxProgressPercent: text badge retains highest % achieved (100% READ)
   useEffect(() => {
     const handleScroll = () => {
       if (!work || !work.slug) return;
@@ -116,29 +127,38 @@ export const ReaderView = () => {
 
       if (totalHeight <= 0) {
         setScrollProgressPercent(100);
+        setMaxProgressPercent(100);
         return;
       }
 
       const currentScroll = Math.max(0, window.scrollY);
-      const scrollPercentage = Math.min(100, Math.max(0, Math.round((currentScroll / totalHeight) * 100)));
+      const currentScrollPercentage = Math.min(100, Math.max(0, Math.round((currentScroll / totalHeight) * 100)));
 
-      setScrollProgressPercent(scrollPercentage);
+      // Live growing progress line moves up and down smoothly
+      setScrollProgressPercent(currentScrollPercentage);
 
-      readerProgressService.saveLastRead({
-        slug: work.slug,
-        title: work.title,
-        author: work.author,
-        category: work.category,
-        scrollPercentage,
-        paragraphIndex: paragraphBookmarks[work.slug] || 0,
-      });
+      // Permanent badge retains maximum high-water mark (100% READ)
+      setMaxProgressPercent((prevMax) => {
+        const newMaxPercentage = Math.max(prevMax, currentScrollPercentage);
 
-      if (scrollPercentage >= 90) {
-        const statuses = readerProgressService.getLibraryStatuses();
-        if (statuses[work.slug] !== 'Completed') {
-          readerProgressService.setWorkLibraryStatus(work.slug, 'Completed');
+        readerProgressService.saveLastRead({
+          slug: work.slug,
+          title: work.title,
+          author: work.author,
+          category: work.category,
+          scrollPercentage: newMaxPercentage,
+          paragraphIndex: paragraphBookmarks[work.slug] || 0,
+        });
+
+        if (newMaxPercentage >= 90) {
+          const statuses = readerProgressService.getLibraryStatuses();
+          if (statuses[work.slug] !== 'Completed') {
+            readerProgressService.setWorkLibraryStatus(work.slug, 'Completed');
+          }
         }
-      }
+
+        return newMaxPercentage;
+      });
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -306,15 +326,11 @@ export const ReaderView = () => {
       className={`relative min-h-screen ${activeTheme.bg} text-[#FEEFFF] selection:bg-[#D5B06C]/30 selection:text-[#FEEFFF] transition-colors duration-500`}
     >
       <CosmicNebulaBackground variant={activeTheme.nebulaVariant} />
-      <Navigation />
-
-      {/* Clamped Golden Reading Progress Bar */}
-      <div className="fixed top-0 left-0 right-0 h-1 bg-[#8A8177]/20 z-50 overflow-hidden">
-        <div
-          className="h-full bg-gradient-to-r from-amber-600 via-[#D5B06C] to-amber-400 transition-all duration-150 shadow-[0_0_10px_rgba(213,176,108,0.8)]"
-          style={{ width: `${scrollProgressPercent}%` }}
-        />
-      </div>
+      <Navigation
+        readingPercent={maxProgressPercent}
+        scrollLinePercent={scrollProgressPercent}
+        readingWork={work}
+      />
 
       {/* Floating Save Quote Tooltip */}
       <AnimatePresence>

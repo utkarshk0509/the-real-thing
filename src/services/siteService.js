@@ -56,6 +56,65 @@ export const siteService = {
     }
 
     return true;
+  },
+
+  /**
+   * Fetches full About Author Sanctuary custom settings.
+   */
+  async getAboutData() {
+    const cached = cacheService.get('real_thing_about_data');
+    if (cached) return cached;
+
+    if (supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('site_settings')
+          .select('value')
+          .eq('key', 'about_data')
+          .maybeSingle();
+
+        if (!error && data?.value) {
+          const parsed = typeof data.value === 'string' ? JSON.parse(data.value) : data.value;
+          cacheService.set('real_thing_about_data', parsed);
+          return parsed;
+        }
+      } catch (err) {
+        console.warn('[siteService] Remote about fetch error:', err);
+      }
+    }
+
+    try {
+      const local = localStorage.getItem('real_thing_about_data');
+      if (local) return JSON.parse(local);
+    } catch (e) {}
+
+    return null;
+  },
+
+  /**
+   * Updates full About Author Sanctuary custom settings.
+   */
+  async updateAboutData(aboutData) {
+    cacheService.set('real_thing_about_data', aboutData);
+    try {
+      localStorage.setItem('real_thing_about_data', JSON.stringify(aboutData));
+    } catch (e) {}
+
+    if (supabase) {
+      try {
+        await supabase
+          .from('site_settings')
+          .upsert({
+            key: 'about_data',
+            value: JSON.stringify(aboutData),
+            updated_at: new Date().toISOString()
+          });
+      } catch (err) {
+        console.warn('[siteService] Remote about update notice:', err);
+      }
+    }
+
+    return true;
   }
 };
 

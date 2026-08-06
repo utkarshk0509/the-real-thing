@@ -311,7 +311,7 @@ export default function CosmicNebulaBackground({ variant = 'reader' }) {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-0"
+      className="pointer-events-none fixed inset-0 z-0 bg-[#050608]"
       aria-hidden="true"
     />
   );

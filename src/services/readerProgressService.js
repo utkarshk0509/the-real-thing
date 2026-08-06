@@ -13,6 +13,7 @@ const KEYS = {
   CURATOR_DRAFT: 'real_thing_curator_draft',
   VIEW_PREFERENCE: 'real_thing_view_preference',
   READER_SETTINGS: 'real_thing_reader_settings',
+  ALL_PROGRESS: 'real_thing_all_progress',
 };
 
 export const readerProgressService = {
@@ -32,6 +33,24 @@ export const readerProgressService = {
   },
 
   // --- 1. Reading Progress & Last Read ---
+  getAllProgress: () => {
+    try {
+      const data = localStorage.getItem(KEYS.ALL_PROGRESS);
+      return data ? JSON.parse(data) : {};
+    } catch (e) {
+      return {};
+    }
+  },
+
+  getWorkProgress: (slug) => {
+    try {
+      const all = readerProgressService.getAllProgress();
+      return all[slug] || 0;
+    } catch (e) {
+      return 0;
+    }
+  },
+
   getLastRead: (category = null) => {
     try {
       let key = KEYS.LAST_READ;
@@ -50,10 +69,19 @@ export const readerProgressService = {
       const category = workData.category || 'poem';
       const categoryKey = category === 'story' ? KEYS.LAST_READ_STORY : KEYS.LAST_READ_POEM;
 
+      const newPercentage = Math.min(100, Math.max(0, Math.round(workData.scrollPercentage || 0)));
+
+      // Update per-work progress high-water mark
+      if (workData.slug) {
+        const allProgress = readerProgressService.getAllProgress();
+        const currentWorkMax = allProgress[workData.slug] || 0;
+        const updatedMax = Math.max(currentWorkMax, newPercentage);
+        allProgress[workData.slug] = updatedMax;
+        localStorage.setItem(KEYS.ALL_PROGRESS, JSON.stringify(allProgress));
+      }
+
       const existingOverall = readerProgressService.getLastRead();
       const existingCategory = readerProgressService.getLastRead(category);
-
-      const newPercentage = Math.min(100, Math.max(0, Math.round(workData.scrollPercentage || 0)));
 
       // Keep maximum percentage achieved so scrolling back to top does not clear progress
       const isSameOverall = existingOverall && existingOverall.slug === workData.slug;

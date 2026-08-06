@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import AtmosphericBackground from '../components/Shared/AtmosphericBackground';
+import { Feather, BookOpen, Compass, User, BarChart2, Sparkles, Upload, Trash2, Edit3, Eye, Check, RotateCcw, Scissors, Layers, ArrowLeft } from 'lucide-react';
+import CosmicNebulaBackground from '../components/Shared/CosmicNebulaBackground';
 import { GlowingCard } from '../components/Shared/GlowingCard';
 import workService from '../services/workService';
 import storageService from '../services/storageService';
@@ -443,8 +444,8 @@ export const AuthorPortal = () => {
   }, [allWorks, arrangerCategory]);
 
   return (
-    <div className="relative min-h-screen bg-[#080A06] text-[#FEEFFF] selection:bg-[#D5B06C]/30 selection:text-[#FEEFFF] p-4 md:p-10">
-      <AtmosphericBackground />
+    <div className="relative min-h-screen bg-[#050608] text-[#FEEFFF] selection:bg-[#D5B06C]/30 selection:text-[#FEEFFF] p-4 md:p-10">
+      <CosmicNebulaBackground variant="about" />
 
       <div className="relative z-10 max-w-6xl mx-auto space-y-6">
         {/* Top Header */}
@@ -452,13 +453,16 @@ export const AuthorPortal = () => {
           <div>
             <button
               onClick={() => navigate('/hub')}
-              className="font-sans text-xs uppercase tracking-widest text-[#8A8177] hover:text-[#D5B06C] transition-colors mb-1 block cursor-pointer"
+              className="font-sans text-xs uppercase tracking-widest text-[#8A8177] hover:text-[#D5B06C] transition-all mb-2 flex items-center gap-1.5 cursor-pointer group"
             >
-              ← Return to Hub
+              <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
+              <span>Return to Constellation Hub</span>
             </button>
-            <h1 className="font-serif text-3xl text-[#FEEFFF]">Curator Portal</h1>
-            <p className="font-sans text-[11px] uppercase tracking-widest text-[#8A8177] mt-1">
-              Sanctuary Content Management & Architecture
+            <h1 className="font-serif text-3xl md:text-4xl text-[#FEEFFF] tracking-wide flex items-center gap-2.5">
+              Curator Portal <Sparkles className="w-5 h-5 text-[#D5B06C] animate-pulse" />
+            </h1>
+            <p className="font-sans text-[11px] uppercase tracking-[0.25em] text-[#8A8177] mt-1">
+              Sanctuary Architecture & Content Management Workshop
             </p>
           </div>
 
@@ -467,7 +471,7 @@ export const AuthorPortal = () => {
               <button
                 type="button"
                 onClick={clearForm}
-                className="text-xs uppercase tracking-widest text-[#8A8177] hover:text-red-400 transition-colors cursor-pointer border border-[#8A8177]/20 px-3 py-2 rounded"
+                className="text-xs uppercase tracking-widest text-[#8A8177] hover:text-red-400 transition-colors cursor-pointer border border-[#8A8177]/20 px-3.5 py-2.5 rounded-xl bg-[#0F1216]/60 backdrop-blur-md"
               >
                 Clear Form
               </button>
@@ -476,8 +480,9 @@ export const AuthorPortal = () => {
               <button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="bg-[#D5B06C] text-[#080A06] font-sans text-xs font-semibold uppercase tracking-widest px-6 py-2.5 rounded hover:bg-[#FEEFFF] transition-all duration-300 disabled:opacity-50 cursor-pointer shadow-[0_0_15px_rgba(213,176,108,0.2)]"
+                className="bg-[#D5B06C] text-[#080A06] font-sans text-xs font-semibold uppercase tracking-widest px-6 py-2.5 rounded-xl hover:bg-[#FEEFFF] transition-all duration-300 disabled:opacity-50 cursor-pointer shadow-[0_0_25px_rgba(213,176,108,0.35)] flex items-center gap-2"
               >
+                <Feather className="w-3.5 h-3.5" />
                 {isSubmitting ? 'Inscribing...' : isDraft ? 'Save Draft' : 'Publish Work'}
               </button>
             )}
@@ -485,62 +490,32 @@ export const AuthorPortal = () => {
         </header>
 
         {/* Master Navigation Bar */}
-        <nav className="flex items-center border-b border-[#8A8177]/20 overflow-x-auto bg-[#0F1216]/50 rounded-xl p-1.5 backdrop-blur-sm gap-1">
-          <button
-            type="button"
-            onClick={() => setActiveView('write')}
-            className={`px-5 py-2.5 rounded-lg font-sans text-xs uppercase tracking-widest transition-all cursor-pointer whitespace-nowrap ${
-              activeView === 'write'
-                ? 'bg-[#D5B06C]/15 text-[#D5B06C] border border-[#D5B06C]/40 font-semibold'
-                : 'text-[#8A8177] hover:text-[#FEEFFF]'
-            }`}
-          >
-            Write & Edit
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveView('library')}
-            className={`px-5 py-2.5 rounded-lg font-sans text-xs uppercase tracking-widest transition-all cursor-pointer whitespace-nowrap ${
-              activeView === 'library'
-                ? 'bg-[#D5B06C]/15 text-[#D5B06C] border border-[#D5B06C]/40 font-semibold'
-                : 'text-[#8A8177] hover:text-[#FEEFFF]'
-            }`}
-          >
-            Library ({allWorks.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveView('arrange')}
-            className={`px-5 py-2.5 rounded-lg font-sans text-xs uppercase tracking-widest transition-all cursor-pointer whitespace-nowrap ${
-              activeView === 'arrange'
-                ? 'bg-[#D5B06C]/15 text-[#D5B06C] border border-[#D5B06C]/40 font-semibold'
-                : 'text-[#8A8177] hover:text-[#FEEFFF]'
-            }`}
-          >
-            Constellation Arranger
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveView('about')}
-            className={`px-5 py-2.5 rounded-lg font-sans text-xs uppercase tracking-widest transition-all cursor-pointer whitespace-nowrap ${
-              activeView === 'about'
-                ? 'bg-[#D5B06C]/15 text-[#D5B06C] border border-[#D5B06C]/40 font-semibold'
-                : 'text-[#8A8177] hover:text-[#FEEFFF]'
-            }`}
-          >
-            About Bio
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveView('analytics')}
-            className={`px-5 py-2.5 rounded-lg font-sans text-xs uppercase tracking-widest transition-all cursor-pointer whitespace-nowrap ${
-              activeView === 'analytics'
-                ? 'bg-[#D5B06C]/15 text-[#D5B06C] border border-[#D5B06C]/40 font-semibold'
-                : 'text-[#8A8177] hover:text-[#FEEFFF]'
-            }`}
-          >
-            Analytics
-          </button>
+        <nav className="flex items-center border border-[#D5B06C]/25 overflow-x-auto bg-[#0F1216]/70 rounded-2xl p-2 backdrop-blur-xl gap-2 shadow-2xl">
+          {[
+            { id: 'write', label: 'Write & Edit', icon: Feather },
+            { id: 'library', label: `Library (${allWorks.length})`, icon: BookOpen },
+            { id: 'arrange', label: 'Constellation Arranger', icon: Compass },
+            { id: 'about', label: 'Sanctuary Bio', icon: User },
+            { id: 'analytics', label: 'Reader Insights', icon: BarChart2 },
+          ].map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeView === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveView(tab.id)}
+                className={`relative px-4 py-2.5 rounded-xl font-sans text-xs uppercase tracking-widest transition-all cursor-pointer whitespace-nowrap flex items-center gap-2 ${
+                  isActive
+                    ? 'bg-[#D5B06C]/20 text-[#D5B06C] border border-[#D5B06C]/50 font-semibold shadow-[0_0_15px_rgba(213,176,108,0.2)]'
+                    : 'text-[#8A8177] hover:text-[#FEEFFF] hover:bg-white/5'
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
         </nav>
 
         {/* Global Notification Banner */}

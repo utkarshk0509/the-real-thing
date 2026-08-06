@@ -12,6 +12,7 @@ const KEYS = {
   EMOJI_REACTIONS: 'real_thing_emoji_reactions',
   CURATOR_DRAFT: 'real_thing_curator_draft',
   VIEW_PREFERENCE: 'real_thing_view_preference',
+  READER_SETTINGS: 'real_thing_reader_settings',
 };
 
 export const readerProgressService = {
@@ -296,6 +297,24 @@ export const readerProgressService = {
   clearCuratorDraft: () => {
     try {
       localStorage.removeItem(KEYS.CURATOR_DRAFT);
+    } catch (e) {}
+  },
+
+  // --- 8. Reader Theme & Typography Settings ---
+  getReaderSettings: () => {
+    try {
+      const data = localStorage.getItem(KEYS.READER_SETTINGS);
+      return data
+        ? JSON.parse(data)
+        : { theme: 'midnight', fontSize: 'md', fontFamily: 'serif' };
+    } catch (e) {
+      return { theme: 'midnight', fontSize: 'md', fontFamily: 'serif' };
+    }
+  },
+
+  saveReaderSettings: (settings) => {
+    try {
+      localStorage.setItem(KEYS.READER_SETTINGS, JSON.stringify(settings));
     } catch (e) {}
   },
 };

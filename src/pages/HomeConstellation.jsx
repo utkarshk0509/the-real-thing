@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, useMotionValue, useSpring } from 'framer-motion';
+import { Sparkles } from 'lucide-react';
 import Navigation from '../components/Shared/Navigation';
 import CosmicNebulaBackground from '../components/Shared/CosmicNebulaBackground';
 import workService from '../services/workService';
@@ -278,11 +279,16 @@ export const HomeConstellation = () => {
     return () => window.removeEventListener('mousemove', move);
   }, [mouseX, mouseY]);
 
+  const [allWorks, setAllWorks] = useState([]);
+  const [oracleWork, setOracleWork] = useState(null);
+  const [isOracleOpen, setIsOracleOpen] = useState(false);
+
   useEffect(() => {
     const load = async () => {
       try {
         const cached = cacheService.get(CACHE_KEYS.HUB_WORKS) || [];
         if (cached.length > 0) {
+          setAllWorks(cached);
           setCounts({
             poems: cached.filter((w) => w.category === 'poem').length,
             stories: cached.filter((w) => w.category === 'story').length,
@@ -290,6 +296,7 @@ export const HomeConstellation = () => {
         }
         const works = await workService.getPublishedWorks();
         if (works?.length > 0) {
+          setAllWorks(works);
           setCounts({
             poems: works.filter((w) => w.category === 'poem').length,
             stories: works.filter((w) => w.category === 'story').length,
@@ -303,6 +310,50 @@ export const HomeConstellation = () => {
     };
     load();
   }, []);
+
+  const handleOpenOracle = async () => {
+    // Filter strictly for POEMS ONLY (exclude stories)
+    const poems = allWorks.filter((w) => w.category === 'poem');
+
+    if (poems.length === 0) return;
+
+    // Pick a random poem
+    const chosenPoem = poems[Math.floor(Math.random() * poems.length)];
+
+    try {
+      // Fetch full poem object including 'body' column
+      const fullPoem = await workService.getWorkBySlug(chosenPoem.slug);
+
+      const rawBody = (fullPoem?.body || chosenPoem.excerpt || '').trim();
+
+      // Split poem body into individual poetic lines
+      const lines = rawBody
+        .split(/\r?\n/)
+        .map((l) => l.replace(/^[#*->\s]+/, '').trim())
+        .filter((l) => l.length > 0 && !l.toLowerCase().startsWith('by '));
+
+      let poemLine = '';
+      if (lines.length > 0) {
+        // Pick a random line directly from THIS poem's actual body
+        poemLine = lines[Math.floor(Math.random() * lines.length)];
+      } else {
+        poemLine = rawBody || chosenPoem.title;
+      }
+
+      // Limit length cleanly if line is overly long
+      if (poemLine.length > 180) {
+        poemLine = poemLine.slice(0, 175).replace(/\s+\S*$/, '') + '...';
+      }
+
+      setOracleWork({
+        ...chosenPoem,
+        snippet: poemLine,
+      });
+      setIsOracleOpen(true);
+    } catch (e) {
+      console.warn('[HomeConstellation] Oracle body fetch error:', e);
+    }
+  };
 
   const getCount = (id) => {
     if (id === 'poems') return `${counts.poems} inscriptions`;
@@ -381,21 +432,98 @@ export const HomeConstellation = () => {
           </motion.p>
         </div>
 
-        {/* ── Continue Reading pill ─────────────────── */}
+        {/* ── Action Bar: Resume Reading & Discover Stanza Oracle ── */}
+        <div className="flex flex-wrap items-center justify-center gap-2 mb-2 z-20">
+          <AnimatePresence>
+            {lastReadWork && (
+              <motion.button
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                transition={{ delay: 0.6 }}
+                onClick={() => navigate(`/read/${lastReadWork.slug}`)}
+                className="px-4 py-1.5 rounded-full border border-[#D5B06C]/40 bg-[#D5B06C]/10 text-[#D5B06C] font-sans text-[9px] uppercase tracking-[0.25em] hover:bg-[#D5B06C]/20 hover:border-[#D5B06C] transition-all backdrop-blur-sm flex items-center gap-2 cursor-pointer"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-[#D5B06C] animate-pulse inline-block" />
+                Resume · {lastReadWork.title}
+                <span className="text-[#8A8177]">→</span>
+              </motion.button>
+            )}
+          </AnimatePresence>
+
+          {/* Random Stanza Oracle Button */}
+          <motion.button
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.65 }}
+            onClick={handleOpenOracle}
+            className="px-4 py-1.5 rounded-full border border-[#7CB9E8]/40 bg-[#7CB9E8]/10 text-[#7CB9E8] font-sans text-[9px] uppercase tracking-[0.25em] hover:bg-[#7CB9E8]/20 hover:border-[#7CB9E8] transition-all backdrop-blur-sm flex items-center gap-2 cursor-pointer shadow-[0_0_15px_rgba(124,185,232,0.15)]"
+          >
+            <Sparkles className="w-3 h-3" />
+            <span>Discover a Stanza</span>
+          </motion.button>
+        </div>
+
+        {/* ── Random Inscription Oracle Modal ── */}
         <AnimatePresence>
-          {lastReadWork && (
-            <motion.button
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              transition={{ delay: 0.6 }}
-              onClick={() => navigate(`/read/${lastReadWork.slug}`)}
-              className="mb-2 z-20 px-4 py-1.5 rounded-full border border-[#D5B06C]/40 bg-[#D5B06C]/10 text-[#D5B06C] font-sans text-[9px] uppercase tracking-[0.25em] hover:bg-[#D5B06C]/20 hover:border-[#D5B06C] transition-all backdrop-blur-sm flex items-center gap-2"
+          {isOracleOpen && oracleWork && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+              onClick={() => setIsOracleOpen(false)}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-[#D5B06C] animate-pulse inline-block" />
-              Resume · {lastReadWork.title}
-              <span className="text-[#8A8177]">→</span>
-            </motion.button>
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                onClick={(e) => e.stopPropagation()}
+                className="relative max-w-lg w-full bg-[#0F1216] border border-[#D5B06C]/50 rounded-2xl p-6 md:p-8 text-center space-y-5 shadow-[0_0_60px_rgba(213,176,108,0.3)] overflow-hidden"
+              >
+                {/* Background Stardust Pulse */}
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(213,176,108,0.1)_0%,transparent_75%)] pointer-events-none" />
+
+                <div className="space-y-1">
+                  <span className="font-sans text-[9px] uppercase tracking-[0.35em] text-[#D5B06C] font-semibold block">
+                    Oracle Inscription • {oracleWork.category}
+                  </span>
+                  <h3 className="font-serif text-2xl md:text-3xl text-[#FEEFFF] font-normal capitalize">
+                    {oracleWork.title}
+                  </h3>
+                  <p className="font-sans text-xs uppercase tracking-widest text-[#8A8177]">
+                    By {oracleWork.author}
+                  </p>
+                </div>
+
+                <div className="h-px w-24 bg-gradient-to-r from-transparent via-[#D5B06C]/60 to-transparent mx-auto" />
+
+                <blockquote className="font-serif text-base md:text-lg text-[#FEEFFF]/90 italic leading-relaxed px-2 font-light">
+                  “{oracleWork.snippet}”
+                </blockquote>
+
+                <div className="pt-2 flex items-center justify-center gap-3">
+                  <button
+                    onClick={() => {
+                      setIsOracleOpen(false);
+                      if (oracleWork.slug && oracleWork.slug !== 'hub') {
+                        navigate(`/read/${oracleWork.slug}`);
+                      }
+                    }}
+                    className="px-6 py-2.5 rounded-full bg-[#D5B06C] text-[#080A06] font-sans text-xs font-semibold uppercase tracking-widest hover:bg-[#FEEFFF] transition-all shadow-lg cursor-pointer"
+                  >
+                    Read Full Inscription →
+                  </button>
+                  <button
+                    onClick={handleOpenOracle}
+                    className="px-4 py-2.5 rounded-full border border-[#8A8177]/40 text-[#8A8177] hover:text-[#FEEFFF] hover:border-[#FEEFFF] font-sans text-xs uppercase tracking-widest transition-all cursor-pointer"
+                  >
+                    Another Stanza
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
           )}
         </AnimatePresence>
 

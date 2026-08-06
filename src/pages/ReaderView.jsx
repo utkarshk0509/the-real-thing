@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Sliders, Palette, Type, Check } from 'lucide-react';
 import CosmicNebulaBackground from '../components/Shared/CosmicNebulaBackground';
 import Navigation from '../components/Shared/Navigation';
 import AnonymousComments from '../components/Engagement/AnonymousComments';
@@ -23,6 +24,12 @@ export const ReaderView = () => {
   const [isClosingBook, setIsClosingBook] = useState(false);
 
   const [scrollProgressPercent, setScrollProgressPercent] = useState(0);
+
+  // Reader Settings (Theme & Typography Customizer)
+  const [readerSettings, setReaderSettings] = useState(() =>
+    readerProgressService.getReaderSettings()
+  );
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   // Floating Quote Selection State
   const [selectedText, setSelectedText] = useState('');
@@ -241,13 +248,64 @@ export const ReaderView = () => {
     );
   }
 
+  const handleUpdateSetting = (key, value) => {
+    const updated = { ...readerSettings, [key]: value };
+    setReaderSettings(updated);
+    readerProgressService.saveReaderSettings(updated);
+  };
+
+  const THEMES = {
+    midnight: {
+      bg: 'bg-[#080A06]',
+      cardBg: 'bg-[#0F1216]',
+      text: 'text-[#FEEFFF]/90',
+      accent: 'text-[#D5B06C]',
+      accentBg: 'bg-[#D5B06C]',
+      border: 'border-[#D5B06C]/40',
+      nebulaVariant: 'reader',
+    },
+    sepia: {
+      bg: 'bg-[#181410]',
+      cardBg: 'bg-[#221B14]',
+      text: 'text-[#F2E5D0]',
+      accent: 'text-[#E2B36E]',
+      accentBg: 'bg-[#E2B36E]',
+      border: 'border-[#E2B36E]/40',
+      nebulaVariant: 'about',
+    },
+    nebula: {
+      bg: 'bg-[#090714]',
+      cardBg: 'bg-[#120E26]',
+      text: 'text-[#EBE6FF]',
+      accent: 'text-[#A78BFA]',
+      accentBg: 'bg-[#A78BFA]',
+      border: 'border-[#A78BFA]/40',
+      nebulaVariant: 'reader',
+    },
+  };
+
+  const activeTheme = THEMES[readerSettings.theme] || THEMES.midnight;
+
+  const FONT_SIZES = {
+    sm: 'text-sm md:text-base leading-relaxed',
+    md: 'text-base md:text-lg leading-relaxed',
+    lg: 'text-lg md:text-xl leading-relaxed',
+    xl: 'text-xl md:text-2xl leading-relaxed',
+  };
+
+  const FONT_FAMILIES = {
+    serif: 'font-serif',
+    playfair: 'font-serif font-medium tracking-wide',
+    sans: 'font-sans font-light tracking-wide',
+  };
+
   return (
     <div
       onMouseUp={handleTextSelection}
       onTouchEnd={handleTextSelection}
-      className="relative min-h-screen bg-[#080A06] text-[#FEEFFF] selection:bg-[#D5B06C]/30 selection:text-[#FEEFFF]"
+      className={`relative min-h-screen ${activeTheme.bg} text-[#FEEFFF] selection:bg-[#D5B06C]/30 selection:text-[#FEEFFF] transition-colors duration-500`}
     >
-      <CosmicNebulaBackground variant="reader" />
+      <CosmicNebulaBackground variant={activeTheme.nebulaVariant} />
       <Navigation />
 
       {/* Clamped Golden Reading Progress Bar */}
@@ -297,17 +355,136 @@ export const ReaderView = () => {
         )}
       </AnimatePresence>
 
-      <main className={`relative z-10 mx-auto px-4 md:px-6 pt-32 md:pt-36 pb-24 ${isBookshelfMode ? 'max-w-5xl' : 'max-w-3xl'}`}>
-        {/* Return Button */}
-        <div className="mb-6 flex items-center">
+      <main className={`relative z-10 mx-auto px-4 md:px-6 pt-28 sm:pt-36 pb-24 ${isBookshelfMode ? 'max-w-5xl' : 'max-w-3xl'}`}>
+        {/* Return Button & Reader Settings Customizer Trigger */}
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-2.5">
           <button
             onClick={handleReturnNav}
-            className="group flex items-center gap-2 font-sans text-[11px] md:text-xs uppercase tracking-[0.2em] text-[#8A8177] hover:text-[#D5B06C] transition-colors cursor-pointer bg-[#0F1216]/80 border border-[#8A8177]/20 hover:border-[#D5B06C]/40 px-3.5 py-1.5 md:px-4 md:py-2 rounded-lg backdrop-blur-md shadow-sm"
+            className="group flex items-center gap-2 font-sans text-[10px] sm:text-xs uppercase tracking-[0.2em] text-[#8A8177] hover:text-[#D5B06C] transition-colors cursor-pointer bg-[#0F1216]/80 border border-[#8A8177]/20 hover:border-[#D5B06C]/40 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg backdrop-blur-md shadow-sm"
           >
             <span className="group-hover:-translate-x-1 transition-transform">←</span>
             <span>Return to {categoryLabel}</span>
           </button>
+
+          {/* Reader Customizer Toggle Button */}
+          <button
+            onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+            className={`flex items-center gap-1.5 font-sans text-[10px] sm:text-xs uppercase tracking-[0.2em] px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg border transition-all cursor-pointer backdrop-blur-md shadow-sm ${
+              isSettingsOpen
+                ? `${activeTheme.border} ${activeTheme.cardBg} ${activeTheme.accent}`
+                : 'border-[#8A8177]/20 bg-[#0F1216]/80 text-[#8A8177] hover:text-[#D5B06C]'
+            }`}
+          >
+            <Sliders className="w-3.5 h-3.5" />
+            <span>Theme & Font</span>
+          </button>
         </div>
+
+        {/* Reader Customizer Drawer / Control Panel */}
+        <AnimatePresence>
+          {isSettingsOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+              className="mb-8 overflow-hidden"
+            >
+              <div className={`p-4 md:p-6 rounded-2xl border ${activeTheme.border} ${activeTheme.cardBg} backdrop-blur-xl space-y-4 shadow-2xl`}>
+                <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                  <span className="font-sans text-xs uppercase tracking-[0.25em] text-[#D5B06C] font-semibold flex items-center gap-2">
+                    <Palette className="w-4 h-4" /> Reading Sanctuary Customizer
+                  </span>
+                  <button
+                    onClick={() => setIsSettingsOpen(false)}
+                    className="text-xs text-[#8A8177] hover:text-[#FEEFFF]"
+                  >
+                    ✕ Close
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {/* Theme Selector */}
+                  <div className="space-y-2">
+                    <span className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177] block">
+                      Theme
+                    </span>
+                    <div className="flex items-center gap-2">
+                      {[
+                        { id: 'midnight', label: 'Midnight', bg: 'bg-[#080A06] text-[#FEEFFF] border-[#D5B06C]/40' },
+                        { id: 'sepia', label: 'Sepia', bg: 'bg-[#181410] text-[#F2E5D0] border-[#E2B36E]/40' },
+                        { id: 'nebula', label: 'Nebula', bg: 'bg-[#090714] text-[#EBE6FF] border-[#A78BFA]/40' },
+                      ].map((t) => (
+                        <button
+                          key={t.id}
+                          onClick={() => handleUpdateSetting('theme', t.id)}
+                          className={`flex-1 py-1.5 px-2 rounded-lg border text-[11px] font-sans uppercase tracking-wider transition-all flex items-center justify-center gap-1 ${t.bg} ${
+                            readerSettings.theme === t.id ? 'ring-2 ring-white/50 scale-105' : 'opacity-70 hover:opacity-100'
+                          }`}
+                        >
+                          {t.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Font Size Selector */}
+                  <div className="space-y-2">
+                    <span className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177] block">
+                      Font Size
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      {[
+                        { id: 'sm', label: 'A-' },
+                        { id: 'md', label: 'A' },
+                        { id: 'lg', label: 'A+' },
+                        { id: 'xl', label: 'A++' },
+                      ].map((s) => (
+                        <button
+                          key={s.id}
+                          onClick={() => handleUpdateSetting('fontSize', s.id)}
+                          className={`flex-1 py-1.5 rounded-lg border border-white/10 text-xs font-sans font-semibold transition-all ${
+                            readerSettings.fontSize === s.id
+                              ? 'bg-[#D5B06C] text-[#080A06] border-[#D5B06C]'
+                              : 'bg-black/30 text-[#8A8177] hover:text-[#FEEFFF]'
+                          }`}
+                        >
+                          {s.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Font Family Selector */}
+                  <div className="space-y-2">
+                    <span className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177] block">
+                      Typography
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      {[
+                        { id: 'serif', label: 'Serif' },
+                        { id: 'playfair', label: 'Elegant' },
+                        { id: 'sans', label: 'Modern' },
+                      ].map((f) => (
+                        <button
+                          key={f.id}
+                          onClick={() => handleUpdateSetting('fontFamily', f.id)}
+                          className={`flex-1 py-1.5 rounded-lg border border-white/10 text-[11px] font-sans uppercase tracking-wider transition-all ${
+                            readerSettings.fontFamily === f.id
+                              ? 'bg-[#D5B06C] text-[#080A06] border-[#D5B06C]'
+                              : 'bg-black/30 text-[#8A8177] hover:text-[#FEEFFF]'
+                          }`}
+                        >
+                          {f.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* 3D Opened Book Layout in Bookshelf Mode */}
         {isBookshelfMode ? (
@@ -344,7 +521,7 @@ export const ReaderView = () => {
                   </div>
 
                   <div className="text-center font-serif italic text-xs text-[#8A8177] space-y-2 py-8">
-                    <p className="font-serif text-3xl text-[#D5B06C]">❦</p>
+                    <div className="h-px w-12 bg-[#D5B06C]/40 mx-auto my-3" />
                     <p>Estimated Reading: {work.read_time_minutes} minutes</p>
                     <p className="text-[10px] uppercase font-sans tracking-widest text-[#D5B06C]">
                       The Real Thing Inscriptions
@@ -374,7 +551,7 @@ export const ReaderView = () => {
                   </header>
 
                   {/* Text Body with Bookmarks */}
-                  <div className="font-serif text-base md:text-lg text-[#FEEFFF]/90 leading-relaxed mb-10 font-light tracking-wide text-left relative z-20">
+                  <div className={`${FONT_FAMILIES[readerSettings.fontFamily] || 'font-serif'} ${FONT_SIZES[readerSettings.fontSize] || 'text-base md:text-lg'} ${activeTheme.text} mb-10 text-left relative z-20`}>
                     {renderParagraphs(work.body)}
                   </div>
 
@@ -446,18 +623,18 @@ export const ReaderView = () => {
           </div>
         ) : (
           /* Grid View Minimalist Container */
-          <div className="bg-[#0F1216]/50 border border-[#8A8177]/10 p-6 md:p-12 rounded-2xl">
+          <div className={`${activeTheme.cardBg} border ${activeTheme.border} p-6 md:p-12 rounded-2xl shadow-xl transition-colors duration-500`}>
             <header className="text-center mb-14 space-y-3 pt-2">
               <h1 className="font-serif text-3xl md:text-5xl text-[#FEEFFF] font-normal leading-tight capitalize">
                 {work.title}
               </h1>
-              <p className="font-sans text-xs uppercase tracking-[0.2em] text-[#D5B06C]">
+              <p className={`font-sans text-xs uppercase tracking-[0.2em] ${activeTheme.accent}`}>
                 By {work.author}
               </p>
             </header>
 
             {/* Text Body with Bookmarks */}
-            <div className="font-serif text-lg md:text-xl text-[#FEEFFF]/90 leading-relaxed mb-12 font-light tracking-wide text-left">
+            <div className={`${FONT_FAMILIES[readerSettings.fontFamily] || 'font-serif'} ${FONT_SIZES[readerSettings.fontSize] || 'text-lg md:text-xl'} ${activeTheme.text} mb-12 text-left`}>
               {renderParagraphs(work.body)}
             </div>
 

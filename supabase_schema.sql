@@ -54,6 +54,10 @@ CREATE TABLE IF NOT EXISTS site_settings (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+INSERT INTO site_settings (key, value)
+VALUES ('author_bio', '"The Real Thing" is an open-access literary sanctuary designed for poetry, prose, and quiet contemplation.')
+ON CONFLICT (key) DO NOTHING;
+
 -- 6. CREATE USER_LIKES TABLE (For activity tracking)
 CREATE TABLE IF NOT EXISTS user_likes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

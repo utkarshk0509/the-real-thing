@@ -17,7 +17,7 @@ export const siteService = {
           .from('site_settings')
           .select('value')
           .eq('key', 'author_bio')
-          .single();
+          .maybeSingle();
 
         if (!error && data?.value) {
           cacheService.set(CACHE_KEYS.AUTHOR_BIO, data.value);

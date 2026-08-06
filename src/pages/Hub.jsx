@@ -121,6 +121,9 @@ export const Hub = ({ filter }) => {
                     <motion.div key={poem.slug} variants={itemVariants}>
                       <GlowingCard 
                         image={poem.image_url}
+                        cropScale={poem.crop_scale}
+                        cropPosX={poem.crop_pos_x}
+                        cropPosY={poem.crop_pos_y}
                         onClick={() => navigate(`/read/${poem.slug}`)}
                         className="h-[110px]"
                       >
@@ -162,6 +165,9 @@ export const Hub = ({ filter }) => {
                     <motion.div key={story.slug} variants={itemVariants}>
                       <GlowingCard 
                         image={story.image_url}
+                        cropScale={story.crop_scale}
+                        cropPosX={story.crop_pos_x}
+                        cropPosY={story.crop_pos_y}
                         onClick={() => navigate(`/read/${story.slug}`)}
                         className="h-[110px]"
                       >

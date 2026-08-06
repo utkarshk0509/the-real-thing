@@ -4,6 +4,9 @@ export const GlowingCard = ({
   children, 
   className = "", 
   image, 
+  cropScale = 1,
+  cropPosX = 50,
+  cropPosY = 50,
   onClick 
 }) => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -36,14 +39,18 @@ export const GlowingCard = ({
 
       {/* Atmospheric Image Banner Overlay */}
       {image && (
-        <div className="absolute right-0 top-0 bottom-0 w-2/5 overflow-hidden pointer-events-none opacity-40 group-hover:opacity-85 transition-opacity duration-500">
+        <div className="absolute right-0 top-0 bottom-0 w-2/5 overflow-hidden pointer-events-none opacity-60 group-hover:opacity-90 transition-opacity duration-500">
           <img 
             src={image} 
             alt="" 
-            className="w-full h-full object-cover object-center grayscale contrast-115 group-hover:grayscale-0 transform group-hover:scale-105 transition-all duration-700 ease-out" 
+            className="w-full h-full object-cover grayscale contrast-115 group-hover:grayscale-0 transition-all duration-300 ease-out" 
+            style={{
+              transform: `scale(${cropScale})`,
+              objectPosition: `${cropPosX}% ${cropPosY}%`
+            }}
           />
           {/* Smooth gradient blending mask into the card background */}
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0F1216] via-[#0F1216]/60 to-transparent mix-blend-normal group-hover:opacity-60 transition-opacity duration-500" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0F1216] via-[#0F1216]/60 to-transparent mix-blend-normal group-hover:opacity-40 transition-opacity duration-500" />
         </div>
       )}
 

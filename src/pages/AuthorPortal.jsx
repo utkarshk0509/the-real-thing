@@ -607,6 +607,9 @@ export const AuthorPortal = () => {
                   <div className="max-w-md">
                     <GlowingCard
                       image={imageUrl || 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=80&w=600&auto=format&fit=crop'}
+                      cropScale={cropScale}
+                      cropPosX={cropPosX}
+                      cropPosY={cropPosY}
                       className="h-[110px]"
                     >
                       <div>
@@ -941,19 +944,30 @@ export const AuthorPortal = () => {
                 </button>
               </div>
 
-              {/* Live Preview Box */}
-              <div className="w-full h-40 rounded-xl overflow-hidden border border-[#8A8177]/30 bg-[#080A06] relative flex items-center justify-center">
-                {tempImage && (
-                  <img
-                    src={tempImage}
-                    alt="Crop preview"
-                    className="w-full h-full object-cover transition-all duration-75"
-                    style={{
-                      transform: `scale(${cropScale})`,
-                      objectPosition: `${cropPosX}% ${cropPosY}%`
-                    }}
-                  />
-                )}
+              {/* Live Card Preview Box */}
+              <div className="space-y-2">
+                <span className="font-sans text-[10px] uppercase tracking-widest text-[#D5B06C]">
+                  Live Card Preview
+                </span>
+                <GlowingCard
+                  image={tempImage}
+                  cropScale={cropScale}
+                  cropPosX={cropPosX}
+                  cropPosY={cropPosY}
+                  className="h-[110px]"
+                >
+                  <div>
+                    <h3 className="font-serif text-lg text-[#FEEFFF]">
+                      {title || 'Untitled Work'}
+                    </h3>
+                    <p className="font-sans text-xs text-[#D5B06C]/80 mt-1">
+                      By {author || 'Anonymous'}
+                    </p>
+                  </div>
+                  <div className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177]">
+                    {metrics.readTime} min read
+                  </div>
+                </GlowingCard>
               </div>
 
               {/* Adjustment Sliders */}

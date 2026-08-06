@@ -1,129 +1,23 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, useScroll, useSpring } from 'framer-motion';
 import AtmosphericBackground from '../components/Shared/AtmosphericBackground';
 import Navigation from '../components/Shared/Navigation';
 import GildedHeart from '../components/Engagement/GildedHeart';
 import AnonymousComments from '../components/Engagement/AnonymousComments';
-import { supabase } from '../lib/supabase';
+import useReader from '../hooks/useReader';
+import useComments from '../hooks/useComments';
+import useAuth from '../hooks/useAuth';
 
 export const ReaderView = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
-  const [work, setWork] = useState(null);
-  const [comments, setComments] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  const isAuthorLoggedIn = sessionStorage.getItem('real_thing_author_auth') === 'true';
+  const { work, loading, handleToggleLike } = useReader(slug);
+  const { comments, addComment, deleteComment } = useComments(work?.id);
+  const { isCurator } = useAuth();
 
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 });
-
-  useEffect(() => {
-    const loadWorkAndComments = async () => {
-      setLoading(true);
-
-      const localCustom = JSON.parse(localStorage.getItem('real_thing_custom_works') || '[]');
-      let activeWork = localCustom.find((w) => w.slug === slug) || null;
-
-      try {
-        if (supabase) {
-          const { data, error } = await supabase
-            .from('works')
-            .select('*')
-            .eq('slug', slug)
-            .single();
-
-          if (!error && data) {
-            activeWork = data;
-          }
-
-          if (activeWork?.id) {
-            const { data: commentsData } = await supabase
-              .from('comments')
-              .select('*')
-              .eq('work_id', activeWork.id)
-              .order('created_at', { ascending: false });
-
-            if (commentsData) {
-              setComments(commentsData);
-            }
-          }
-        }
-      } catch (err) {
-        console.warn('Remote fetch failed:', err);
-      }
-
-      setWork(activeWork);
-      setLoading(false);
-    };
-
-    loadWorkAndComments();
-  }, [slug]);
-
-  const handleToggleLike = async (isLiking, newCount) => {
-    if (!work) return;
-
-    const updatedWork = { ...work, gilded_likes_count: newCount };
-    setWork(updatedWork);
-
-    const localWorks = JSON.parse(localStorage.getItem('real_thing_custom_works') || '[]');
-    const updatedLocal = localWorks.map((w) => (w.slug === slug ? updatedWork : w));
-    localStorage.setItem('real_thing_custom_works', JSON.stringify(updatedLocal));
-
-    try {
-      if (supabase && work.id) {
-        await supabase
-          .from('works')
-          .update({ gilded_likes_count: newCount })
-          .eq('id', work.id);
-      }
-    } catch (err) {
-      console.warn('Like sync failed:', err);
-    }
-  };
-
-  const handleAddComment = async (newCommentData) => {
-    const newComment = {
-      id: Date.now().toString(),
-      work_id: work?.id || slug,
-      ...newCommentData,
-      created_at: new Date().toISOString(),
-    };
-
-    setComments((prev) => [newComment, ...prev]);
-
-    try {
-      if (supabase && work?.id) {
-        const { data } = await supabase.from('comments').insert([
-          {
-            work_id: work.id,
-            author_alias: newComment.author_alias,
-            avatar_seed: newComment.avatar_seed,
-            content: newComment.content,
-          },
-        ]).select();
-
-        if (data && data[0]) {
-          setComments((prev) => prev.map((c) => (c.id === newComment.id ? data[0] : c)));
-        }
-      }
-    } catch (err) {
-      console.warn('Comment insert failed:', err);
-    }
-  };
-
-  const handleDeleteComment = async (commentId) => {
-    setComments((prev) => prev.filter((c) => c.id !== commentId));
-
-    try {
-      if (supabase) {
-        await supabase.from('comments').delete().eq('id', commentId);
-      }
-    } catch (err) {
-      console.warn('Comment delete failed:', err);
-    }
-  };
 
   if (loading) {
     return (
@@ -160,7 +54,6 @@ export const ReaderView = () => {
         style={{ scaleX }}
       />
 
-      {/* Substantially increased top padding (pt-48 md:pt-56) to guarantee title sits comfortably below the header */}
       <main className="relative z-10 max-w-2xl mx-auto px-6 pt-48 md:pt-56 pb-24">
         <header className="text-center mb-16 space-y-3">
           <h1 className="font-serif text-3xl md:text-5xl text-[#FEEFFF] font-normal leading-tight capitalize">
@@ -188,8 +81,8 @@ export const ReaderView = () => {
 
         <AnonymousComments
           comments={comments}
-          onAddComment={handleAddComment}
-          onDeleteComment={isAuthorLoggedIn ? handleDeleteComment : null}
+          onAddComment={addComment}
+          onDeleteComment={isCurator ? deleteComment : null}
         />
       </main>
     </article>

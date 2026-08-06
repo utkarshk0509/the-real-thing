@@ -1,77 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { supabase } from '../../lib/supabase';
+import useAuth from '../../hooks/useAuth';
+import { CACHE_KEYS } from '../../config/constants';
 
 export const Navigation = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
+  const { user, userData, isCurator, login, logout } = useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [userLikes, setUserLikes] = useState([]);
-  const [userComments, setUserComments] = useState([]);
-  const [userWorks, setUserWorks] = useState([]);
-
-  const CURATOR_EMAIL = import.meta.env.VITE_CURATOR_EMAIL || '';
-  const isCurator = user && (user.email === CURATOR_EMAIL || sessionStorage.getItem('real_thing_author_auth') === 'true');
-
-  useEffect(() => {
-    if (supabase) {
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        setUser(session?.user ?? null);
-        if (session?.user) fetchUserData(session.user.id);
-      });
-
-      const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          fetchUserData(session.user.id);
-          if (session.user.email === CURATOR_EMAIL) {
-            sessionStorage.setItem('real_thing_author_auth', 'true');
-          }
-        }
-      });
-
-      return () => authListener?.subscription?.unsubscribe();
-    }
-  }, []);
-
-  const fetchUserData = async (userId) => {
-    if (!supabase) return;
-
-    const { data: likes } = await supabase
-      .from('user_likes')
-      .select('work_id, works(*)')
-      .eq('user_id', userId);
-
-    const { data: comments } = await supabase
-      .from('comments')
-      .select('*, works(title, slug)')
-      .eq('user_id', userId);
-
-    const { data: works } = await supabase
-      .from('works')
-      .select('*')
-      .eq('user_id', userId);
-
-    if (likes) setUserLikes(likes.map((l) => l.works).filter(Boolean));
-    if (comments) setUserComments(comments);
-    if (works) setUserWorks(works);
-  };
 
   const handleGoogleLogin = async () => {
-    if (!supabase) return;
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { 
-        redirectTo: window.location.origin + '/hub' 
-      }
-    });
+    await login();
   };
 
   const handleLogout = async () => {
-    if (supabase) await supabase.auth.signOut();
-    sessionStorage.removeItem('real_thing_author_auth');
-    setUser(null);
+    await logout();
     setIsProfileOpen(false);
     navigate('/hub');
   };
@@ -79,7 +22,7 @@ export const Navigation = () => {
   return (
     <>
       <nav className="fixed top-0 left-0 right-0 z-40 bg-[#080A06]/90 backdrop-blur-md border-b border-[#8A8177]/10 px-4 md:px-6 py-3.5 flex items-center justify-between">
-        {/* Left Logo - Prevent line wrapping on mobile */}
+        {/* Left Logo */}
         <Link to="/" className="font-serif text-base md:text-xl tracking-wider text-[#FEEFFF] hover:text-[#D5B06C] transition-colors whitespace-nowrap cursor-pointer">
           The Real Thing
         </Link>
@@ -99,7 +42,7 @@ export const Navigation = () => {
           {isCurator && (
             <button
               onClick={() => {
-                sessionStorage.setItem('real_thing_author_auth', 'true');
+                sessionStorage.setItem(CACHE_KEYS.AUTHOR_AUTH, 'true');
                 navigate('/portal');
               }}
               className="px-2.5 py-1 rounded border border-[#D5B06C]/40 text-[#D5B06C] font-sans text-[9px] md:text-[10px] uppercase tracking-widest hover:bg-[#D5B06C] hover:text-[#080A06] transition-colors cursor-pointer"
@@ -164,9 +107,9 @@ export const Navigation = () => {
 
                 <div className="space-y-3">
                   <h4 className="font-sans text-xs uppercase tracking-widest text-[#D5B06C]">
-                    Resonances / Liked ({userLikes.length})
+                    Resonances / Liked ({userData.likes.length})
                   </h4>
-                  {userLikes.map((w) => (
+                  {userData.likes.map((w) => (
                     <Link
                       key={w.id}
                       to={`/read/${w.slug}`}

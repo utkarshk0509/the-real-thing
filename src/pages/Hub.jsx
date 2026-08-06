@@ -4,29 +4,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Navigation from '../components/Shared/Navigation';
 import AtmosphericBackground from '../components/Shared/AtmosphericBackground';
 import { GlowingCard } from '../components/Shared/GlowingCard';
-import { supabase } from '../lib/supabase';
+import useWorks from '../hooks/useWorks';
+import siteService from '../services/siteService';
 
 export const Hub = ({ filter }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Load local cache immediately for instant 0ms painting (works for both poems and stories)
-  const getCachedWorks = () => {
-    try {
-      const cached = localStorage.getItem('real_thing_cached_hub_works');
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (parsed.length > 0) return parsed;
-      }
-    } catch (e) {
-      console.warn('Initial cache read error:', e);
-    }
-    return [];
-  };
-
-  const [works, setWorks] = useState(getCachedWorks);
-  // If we already have cached works, loading is false instantly!
-  const [loading, setLoading] = useState(() => getCachedWorks().length === 0);
+  const { works, loading } = useWorks();
   const [aboutBio, setAboutBio] = useState('');
 
   const currentPath = filter || location.pathname;
@@ -34,73 +19,11 @@ export const Hub = ({ filter }) => {
   const isStoriesOnly = currentPath === '/stories';
   const isAboutOnly = currentPath === '/about';
 
-  // Instant Cache + Self-Caching Background Sync
-  useEffect(() => {
-    const loadAllWorks = async () => {
-      let remoteWorks = [];
-
-      try {
-        if (supabase) {
-          const { data, error } = await supabase
-            .from('works')
-            .select('slug, title, category, author, image_url, published_at, read_time_minutes, status, sort_order')
-            .eq('status', 'published');
-
-          if (!error && data) remoteWorks = data;
-        }
-      } catch (err) {
-        console.warn('Supabase fetch failed:', err.message);
-      }
-
-      const localCustom = JSON.parse(localStorage.getItem('real_thing_custom_works') || '[]');
-      
-      const map = new Map();
-      [...remoteWorks, ...localCustom].forEach((item) => {
-        if (item.status === 'published') {
-          map.set(item.slug, item);
-        }
-      });
-
-      let uniqueWorks = Array.from(map.values());
-      uniqueWorks.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
-
-      if (uniqueWorks.length > 0) {
-        setWorks(uniqueWorks);
-        setLoading(false);
-        // Self-cache immediately so future reloads/visits to poems & stories are instant
-        try {
-          localStorage.setItem('real_thing_cached_hub_works', JSON.stringify(uniqueWorks));
-        } catch (e) {
-          console.warn('Cache write notice:', e);
-        }
-      }
-    };
-
-    loadAllWorks();
-  }, [location.pathname]);
-
-  // Fetch live About Bio instantly
+  // Fetch live About Bio instantly via siteService
   useEffect(() => {
     const fetchLiveBio = async () => {
-      const cachedBio = localStorage.getItem('real_thing_author_bio');
-      if (cachedBio) setAboutBio(cachedBio);
-
-      if (supabase) {
-        try {
-          const { data, error } = await supabase
-            .from('site_settings')
-            .select('value')
-            .eq('key', 'author_bio')
-            .single();
-
-          if (!error && data?.value) {
-            setAboutBio(data.value);
-            localStorage.setItem('real_thing_author_bio', data.value);
-          }
-        } catch (err) {
-          console.warn('Cloud bio fetch warning:', err);
-        }
-      }
+      const bio = await siteService.getAuthorBio();
+      setAboutBio(bio);
     };
 
     if (isAboutOnly) {

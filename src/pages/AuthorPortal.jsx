@@ -3,7 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import AtmosphericBackground from '../components/Shared/AtmosphericBackground';
 import { GlowingCard } from '../components/Shared/GlowingCard';
-import { supabase } from '../lib/supabase';
+import workService from '../services/workService';
+import storageService from '../services/storageService';
+import siteService from '../services/siteService';
+import authService from '../services/authService';
 
 export const AuthorPortal = () => {
   const navigate = useNavigate();
@@ -47,69 +50,22 @@ export const AuthorPortal = () => {
     loadWorksAndAbout();
   }, []);
 
-  // Helper to instantly seed the public hub cache for 0ms page loads
-  const updateHubCache = (worksArray) => {
-    try {
-      const publishedOnly = worksArray.filter(w => w.status === 'published');
-      localStorage.setItem('real_thing_cached_hub_works', JSON.stringify(publishedOnly));
-    } catch (e) {
-      console.warn('Cache seed warning:', e);
-    }
-  };
-
   const loadWorksAndAbout = async () => {
-    const savedBio = localStorage.getItem('real_thing_author_bio') || '"The Real Thing" is an open-access literary sanctuary designed for poetry, prose, and quiet contemplation.';
-    setAboutBio(savedBio);
+    const bio = await siteService.getAuthorBio();
+    setAboutBio(bio);
 
-    let combinedWorks = [];
-
-    if (supabase) {
-      try {
-        const { data: dbWorks } = await supabase
-          .from('works')
-          .select('*')
-          .order('sort_order', { ascending: true })
-          .order('created_at', { ascending: false });
-
-        if (dbWorks) combinedWorks = dbWorks;
-      } catch (err) {
-        console.warn('Analytics fetch error:', err);
-      }
-    }
-
-    // Apply any lightweight local sort order rules saved safely
-    const savedOrderMap = JSON.parse(localStorage.getItem('real_thing_custom_works') || '[]');
-    const orderMap = new Map(savedOrderMap.map(item => [item.slug, item.sort_order]));
-
-    combinedWorks = combinedWorks.map(work => {
-      if (orderMap.has(work.slug)) {
-        return { ...work, sort_order: orderMap.get(work.slug) };
-      }
-      return work;
-    });
-
-    // Sort cleanly by sort_order
-    combinedWorks.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+    const combinedWorks = await workService.getAllWorksAdmin();
     setAllWorks(combinedWorks);
-    updateHubCache(combinedWorks); // Seed cache instantly
   };
 
   const handleSaveAboutBio = async (e) => {
     e.preventDefault();
-    localStorage.setItem('real_thing_author_bio', aboutBio);
-
     try {
-      if (supabase) {
-        const { error } = await supabase
-          .from('site_settings')
-          .upsert({ key: 'author_bio', value: aboutBio, updated_at: new Date().toISOString() });
-
-        if (error) throw error;
-      }
-      setStatusMessage({ type: 'success', text: 'About the Author bio successfully published to the cloud!' });
+      await siteService.updateAuthorBio(aboutBio);
+      setStatusMessage({ type: 'success', text: 'About the Author bio successfully published!' });
     } catch (err) {
-      console.warn('Remote bio sync failed:', err);
-      setStatusMessage({ type: 'success', text: 'Bio saved locally (Cloud sync warning).' });
+      console.warn('Bio save notice:', err);
+      setStatusMessage({ type: 'success', text: 'Bio saved locally.' });
     }
   };
 
@@ -136,42 +92,11 @@ export const AuthorPortal = () => {
     setDraggedItemIndex(null);
   };
 
-  // Explicit Save Order Handler (Optimized with lightweight tracking to prevent quota errors)
+  // Explicit Save Order Handler
   const handleSaveOrder = async () => {
     try {
-      // 1. Reassign sequential sort_order indexes (0, 1, 2...)
-      const finalWorks = allWorks.map((work, idx) => ({
-        ...work,
-        sort_order: idx
-      }));
-
+      const finalWorks = await workService.saveOrder(allWorks);
       setAllWorks(finalWorks);
-      updateHubCache(finalWorks); // Update cache immediately
-
-      // 2. Save only lightweight references to localStorage to prevent quota breaches
-      const lightweightMap = finalWorks.map(w => ({
-        slug: w.slug,
-        sort_order: w.sort_order
-      }));
-      localStorage.setItem('real_thing_custom_works', JSON.stringify(lightweightMap));
-
-      // 3. Safely sync to Supabase
-      if (supabase) {
-        for (let work of finalWorks) {
-          if (work.id && !String(work.id).startsWith('17')) {
-            await supabase
-              .from('works')
-              .update({ sort_order: work.sort_order })
-              .eq('id', work.id);
-          } else if (work.slug) {
-            await supabase
-              .from('works')
-              .update({ sort_order: work.sort_order })
-              .eq('slug', work.slug);
-          }
-        }
-      }
-
       setStatusMessage({ type: 'success', text: '✨ Constellation order successfully saved!' });
     } catch (err) {
       console.warn('Order save notice:', err.message);
@@ -212,10 +137,18 @@ export const AuthorPortal = () => {
     }
   };
 
-  const handleApplyCrop = () => {
-    setImageUrl(tempImage);
-    setIsCropModalOpen(false);
-    setStatusMessage({ type: 'success', text: 'Image successfully cropped and applied.' });
+  const handleApplyCrop = async () => {
+    setStatusMessage({ type: 'success', text: 'Compressing image into WebP format...' });
+    try {
+      const compressedUrl = await storageService.uploadCoverImage(tempImage);
+      setImageUrl(compressedUrl);
+      setIsCropModalOpen(false);
+      setStatusMessage({ type: 'success', text: 'Image successfully compressed into WebP & applied.' });
+    } catch (err) {
+      setImageUrl(tempImage);
+      setIsCropModalOpen(false);
+      setStatusMessage({ type: 'success', text: 'Image applied.' });
+    }
   };
 
   const handleLoadWork = (work) => {
@@ -240,26 +173,10 @@ export const AuthorPortal = () => {
 
   const confirmDeleteWork = async () => {
     if (!workToDelete) return;
-    const { id, slug } = workToDelete;
 
-    const filteredWorks = allWorks.filter((w) => w.id !== id && w.slug !== slug);
-    setAllWorks(filteredWorks);
-    updateHubCache(filteredWorks);
+    await workService.deleteWork({ id: workToDelete.id, slug: workToDelete.slug });
 
-    const localWorks = JSON.parse(localStorage.getItem('real_thing_custom_works') || '[]');
-    const updatedLocal = localWorks.filter((w) => w.slug !== slug);
-    localStorage.setItem('real_thing_custom_works', JSON.stringify(updatedLocal));
-
-    try {
-      if (supabase) {
-        if (slug) await supabase.from('works').delete().eq('slug', slug);
-        if (id) await supabase.from('works').delete().eq('id', id);
-      }
-    } catch (err) {
-      console.warn('Remote delete failed:', err);
-    }
-
-    if (editingId === id) clearForm();
+    if (editingId === workToDelete.id) clearForm();
     setStatusMessage({ type: 'success', text: 'Inscription permanently deleted.' });
     setWorkToDelete(null);
     loadWorksAndAbout();
@@ -289,6 +206,15 @@ export const AuthorPortal = () => {
     setIsSubmitting(true);
     setStatusMessage(null);
 
+    let finalImageUrl = imageUrl.trim();
+    if (finalImageUrl.startsWith('data:image/')) {
+      try {
+        finalImageUrl = await storageService.uploadCoverImage(finalImageUrl);
+      } catch (err) {
+        console.warn('WebP storage upload fallback:', err);
+      }
+    }
+
     const slugBase = title
       .toLowerCase()
       .trim()
@@ -296,7 +222,7 @@ export const AuthorPortal = () => {
       .replace(/\s+/g, '-');
 
     const newWork = {
-      id: editingId || Date.now().toString(),
+      id: editingId || undefined,
       title,
       slug: `${slugBase}-${Date.now().toString().slice(-4)}`,
       author: author.trim() || 'Anonymous',
@@ -304,7 +230,7 @@ export const AuthorPortal = () => {
       status: isDraft ? 'draft' : 'published',
       excerpt: excerpt.trim() || body.slice(0, 120) + '...',
       body,
-      image_url: imageUrl.trim() || 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=80&w=600&auto=format&fit=crop',
+      image_url: finalImageUrl || 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=80&w=600&auto=format&fit=crop',
       read_time_minutes: metrics.readTime,
       published_at: isDraft ? null : new Date().toISOString(),
       crop_scale: cropScale,
@@ -313,17 +239,7 @@ export const AuthorPortal = () => {
       sort_order: allWorks.length
     };
 
-    if (supabase) {
-      try {
-        if (editingId) {
-          await supabase.from('works').update(newWork).eq('id', editingId);
-        } else {
-          await supabase.from('works').insert([newWork]);
-        }
-      } catch (err) {
-        console.warn('Supabase upsert warning:', err);
-      }
-    }
+    await workService.upsertWork(newWork);
 
     loadWorksAndAbout();
     setStatusMessage({ type: 'success', text: 'Inscription successfully saved and published!' });
@@ -467,7 +383,7 @@ export const AuthorPortal = () => {
                 onClick={() => fileInputRef.current?.click()}
                 className="w-full py-2 px-3 bg-[#080A06] border border-[#8A8177]/30 text-[#FEEFFF] font-sans text-xs rounded hover:border-[#D5B06C] transition-colors flex items-center justify-center gap-2 cursor-pointer"
               >
-                📷 Upload & Crop Image
+                📷 Upload & Crop Image (WebP)
               </button>
 
               <input

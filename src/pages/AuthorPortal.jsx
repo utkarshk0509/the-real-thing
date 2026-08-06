@@ -398,9 +398,6 @@ export const AuthorPortal = () => {
       crop_scale: cropScale,
       crop_pos_x: cropPosX,
       crop_pos_y: cropPosY,
-      bookshelf_crop_scale: bookshelfCropScale,
-      bookshelf_crop_pos_x: bookshelfCropPosX,
-      bookshelf_crop_pos_y: bookshelfCropPosY,
       sort_order: allWorks.length
     };
 

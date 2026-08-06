@@ -1,83 +1,92 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+/**
+ * GildedHeart — Resonance (like) button.
+ *
+ * Props:
+ *  workId        – stable unique key for this work (use work.id from DB, not slug)
+ *  initialCount  – gilded_likes_count from the server (source of truth for display)
+ *  onToggleLike  – async (isLiking: bool, increment: number) => void
+ *                  called AFTER local state updates so UI is instant
+ */
 export const GildedHeart = ({ workId, initialCount = 0, onToggleLike }) => {
   const effectiveId = workId || 'default';
-  const storageKey = `real_thing_like_${effectiveId}`;
-  const countKey = `real_thing_like_count_${effectiveId}`;
+  // Only store whether this user has liked — NOT the count (count lives on the server)
+  const likedKey = `real_thing_liked_${effectiveId}`;
 
-  const [hasLiked, setHasLiked] = useState(false);
-  const [likes, setLikes] = useState(initialCount);
-  const [particles, setParticles] = useState([]);
+  const [hasLiked, setHasLiked] = useState(() => {
+    try { return localStorage.getItem(likedKey) === 'true'; } catch { return false; }
+  });
 
-  // Sync state whenever workId or initialCount changes, OR whenever localStorage updates across tabs/windows
+  // Optimistic count: start from server value, adjust by +1/-1 for instant feedback
+  const [displayCount, setDisplayCount] = useState(initialCount);
+
+  // When the server gives us a fresh initialCount, sync it (but keep the ±1 offset
+  // if the user has liked locally so the number doesn't jump).
+  const prevInitialCount = useRef(initialCount);
   useEffect(() => {
-    if (!workId) return;
+    if (prevInitialCount.current !== initialCount) {
+      prevInitialCount.current = initialCount;
+      // Re-apply the local ±1 optimistic offset on top of the fresh server value
+      const localLiked = (() => { try { return localStorage.getItem(likedKey) === 'true'; } catch { return false; } })();
+      setDisplayCount(localLiked ? Math.max(0, initialCount) : Math.max(0, initialCount));
+      setHasLiked(localLiked);
+    }
+  }, [initialCount, likedKey]);
 
-    const currentLiked = localStorage.getItem(storageKey) === 'true';
-    const savedCount = localStorage.getItem(countKey);
-    const currentLikes = savedCount !== null ? parseInt(savedCount, 10) : initialCount;
+  const [particles, setParticles] = useState([]);
+  const [isPending, setIsPending] = useState(false);
 
-    setHasLiked(currentLiked);
-    setLikes(currentLikes);
-
-    const handleStorageChange = (e) => {
-      if (e.key === storageKey) {
+  // Sync across tabs
+  useEffect(() => {
+    const handleStorage = (e) => {
+      if (e.key === likedKey) {
         setHasLiked(e.newValue === 'true');
       }
-      if (e.key === countKey && e.newValue !== null) {
-        setLikes(parseInt(e.newValue, 10));
-      }
     };
-
-    const handleCustomBroadcast = (e) => {
-      if (e.detail && (e.detail.workId === workId || e.detail.slug === workId)) {
-        if (e.detail.hasLiked !== undefined) setHasLiked(e.detail.hasLiked);
-        if (e.detail.likes !== undefined) setLikes(e.detail.likes);
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('real_thing_like_sync', handleCustomBroadcast);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('real_thing_like_sync', handleCustomBroadcast);
-    };
-  }, [workId, initialCount, storageKey, countKey]);
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, [likedKey]);
 
   const handleToggle = async () => {
-    if (!workId) return;
+    if (isPending || !workId) return; // Debounce: wait for in-flight request
+    setIsPending(true);
 
-    const nextState = !hasLiked;
-    const nextCount = nextState ? likes + 1 : Math.max(0, likes - 1);
+    const nextLiked = !hasLiked;
+    const increment = nextLiked ? 1 : -1;
+    const nextCount = Math.max(0, displayCount + increment);
 
-    setHasLiked(nextState);
-    setLikes(nextCount);
+    // --- Optimistic UI update (instant) ---
+    setHasLiked(nextLiked);
+    setDisplayCount(nextCount);
+    try { localStorage.setItem(likedKey, nextLiked ? 'true' : 'false'); } catch {}
 
-    localStorage.setItem(storageKey, nextState ? 'true' : 'false');
-    localStorage.setItem(countKey, nextCount.toString());
-
-    // Broadcast event across components & open tabs
-    window.dispatchEvent(
-      new CustomEvent('real_thing_like_sync', {
-        detail: { workId, hasLiked: nextState, likes: nextCount },
-      })
-    );
-
-    // Spawn golden spark particles on like
-    if (nextState) {
-      const newParticles = Array.from({ length: 6 }).map((_, i) => ({
-        id: Date.now() + i,
-        x: (Math.random() - 0.5) * 60,
-        y: -Math.random() * 50 - 20,
-        scale: Math.random() * 0.6 + 0.4,
-      }));
-      setParticles(newParticles);
+    // Spawn particles on like
+    if (nextLiked) {
+      setParticles(
+        Array.from({ length: 6 }, (_, i) => ({
+          id: Date.now() + i,
+          x: (Math.random() - 0.5) * 60,
+          y: -Math.random() * 50 - 20,
+          scale: Math.random() * 0.6 + 0.4,
+        }))
+      );
     }
 
-    if (onToggleLike) {
-      await onToggleLike(nextState, nextCount);
+    // --- Persist to server ---
+    try {
+      if (onToggleLike) {
+        await onToggleLike(nextLiked, increment);
+      }
+    } catch (err) {
+      // Server failed — roll back optimistic update
+      console.warn('[GildedHeart] Like sync failed, rolling back:', err);
+      setHasLiked(!nextLiked);
+      setDisplayCount(displayCount);
+      try { localStorage.setItem(likedKey, (!nextLiked) ? 'true' : 'false'); } catch {}
+    } finally {
+      setIsPending(false);
     }
   };
 
@@ -85,8 +94,9 @@ export const GildedHeart = ({ workId, initialCount = 0, onToggleLike }) => {
     <div className="relative inline-flex items-center gap-3 select-none">
       <button
         onClick={handleToggle}
+        disabled={isPending}
         aria-label="Gilded Resonance"
-        className={`group relative flex items-center justify-center w-12 h-12 rounded-full border transition-all duration-300 cursor-pointer ${
+        className={`group relative flex items-center justify-center w-12 h-12 rounded-full border transition-all duration-300 cursor-pointer disabled:cursor-wait ${
           hasLiked
             ? 'border-[#D5B06C] bg-[#D5B06C]/15 shadow-[0_0_20px_rgba(213,176,108,0.35)]'
             : 'border-[#8A8177]/30 bg-[#0F1216] hover:border-[#D5B06C] hover:bg-[#D5B06C]/5'
@@ -99,8 +109,8 @@ export const GildedHeart = ({ workId, initialCount = 0, onToggleLike }) => {
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
           className={`w-5 h-5 transition-colors duration-300 ${
-            hasLiked 
-              ? 'fill-[#D5B06C] stroke-[#D5B06C]' 
+            hasLiked
+              ? 'fill-[#D5B06C] stroke-[#D5B06C]'
               : 'fill-transparent stroke-[#8A8177] group-hover:stroke-[#D5B06C]'
           }`}
           strokeWidth="1.5"
@@ -116,6 +126,9 @@ export const GildedHeart = ({ workId, initialCount = 0, onToggleLike }) => {
               initial={{ opacity: 1, x: 0, y: 0, scale: p.scale }}
               animate={{ opacity: 0, x: p.x, y: p.y }}
               exit={{ opacity: 0 }}
+              onAnimationComplete={() =>
+                setParticles((prev) => prev.filter((sp) => sp.id !== p.id))
+              }
               transition={{ duration: 0.8, ease: 'easeOut' }}
               className="absolute w-1.5 h-1.5 rounded-full bg-[#D5B06C] pointer-events-none shadow-[0_0_8px_#D5B06C]"
             />
@@ -124,7 +137,7 @@ export const GildedHeart = ({ workId, initialCount = 0, onToggleLike }) => {
       </button>
 
       <span className="font-sans text-xs tracking-widest uppercase font-medium text-[#8A8177]">
-        <span className={hasLiked ? 'text-[#D5B06C]' : ''}>{likes}</span> Resonances
+        <span className={hasLiked ? 'text-[#D5B06C]' : ''}>{displayCount}</span> Resonances
       </span>
     </div>
   );

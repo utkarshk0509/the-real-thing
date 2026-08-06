@@ -118,25 +118,24 @@ export const workService = {
     return combinedWorks;
   },
 
-  /**
-   * Atomic RPC function call to handle likes without returning heavy row payloads.
-   */
   async incrementLikes(workId, incrementBy = 1) {
-    if (!workId) return null;
+    if (!workId) throw new Error('workId is required for incrementLikes');
 
     if (supabase) {
-      try {
-        const { data, error } = await supabase.rpc('increment_work_likes', {
-          work_id_param: workId,
-          increment_by: incrementBy
-        });
+      const { data, error } = await supabase.rpc('increment_work_likes', {
+        work_id_param: workId,
+        increment_by: incrementBy
+      });
 
-        if (!error) return data;
-      } catch (err) {
-        console.warn('[workService] RPC increment_work_likes fallback:', err);
+      if (error) {
+        console.error('[workService] RPC increment_work_likes failed:', error.message);
+        throw new Error(error.message);
       }
+
+      return data;
     }
 
+    // Supabase not configured — like is already tracked locally in GildedHeart
     return null;
   },
 

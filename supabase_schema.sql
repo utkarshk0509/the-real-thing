@@ -93,6 +93,11 @@ BEGIN
 END;
 $$;
 
+-- CRITICAL: Grant EXECUTE to anon and authenticated roles so anonymous visitors can call the RPC.
+-- Without this, Supabase blocks the call for unauthenticated users → intermittent like failures.
+GRANT EXECUTE ON FUNCTION increment_work_likes(UUID, INT) TO anon;
+GRANT EXECUTE ON FUNCTION increment_work_likes(UUID, INT) TO authenticated;
+
 -- 9. ROW LEVEL SECURITY (RLS)
 ALTER TABLE works ENABLE ROW LEVEL SECURITY;
 ALTER TABLE comments ENABLE ROW LEVEL SECURITY;

@@ -48,6 +48,11 @@ export const AuthorPortal = () => {
   const [cropPosX, setCropPosX] = useState(50);
   const [cropPosY, setCropPosY] = useState(50);
 
+  // Interactive Image Drag & Zoom State
+  const [isCropDragging, setIsCropDragging] = useState(false);
+  const cropDragStartRef = useRef({ x: 0, y: 0 });
+  const cropPosStartRef = useRef({ x: 50, y: 50 });
+
   // Works Data & Category Filter States
   const [allWorks, setAllWorks] = useState([]);
   const [libraryCategory, setLibraryCategory] = useState('all'); // 'all' | 'poem' | 'story' | 'draft'
@@ -60,6 +65,77 @@ export const AuthorPortal = () => {
   useEffect(() => {
     loadWorksAndAbout();
   }, []);
+
+  // Global mouse & touch listeners for interactive image cropping
+  useEffect(() => {
+    if (!isCropDragging) return;
+
+    const handleMouseMove = (e) => {
+      const dx = e.clientX - cropDragStartRef.current.x;
+      const dy = e.clientY - cropDragStartRef.current.y;
+
+      const deltaX = (dx / 350) * 100;
+      const deltaY = (dy / 150) * 100;
+
+      const newX = Math.max(0, Math.min(100, cropPosStartRef.current.x - deltaX));
+      const newY = Math.max(0, Math.min(100, cropPosStartRef.current.y - deltaY));
+
+      setCropPosX(Math.round(newX));
+      setCropPosY(Math.round(newY));
+    };
+
+    const handleTouchMove = (e) => {
+      if (e.touches.length !== 1) return;
+      const dx = e.touches[0].clientX - cropDragStartRef.current.x;
+      const dy = e.touches[0].clientY - cropDragStartRef.current.y;
+
+      const deltaX = (dx / 350) * 100;
+      const deltaY = (dy / 150) * 100;
+
+      const newX = Math.max(0, Math.min(100, cropPosStartRef.current.x - deltaX));
+      const newY = Math.max(0, Math.min(100, cropPosStartRef.current.y - deltaY));
+
+      setCropPosX(Math.round(newX));
+      setCropPosY(Math.round(newY));
+    };
+
+    const handleMouseUp = () => {
+      setIsCropDragging(false);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('touchmove', handleTouchMove);
+    window.addEventListener('touchend', handleMouseUp);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleMouseUp);
+    };
+  }, [isCropDragging]);
+
+  const handleCropMouseDown = (e) => {
+    e.preventDefault();
+    setIsCropDragging(true);
+    cropDragStartRef.current = { x: e.clientX, y: e.clientY };
+    cropPosStartRef.current = { x: cropPosX, y: cropPosY };
+  };
+
+  const handleCropTouchStart = (e) => {
+    if (e.touches.length === 1) {
+      setIsCropDragging(true);
+      cropDragStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      cropPosStartRef.current = { x: cropPosX, y: cropPosY };
+    }
+  };
+
+  const handleCropWheel = (e) => {
+    e.preventDefault();
+    const zoomFactor = e.deltaY < 0 ? 0.15 : -0.15;
+    setCropScale((prev) => Math.max(1.0, Math.min(3.0, parseFloat((prev + zoomFactor).toFixed(1)))));
+  };
 
   const loadWorksAndAbout = async () => {
     const bio = await siteService.getAuthorBio();
@@ -95,7 +171,6 @@ export const AuthorPortal = () => {
     e.preventDefault();
     if (draggedItemIndex === null || draggedItemIndex === targetIndex) return;
 
-    // Filter current category items
     const categoryWorks = allWorks.filter((w) => w.category === arrangerCategory);
     const otherWorks = allWorks.filter((w) => w.category !== arrangerCategory);
 
@@ -103,7 +178,6 @@ export const AuthorPortal = () => {
     const [movedItem] = reorderedCategory.splice(draggedItemIndex, 1);
     reorderedCategory.splice(targetIndex, 0, movedItem);
 
-    // Merge back
     const finalMerged = [...reorderedCategory, ...otherWorks];
     setAllWorks(finalMerged);
     setDraggedItemIndex(null);
@@ -335,7 +409,7 @@ export const AuthorPortal = () => {
           </div>
         </header>
 
-        {/* Master Navigation Bar - NO EMOJIS */}
+        {/* Master Navigation Bar */}
         <nav className="flex items-center border-b border-[#8A8177]/20 overflow-x-auto bg-[#0F1216]/50 rounded-xl p-1.5 backdrop-blur-sm gap-1">
           <button
             type="button"
@@ -923,7 +997,7 @@ export const AuthorPortal = () => {
         )}
       </div>
 
-      {/* Image Crop & Alignment Modal */}
+      {/* Interactive Touch & Mouse Image Crop Modal */}
       <AnimatePresence>
         {isCropModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#080A06]/85 backdrop-blur-md">
@@ -944,10 +1018,42 @@ export const AuthorPortal = () => {
                 </button>
               </div>
 
-              {/* Live Card Preview Box */}
+              {/* Interactive Canvas */}
               <div className="space-y-2">
-                <span className="font-sans text-[10px] uppercase tracking-widest text-[#D5B06C]">
-                  Live Card Preview
+                <div className="flex justify-between items-center text-[10px] font-sans uppercase tracking-widest text-[#D5B06C]">
+                  <span>Interactive Canvas (Drag image to align, Scroll wheel to zoom)</span>
+                  <span>{cropScale.toFixed(1)}x Zoom</span>
+                </div>
+
+                <div
+                  onMouseDown={handleCropMouseDown}
+                  onTouchStart={handleCropTouchStart}
+                  onWheel={handleCropWheel}
+                  className="w-full h-44 rounded-xl overflow-hidden border border-[#D5B06C]/40 bg-[#080A06] relative cursor-grab active:cursor-grabbing select-none group"
+                >
+                  {tempImage && (
+                    <img
+                      src={tempImage}
+                      alt="Interactive crop"
+                      className="w-full h-full object-cover pointer-events-none transition-transform duration-75"
+                      style={{
+                        transform: `scale(${cropScale})`,
+                        objectPosition: `${cropPosX}% ${cropPosY}%`
+                      }}
+                    />
+                  )}
+                  <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors pointer-events-none flex items-center justify-center">
+                    <span className="bg-[#0F1216]/80 text-[#FEEFFF] px-3 py-1 rounded text-[10px] uppercase font-sans tracking-widest pointer-events-none border border-[#8A8177]/20">
+                      Drag to Pan • Scroll to Zoom
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Live Card Preview Box */}
+              <div className="space-y-2 pt-2">
+                <span className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177]">
+                  Public Card Banner Result
                 </span>
                 <GlowingCard
                   image={tempImage}
@@ -970,70 +1076,34 @@ export const AuthorPortal = () => {
                 </GlowingCard>
               </div>
 
-              {/* Adjustment Sliders */}
-              <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mb-1">
-                    <span>Zoom Scale</span>
-                    <span>{cropScale.toFixed(1)}x</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="1"
-                    max="3"
-                    step="0.1"
-                    value={cropScale}
-                    onChange={(e) => setCropScale(parseFloat(e.target.value))}
-                    className="w-full accent-[#D5B06C] cursor-pointer"
-                  />
-                </div>
-
-                <div>
-                  <div className="flex justify-between font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mb-1">
-                    <span>Horizontal Alignment (X)</span>
-                    <span>{cropPosX}%</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={cropPosX}
-                    onChange={(e) => setCropPosX(parseInt(e.target.value))}
-                    className="w-full accent-[#D5B06C] cursor-pointer"
-                  />
-                </div>
-
-                <div>
-                  <div className="flex justify-between font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mb-1">
-                    <span>Vertical Alignment (Y)</span>
-                    <span>{cropPosY}%</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={cropPosY}
-                    onChange={(e) => setCropPosY(parseInt(e.target.value))}
-                    className="w-full accent-[#D5B06C] cursor-pointer"
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-3 justify-end pt-2">
+              <div className="flex gap-3 justify-between items-center pt-2">
                 <button
                   type="button"
-                  onClick={() => setIsCropModalOpen(false)}
-                  className="px-4 py-2 rounded border border-[#8A8177]/30 text-[#8A8177] font-sans text-xs uppercase tracking-widest hover:text-[#FEEFFF] transition-colors cursor-pointer"
+                  onClick={() => {
+                    setCropScale(1.0);
+                    setCropPosX(50);
+                    setCropPosY(50);
+                  }}
+                  className="text-[10px] font-sans uppercase tracking-widest text-[#8A8177] hover:text-[#D5B06C] cursor-pointer"
                 >
-                  Cancel
+                  Reset Alignment
                 </button>
-                <button
-                  type="button"
-                  onClick={handleApplyCrop}
-                  className="px-6 py-2 rounded bg-[#D5B06C] text-[#080A06] font-sans text-xs font-semibold uppercase tracking-widest hover:bg-[#FEEFFF] transition-colors cursor-pointer"
-                >
-                  Apply and Attach
-                </button>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsCropModalOpen(false)}
+                    className="px-4 py-2 rounded border border-[#8A8177]/30 text-[#8A8177] font-sans text-xs uppercase tracking-widest hover:text-[#FEEFFF] transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleApplyCrop}
+                    className="px-6 py-2 rounded bg-[#D5B06C] text-[#080A06] font-sans text-xs font-semibold uppercase tracking-widest hover:bg-[#FEEFFF] transition-colors cursor-pointer"
+                  >
+                    Apply and Attach
+                  </button>
+                </div>
               </div>
             </motion.div>
           </div>

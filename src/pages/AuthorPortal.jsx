@@ -407,7 +407,7 @@ export const AuthorPortal = () => {
     await workService.upsertWork(newWork);
     readerProgressService.clearCuratorDraft();
 
-    loadWorksAndAbout();
+    await workService.getPublishedWorks();
     setStatusMessage({ type: 'success', text: 'Inscription successfully saved and published.' });
 
     setTimeout(() => {

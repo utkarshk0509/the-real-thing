@@ -5,6 +5,7 @@ import Navigation from '../components/Shared/Navigation';
 import AtmosphericBackground from '../components/Shared/AtmosphericBackground';
 import workService from '../services/workService';
 import cacheService from '../services/cacheService';
+import readerProgressService from '../services/readerProgressService';
 import { CACHE_KEYS } from '../config/constants';
 
 export const HomeConstellation = () => {
@@ -12,6 +13,7 @@ export const HomeConstellation = () => {
   const [hoveredNode, setHoveredNode] = useState(null);
   const [explodingNode, setExplodingNode] = useState(null);
   const [counts, setCounts] = useState({ poems: 0, stories: 0 });
+  const [lastReadWork, setLastReadWork] = useState(null);
 
   useEffect(() => {
     const loadCounts = async () => {
@@ -28,6 +30,12 @@ export const HomeConstellation = () => {
           const poems = works.filter((w) => w.category === 'poem').length;
           const stories = works.filter((w) => w.category === 'story').length;
           setCounts({ poems, stories });
+        }
+
+        // Load recent progress for Resume Reading pill
+        const recent = readerProgressService.getLastRead();
+        if (recent && recent.title && recent.slug) {
+          setLastReadWork(recent);
         }
       } catch (e) {
         console.warn('[HomeConstellation] Count load error:', e);
@@ -113,13 +121,13 @@ export const HomeConstellation = () => {
         </div>
       ))}
 
-      {/* Twinkling Ambient Stardust Field (30 Stars) */}
+      {/* Twinkling Ambient Stardust Field (30 Micro Pinprick Stars) */}
       {Array.from({ length: 30 }).map((_, i) => (
         <motion.div
           key={i}
           animate={{
-            opacity: [0.15, 0.95, 0.15],
-            scale: [0.8, 1.5, 0.8],
+            opacity: [0.1, 0.5, 0.1],
+            scale: [0.8, 1.1, 0.8],
           }}
           transition={{
             duration: 2 + (i % 4),
@@ -130,7 +138,7 @@ export const HomeConstellation = () => {
             top: `${(i * 17) % 90 + 5}%`,
             left: `${(i * 23) % 95 + 2}%`,
           }}
-          className="absolute w-1.5 h-1.5 bg-[#FEEFFF] rounded-full shadow-[0_0_8px_#D5B06C] pointer-events-none z-0"
+          className="absolute w-[0.5px] h-[0.5px] bg-[#FEEFFF] rounded-full shadow-[0_0_1px_rgba(213,176,108,0.5)] pointer-events-none z-0"
         />
       ))}
 
@@ -235,15 +243,35 @@ export const HomeConstellation = () => {
                 onMouseLeave={() => setHoveredNode(null)}
                 onClick={() => handleNodeClick(node)}
               >
-                {/* Rotating Orbital Ring on Hover */}
+                {/* Astronomical Radar Crosshair Lines on Hover */}
+                {isHovered && !isExploding && (
+                  <>
+                    <motion.div
+                      initial={{ scaleX: 0 }}
+                      animate={{ scaleX: 1 }}
+                      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80vw] h-[1px] bg-gradient-to-r from-transparent via-[#D5B06C]/40 to-transparent pointer-events-none z-0"
+                    />
+                    <motion.div
+                      initial={{ scaleY: 0 }}
+                      animate={{ scaleY: 1 }}
+                      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1px] h-[80vh] bg-gradient-to-b from-transparent via-[#D5B06C]/40 to-transparent pointer-events-none z-0"
+                    />
+                  </>
+                )}
+
+                {/* Rotating Golden Small Orbit Ring around Star (Rotates on Hover) */}
                 {!isExploding && (
                   <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 12 + index * 4, repeat: Infinity, ease: 'linear' }}
-                    className={`absolute -inset-4 rounded-full border border-dashed border-[#D5B06C]/40 pointer-events-none transition-opacity duration-300 ${
-                      isHovered ? 'opacity-100 scale-125' : 'opacity-30'
+                    animate={{ rotate: isHovered ? 360 : 0 }}
+                    transition={{ duration: 5, repeat: isHovered ? Infinity : 0, ease: 'linear' }}
+                    className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full border-2 border-dashed border-[#D5B06C]/30 pointer-events-none transition-all duration-300 ${
+                      isHovered
+                        ? 'border-[#D5B06C] opacity-100 scale-180 shadow-[0_0_30px_rgba(213,176,108,0.9)]'
+                        : 'border-[#D5B06C]/30 opacity-30 scale-100'
                     }`}
-                  />
+                  >
+                    <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#D5B06C] rounded-full shadow-[0_0_12px_#D5B06C]" />
+                  </motion.div>
                 )}
 
                 {/* Supernova Particle Burst Outward Particles */}
@@ -268,29 +296,44 @@ export const HomeConstellation = () => {
                   </div>
                 )}
 
-                {/* Glowing Cosmic Star Dot / Exploding Supernova Core */}
+                {/* Shining Micro Starlight Flare Beams */}
+                {!isExploding && (
+                  <>
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[0.5px] md:w-1 h-[0.0625px] bg-gradient-to-r from-transparent via-[#FEEFFF] to-transparent pointer-events-none group-hover:w-1 transition-all opacity-70" />
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[0.0625px] h-0.5 md:h-1 bg-gradient-to-b from-transparent via-[#FEEFFF] to-transparent pointer-events-none group-hover:h-1 transition-all opacity-70" />
+                  </>
+                )}
+
+                {/* Micro Pinprick Twinkling Star Core */}
                 <motion.div
                   animate={
                     isExploding
-                      ? { scale: [1, 3, 25], opacity: [1, 1, 0] }
+                      ? { scale: [1, 4, 30], opacity: [1, 1, 0] }
                       : isHovered
-                      ? { scale: [1.2, 1.6, 1.4], opacity: [0.8, 1, 0.8] }
-                      : { scale: [1, 1.25, 1], opacity: [0.8, 1, 0.8] }
+                      ? { scale: [1, 1.2, 1.05], opacity: [0.85, 1, 0.85] }
+                      : { scale: [0.8, 1, 0.8], opacity: [0.25, 0.6, 0.25] }
                   }
                   transition={{
-                    duration: isExploding ? 0.65 : isHovered ? 0.5 : 2.5 + index,
+                    duration: isExploding ? 0.65 : isHovered ? 0.5 : 1.3 + index * 0.4,
                     repeat: isExploding ? 0 : Infinity,
-                    ease: isExploding ? 'easeOut' : 'easeInOut',
+                    ease: 'easeInOut',
                   }}
                   className={`relative rounded-full flex items-center justify-center transition-all ${
                     isExploding
-                      ? 'w-10 h-10 bg-[#FEEFFF] shadow-[0_0_100px_#D5B06C,0_0_180px_#FEEFFF]'
+                      ? 'w-6 h-6 bg-[#FEEFFF] shadow-[0_0_80px_#D5B06C,0_0_150px_#FEEFFF]'
                       : isHovered
-                      ? 'w-10 h-10 bg-[#D5B06C] shadow-[0_0_50px_#D5B06C,0_0_20px_#FEEFFF]'
-                      : 'w-7 h-7 bg-[#FEEFFF] shadow-[0_0_30px_#D5B06C,0_0_12px_rgba(254,239,255,0.9)] border-2 border-[#D5B06C]'
+                      ? 'w-2.5 h-2.5 bg-[#D5B06C] shadow-[0_0_12px_#D5B06C]'
+                      : 'w-2 h-2 bg-[#FEEFFF] shadow-[0_0_4px_#D5B06C]'
                   }`}
                 >
-                  <div className="absolute w-2.5 h-2.5 bg-[#080A06] rounded-full" />
+                  <div className="absolute w-[0.2px] h-[0.2px] bg-[#FEEFFF] rounded-full" />
+                  {isHovered && !isExploding && (
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ repeat: Infinity, duration: 4, ease: "linear" }}
+                      className="absolute inset-0 rounded-full border border-dashed border-[#D5B06C]/30"
+                    />
+                  )}
                 </motion.div>
 
                 {/* Glassmorphism Node Label Pill Under Star */}
@@ -301,38 +344,6 @@ export const HomeConstellation = () => {
                     </span>
                   </div>
                 )}
-
-                {/* Rich Hover Popup Card */}
-                <AnimatePresence>
-                  {isHovered && !isExploding && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 12, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                      transition={{ duration: 0.2 }}
-                      className="absolute left-1/2 transform -translate-x-1/2 bottom-20 w-72 md:w-80 bg-[#0F1216]/95 border-2 border-[#D5B06C] p-6 rounded-2xl shadow-[0_15px_50px_rgba(213,176,108,0.4)] backdrop-blur-xl pointer-events-none z-50 text-center space-y-3"
-                    >
-                      <h3 className="font-serif text-xl text-[#D5B06C] tracking-wider">
-                        {node.label}
-                      </h3>
-
-                      <span className="inline-block bg-[#D5B06C]/20 border border-[#D5B06C]/40 text-[#D5B06C] font-sans text-[9px] uppercase tracking-widest px-3 py-0.5 rounded-full">
-                        {node.countLabel}
-                      </span>
-
-                      <p className="font-sans text-xs text-[#FEEFFF]/80 leading-relaxed">
-                        {node.description}
-                      </p>
-
-                      <div className="pt-2 border-t border-[#8A8177]/20 flex items-center justify-center gap-2 text-[#D5B06C]">
-                        <span className="font-sans text-[10px] uppercase tracking-[0.25em] font-semibold">
-                          Enter Sanctuary Tab
-                        </span>
-                        <span>→</span>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
               </div>
             );
           })}

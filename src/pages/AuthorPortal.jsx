@@ -85,18 +85,16 @@ export const AuthorPortal = () => {
   const [readerMessages, setReaderMessages] = useState([]);
 
   useEffect(() => {
-    try {
-      const msgs = JSON.parse(localStorage.getItem('real_thing_author_messages') || '[]');
-      setReaderMessages(msgs);
-    } catch (e) {
-      setReaderMessages([]);
-    }
+    const fetchWhispers = async () => {
+      const msgs = await siteService.getWhispers();
+      setReaderMessages(msgs || []);
+    };
+    fetchWhispers();
   }, [activeView]);
 
-  const handleDeleteMessage = (id) => {
-    const updated = readerMessages.filter((m) => m.id !== id);
-    setReaderMessages(updated);
-    localStorage.setItem('real_thing_author_messages', JSON.stringify(updated));
+  const handleDeleteMessage = async (id) => {
+    const updated = await siteService.deleteWhisper(id);
+    setReaderMessages(updated || []);
   };
 
   useEffect(() => {

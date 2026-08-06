@@ -115,6 +115,99 @@ export const siteService = {
     }
 
     return true;
+  },
+
+  /**
+   * Fetches reader whispers from Supabase (or local fallback).
+   */
+  async getWhispers() {
+    if (supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('site_settings')
+          .select('value')
+          .eq('key', 'reader_whispers')
+          .maybeSingle();
+
+        if (!error && data?.value) {
+          const parsed = typeof data.value === 'string' ? JSON.parse(data.value) : data.value;
+          localStorage.setItem('real_thing_author_messages', JSON.stringify(parsed));
+          return parsed;
+        }
+      } catch (err) {
+        console.warn('[siteService] Remote whispers fetch error:', err);
+      }
+    }
+
+    try {
+      const local = localStorage.getItem('real_thing_author_messages');
+      if (local) return JSON.parse(local);
+    } catch (e) {}
+
+    return [];
+  },
+
+  /**
+   * Saves a new reader whisper into Supabase & LocalStorage.
+   */
+  async sendWhisper(whisperData) {
+    const existingWhispers = await siteService.getWhispers();
+    const newWhisper = {
+      id: Date.now(),
+      sender: whisperData.sender || 'A Quiet Reader',
+      text: whisperData.text,
+      timestamp: new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }),
+    };
+
+    const updatedWhispers = [newWhisper, ...existingWhispers];
+
+    try {
+      localStorage.setItem('real_thing_author_messages', JSON.stringify(updatedWhispers));
+    } catch (e) {}
+
+    if (supabase) {
+      try {
+        await supabase
+          .from('site_settings')
+          .upsert({
+            key: 'reader_whispers',
+            value: JSON.stringify(updatedWhispers),
+            updated_at: new Date().toISOString()
+          });
+      } catch (err) {
+        console.warn('[siteService] Remote whisper send notice:', err);
+      }
+    }
+
+    return updatedWhispers;
+  },
+
+  /**
+   * Deletes a reader whisper by ID from Supabase & LocalStorage.
+   */
+  async deleteWhisper(id) {
+    const existingWhispers = await siteService.getWhispers();
+    const updatedWhispers = existingWhispers.filter((w) => w.id !== id);
+
+    try {
+      localStorage.setItem('real_thing_author_messages', JSON.stringify(updatedWhispers));
+    } catch (e) {}
+
+    if (supabase) {
+      try {
+        await supabase
+          .from('site_settings')
+          .upsert({
+            key: 'reader_whispers',
+            value: JSON.stringify(updatedWhispers),
+            updated_at: new Date().toISOString()
+          });
+      } catch (err) {
+        console.warn('[siteService] Remote whisper delete notice:', err);
+      }
+    }
+
+    return updatedWhispers;
   }
 };
 

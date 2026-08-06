@@ -31,19 +31,15 @@ export const AboutAuthorSanctuary = ({ works = [], bio = '' }) => {
     ? (works.find((w) => w.slug === aboutData.spotlightSlug) || works[0])
     : (works.find((w) => w.category === 'poem') || works[0]);
 
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!message.trim()) return;
 
     try {
-      const existing = JSON.parse(localStorage.getItem('real_thing_author_messages') || '[]');
-      const newMsg = {
-        id: Date.now(),
+      await siteService.sendWhisper({
         sender: senderName.trim() || 'A Quiet Reader',
         text: message.trim(),
-        timestamp: new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }),
-      };
-      localStorage.setItem('real_thing_author_messages', JSON.stringify([newMsg, ...existing]));
+      });
 
       setMessage('');
       setSenderName('');

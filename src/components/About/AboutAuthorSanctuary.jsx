@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Feather, BookOpen, Send, CheckCircle2, Star } from 'lucide-react';
 import { GlowingCard } from '../Shared/GlowingCard';
 import siteService from '../../services/siteService';
+import { supabase } from '../../lib/supabase';
 
 export const AboutAuthorSanctuary = ({ works = [], bio = '' }) => {
   const [expandedCard, setExpandedCard] = useState(null);
@@ -17,6 +18,20 @@ export const AboutAuthorSanctuary = ({ works = [], bio = '' }) => {
       if (data) setAboutData(data);
     };
     fetchCustomAbout();
+
+    if (supabase) {
+      const channel = supabase
+        .channel('realtime_about_changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'site_settings' }, async () => {
+          const updated = await siteService.getAboutData();
+          if (updated) setAboutData(updated);
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
   }, []);
 
   const poemsCount = works.filter((w) => w.category === 'poem').length;

@@ -3,6 +3,8 @@ import workService from '../services/workService';
 import cacheService from '../services/cacheService';
 import { CACHE_KEYS } from '../config/constants';
 
+import { supabase } from '../lib/supabase';
+
 export const useWorks = () => {
   // Read instant cache for 0ms page loads (stale-while-revalidate)
   const getCached = () => cacheService.get(CACHE_KEYS.HUB_WORKS) || [];
@@ -30,7 +32,20 @@ export const useWorks = () => {
 
   useEffect(() => {
     fetchWorks();
-  }, []);
+
+    if (supabase) {
+      const channel = supabase
+        .channel('realtime_works_changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'works' }, () => {
+          fetchWorks();
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [fetchWorks]);
 
   return { works, loading, error, refetch: fetchWorks };
 };

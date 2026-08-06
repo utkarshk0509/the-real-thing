@@ -8,6 +8,7 @@ import workService from '../services/workService';
 import storageService from '../services/storageService';
 import siteService from '../services/siteService';
 import readerProgressService from '../services/readerProgressService';
+import { supabase } from '../lib/supabase';
 
 export const AuthorPortal = () => {
   const navigate = useNavigate();
@@ -90,6 +91,20 @@ export const AuthorPortal = () => {
       setReaderMessages(msgs || []);
     };
     fetchWhispers();
+
+    if (supabase) {
+      const channel = supabase
+        .channel('realtime_whispers_changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'reader_whispers' }, async () => {
+          const updated = await siteService.getWhispers();
+          setReaderMessages(updated || []);
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
   }, [activeView]);
 
   const handleDeleteMessage = async (id) => {

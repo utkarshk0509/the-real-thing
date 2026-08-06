@@ -10,34 +10,44 @@ export const useWorks = () => {
   const getCached = () => cacheService.get(CACHE_KEYS.HUB_WORKS) || [];
 
   const [works, setWorks] = useState(getCached);
-  const [loading, setLoading] = useState(true); // Always start loading to ensure fresh fetch
+  const [loading, setLoading] = useState(true); // Initial load state
   const [error, setError] = useState(null);
 
-  const fetchWorks = useCallback(async () => {
+  const fetchWorks = useCallback(async (isSilent = false) => {
     try {
-      setLoading(true);
+      if (!isSilent) setLoading(true);
       const data = await workService.getPublishedWorks();
       setWorks(data);
       setError(null);
     } catch (err) {
       console.warn('[useWorks] Fetch error:', err);
       setError(err);
-      // Fall back to whatever is cached
       const cached = getCached();
       if (cached.length > 0) setWorks(cached);
     } finally {
-      setLoading(false);
+      if (!isSilent) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchWorks();
+    fetchWorks(false);
 
     if (supabase) {
       const channel = supabase
         .channel('realtime_works_changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'works' }, () => {
-          fetchWorks();
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'works' }, (payload) => {
+          // Perform instant in-place state mutation for silky smooth zero-flicker real-time update
+          if (payload.new) {
+            setWorks((prev) =>
+              prev.map((w) =>
+                w.id === payload.new.id || w.slug === payload.new.slug
+                  ? { ...w, ...payload.new }
+                  : w
+              )
+            );
+          }
+          // Perform silent background refetch without triggering loading state (prevents skeleton cards flicker)
+          fetchWorks(true);
         })
         .subscribe();
 

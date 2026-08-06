@@ -29,8 +29,12 @@ export const useReader = (slug) => {
       const channel = supabase
         .channel(`realtime_work_${slug}`)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'works' }, (payload) => {
-          if (payload.new && (payload.new.slug === slug || payload.new.id === work?.id)) {
-            setWork((prev) => (prev ? { ...prev, gilded_likes_count: payload.new.gilded_likes_count } : prev));
+          if (payload.new) {
+            setWork((prev) =>
+              prev && (prev.slug === slug || prev.id === payload.new.id)
+                ? { ...prev, gilded_likes_count: payload.new.gilded_likes_count }
+                : prev
+            );
           }
         })
         .subscribe();
@@ -39,7 +43,7 @@ export const useReader = (slug) => {
         supabase.removeChannel(channel);
       };
     }
-  }, [slug, fetchWork, work?.id]);
+  }, [slug, fetchWork]);
 
   /**
    * Called by GildedHeart with (isLiking: bool, increment: +1 | -1).

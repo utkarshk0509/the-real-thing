@@ -69,11 +69,19 @@ export const Hub = ({ filter }) => {
       <main className="relative z-10 max-w-5xl mx-auto px-6 pt-36 md:pt-45 space-y-10">
         <div className="flex items-center">
           <button
-            onClick={() => navigate('/hub')}
+            onClick={() => {
+              if (isPoemsOnly || isStoriesOnly || isAboutOnly) {
+                navigate('/hub');
+              } else {
+                navigate('/');
+              }
+            }}
             className="group flex items-center gap-2 font-sans text-xs uppercase tracking-[0.25em] text-[#8A8177] hover:text-[#D5B06C] transition-colors cursor-pointer bg-[#0F1216]/50 border border-[#8A8177]/20 hover:border-[#D5B06C]/40 px-4 py-2 rounded-lg backdrop-blur-sm"
           >
             <span className="group-hover:-translate-x-1 transition-transform">←</span>
-            <span>Return to Constellation</span>
+            <span>
+              {isPoemsOnly || isStoriesOnly || isAboutOnly ? 'Return to Constellation' : 'Return to Sanctuary'}
+            </span>
           </button>
         </div>
 

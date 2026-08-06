@@ -38,11 +38,14 @@ export const ReaderView = () => {
           onClick={() => navigate('/hub')}
           className="mt-4 font-sans text-xs uppercase tracking-widest px-6 py-2.5 rounded border border-[#D5B06C]/40 text-[#D5B06C] hover:bg-[#D5B06C] hover:text-[#080A06] transition-all cursor-pointer"
         >
-          Return to Hub
+          Return to Constellation
         </button>
       </div>
     );
   }
+
+  const categoryLabel = work?.category === 'story' ? 'Stories' : work?.category === 'poem' ? 'Poems' : 'Constellation';
+  const categoryRoute = work?.category === 'story' ? '/stories' : work?.category === 'poem' ? '/poems' : '/hub';
 
   return (
     <article className="relative min-h-screen bg-[#080A06] text-[#FEEFFF] selection:bg-[#D5B06C]/30 selection:text-[#FEEFFF]">
@@ -54,7 +57,18 @@ export const ReaderView = () => {
         style={{ scaleX }}
       />
 
-      <main className="relative z-10 max-w-2xl mx-auto px-6 pt-48 md:pt-56 pb-24">
+      <main className="relative z-10 max-w-2xl mx-auto px-6 pt-36 md:pt-44 pb-24">
+        {/* Hierarchical Return Navigation Button */}
+        <div className="mb-8 flex items-center">
+          <button
+            onClick={() => navigate(categoryRoute)}
+            className="group flex items-center gap-2 font-sans text-xs uppercase tracking-[0.25em] text-[#8A8177] hover:text-[#D5B06C] transition-colors cursor-pointer bg-[#0F1216]/50 border border-[#8A8177]/20 hover:border-[#D5B06C]/40 px-4 py-2 rounded-lg backdrop-blur-sm"
+          >
+            <span className="group-hover:-translate-x-1 transition-transform">←</span>
+            <span>Return to {categoryLabel}</span>
+          </button>
+        </div>
+
         <header className="text-center mb-16 space-y-3">
           <h1 className="font-serif text-3xl md:text-5xl text-[#FEEFFF] font-normal leading-tight capitalize">
             {work.title}

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import workService from '../services/workService';
+import { supabase } from '../lib/supabase';
 
 export const useReader = (slug) => {
   const [work, setWork] = useState(null);
@@ -23,7 +24,22 @@ export const useReader = (slug) => {
 
   useEffect(() => {
     fetchWork();
-  }, [slug, fetchWork]);
+
+    if (supabase && slug) {
+      const channel = supabase
+        .channel(`realtime_work_${slug}`)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'works' }, (payload) => {
+          if (payload.new && (payload.new.slug === slug || payload.new.id === work?.id)) {
+            setWork((prev) => (prev ? { ...prev, gilded_likes_count: payload.new.gilded_likes_count } : prev));
+          }
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [slug, fetchWork, work?.id]);
 
   /**
    * Called by GildedHeart with (isLiking: bool, increment: +1 | -1).

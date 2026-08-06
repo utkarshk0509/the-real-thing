@@ -528,9 +528,16 @@ export const ReaderView = () => {
                     <span className="font-sans text-[9px] uppercase tracking-[0.3em] text-[#D5B06C] font-semibold">
                       Sanctuary Archive • {work.category}
                     </span>
-                    <h1 className="font-serif text-3xl md:text-4xl text-[#FEEFFF] font-normal leading-snug">
-                      {work.title}
-                    </h1>
+                    <div className="flex items-center justify-center gap-3">
+                      <GildedHeart
+                        workId={work.slug || work.id}
+                        initialCount={work.gilded_likes_count || 0}
+                        onToggleLike={handleToggleLike}
+                      />
+                      <h1 className="font-serif text-3xl md:text-4xl text-[#FEEFFF] font-normal leading-snug">
+                        {work.title}
+                      </h1>
+                    </div>
                     <p className="font-sans text-xs uppercase tracking-[0.2em] text-[#8A8177]">
                       By {work.author}
                     </p>
@@ -554,13 +561,20 @@ export const ReaderView = () => {
                   <div className="absolute top-0 bottom-0 left-0 w-8 bg-gradient-to-r from-black/60 to-transparent pointer-events-none z-10" />
 
                   {/* Mobile Header */}
-                  <header className="block md:hidden text-center mb-8 space-y-2 border-b border-[#D5B06C]/30 pb-4">
+                  <header className="block md:hidden text-center mb-8 space-y-3 border-b border-[#D5B06C]/30 pb-4">
                     <span className="font-sans text-[8px] uppercase tracking-[0.25em] text-[#D5B06C]">
                       {work.category}
                     </span>
-                    <h1 className="font-serif text-2xl text-[#FEEFFF] font-normal leading-tight">
-                      {work.title}
-                    </h1>
+                    <div className="flex items-center justify-center gap-2.5">
+                      <GildedHeart
+                        workId={work.slug || work.id}
+                        initialCount={work.gilded_likes_count || 0}
+                        onToggleLike={handleToggleLike}
+                      />
+                      <h1 className="font-serif text-2xl text-[#FEEFFF] font-normal leading-tight">
+                        {work.title}
+                      </h1>
+                    </div>
                     <p className="font-sans text-xs uppercase tracking-[0.2em] text-[#8A8177]">
                       By {work.author}
                     </p>
@@ -569,15 +583,6 @@ export const ReaderView = () => {
                   {/* Text Body with Bookmarks */}
                   <div className={`${FONT_FAMILIES[readerSettings.fontFamily] || 'font-serif'} ${FONT_SIZES[readerSettings.fontSize] || 'text-base md:text-lg'} ${activeTheme.text} mb-10 text-left relative z-20`}>
                     {renderParagraphs(work.body)}
-                  </div>
-
-                  {/* Gilded Heart Resonance Like Button */}
-                  <div className="my-8 flex items-center justify-center sm:justify-start relative z-20">
-                    <GildedHeart
-                      workId={work.slug || work.id}
-                      initialCount={work.gilded_likes_count || 0}
-                      onToggleLike={handleToggleLike}
-                    />
                   </div>
 
                   {/* Comments Section */}
@@ -641,9 +646,16 @@ export const ReaderView = () => {
           /* Grid View Minimalist Container */
           <div className={`${activeTheme.cardBg} border ${activeTheme.border} p-6 md:p-12 rounded-2xl shadow-xl transition-colors duration-500`}>
             <header className="text-center mb-14 space-y-3 pt-2">
-              <h1 className="font-serif text-3xl md:text-5xl text-[#FEEFFF] font-normal leading-tight capitalize">
-                {work.title}
-              </h1>
+              <div className="flex items-center justify-center gap-3">
+                <GildedHeart
+                  workId={work.slug || work.id}
+                  initialCount={work.gilded_likes_count || 0}
+                  onToggleLike={handleToggleLike}
+                />
+                <h1 className="font-serif text-3xl md:text-5xl text-[#FEEFFF] font-normal leading-tight capitalize">
+                  {work.title}
+                </h1>
+              </div>
               <p className={`font-sans text-xs uppercase tracking-[0.2em] ${activeTheme.accent}`}>
                 By {work.author}
               </p>
@@ -652,15 +664,6 @@ export const ReaderView = () => {
             {/* Text Body with Bookmarks */}
             <div className={`${FONT_FAMILIES[readerSettings.fontFamily] || 'font-serif'} ${FONT_SIZES[readerSettings.fontSize] || 'text-lg md:text-xl'} ${activeTheme.text} mb-12 text-left`}>
               {renderParagraphs(work.body)}
-            </div>
-
-            {/* Gilded Heart Resonance Like Button */}
-            <div className="my-10 flex items-center justify-center sm:justify-start">
-              <GildedHeart
-                workId={work.slug || work.id}
-                initialCount={work.gilded_likes_count || 0}
-                onToggleLike={handleToggleLike}
-              />
             </div>
 
             {/* Comments Section */}

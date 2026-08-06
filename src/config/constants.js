@@ -6,7 +6,7 @@
 // Supabase Projections
 export const PROJECTIONS = {
   // Lightweight projection for lists/cards
-  CARD_LIST: 'id, slug, title, category, author, image_url, published_at, read_time_minutes, status, sort_order, crop_scale, crop_pos_x, crop_pos_y',
+  CARD_LIST: 'id, slug, title, category, author, image_url, published_at, read_time_minutes, status, sort_order, gilded_likes_count, crop_scale, crop_pos_x, crop_pos_y',
   
   // Full projection for Reader view
   WORK_FULL: 'id, slug, title, category, author, excerpt, body, image_url, published_at, read_time_minutes, status, sort_order, gilded_likes_count, crop_scale, crop_pos_x, crop_pos_y',

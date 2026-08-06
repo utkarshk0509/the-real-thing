@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Heart } from 'lucide-react';
 import Navigation from '../components/Shared/Navigation';
 import CosmicNebulaBackground from '../components/Shared/CosmicNebulaBackground';
 import { GlowingCard } from '../components/Shared/GlowingCard';
@@ -228,7 +229,13 @@ export const Hub = ({ filter }) => {
                               </p>
                             </div>
                             <div className="flex items-center justify-between font-sans text-[10px] uppercase tracking-widest text-[#8A8177]">
-                              <span>{poem.read_time_minutes} min <span className="mx-1 text-[#D5B06C]">•</span> {new Date(poem.published_at || Date.now()).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</span>
+                              <div className="flex items-center gap-2">
+                                <span>{poem.read_time_minutes} min <span className="mx-1 text-[#D5B06C]">•</span> {new Date(poem.published_at || Date.now()).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</span>
+                                <span className="inline-flex items-center gap-1 bg-[#D5B06C]/10 border border-[#D5B06C]/30 px-2 py-0.5 rounded-full text-[#D5B06C] font-sans text-[9px] font-medium lowercase tracking-normal">
+                                  <Heart className="w-2.5 h-2.5 fill-[#D5B06C]" />
+                                  <span>{poem.gilded_likes_count || poem.gildedLikesCount || 0}</span>
+                                </span>
+                              </div>
                               {allProgress[poem.slug] > 0 && (
                                 <span className="inline-flex items-center gap-1 bg-[#D5B06C]/10 border border-[#D5B06C]/40 px-2 py-0.5 rounded-full text-[#D5B06C] font-sans text-[9px] uppercase tracking-widest font-semibold shadow-[0_0_10px_rgba(213,176,108,0.2)]">
                                   <span>{allProgress[poem.slug] >= 90 ? '100% Completed' : `${allProgress[poem.slug]}% Read`}</span>
@@ -279,7 +286,13 @@ export const Hub = ({ filter }) => {
                                 </p>
                               </div>
                               <div className="flex items-center justify-between font-sans text-[10px] uppercase tracking-widest text-[#8A8177]">
-                                <span>{story.read_time_minutes} min read</span>
+                                <div className="flex items-center gap-2">
+                                  <span>{story.read_time_minutes} min read</span>
+                                  <span className="inline-flex items-center gap-1 bg-[#D5B06C]/10 border border-[#D5B06C]/30 px-2 py-0.5 rounded-full text-[#D5B06C] font-sans text-[9px] font-medium lowercase tracking-normal">
+                                    <Heart className="w-2.5 h-2.5 fill-[#D5B06C]" />
+                                    <span>{story.gilded_likes_count || story.gildedLikesCount || 0}</span>
+                                  </span>
+                                </div>
                                 {allProgress[story.slug] > 0 && (
                                   <span className="inline-flex items-center gap-1 bg-[#7CB9E8]/10 border border-[#7CB9E8]/40 px-2 py-0.5 rounded-full text-[#7CB9E8] font-sans text-[9px] uppercase tracking-widest font-semibold shadow-[0_0_10px_rgba(124,185,232,0.2)]">
                                     <span>{allProgress[story.slug] >= 90 ? '100% Completed' : `${allProgress[story.slug]}% Read`}</span>

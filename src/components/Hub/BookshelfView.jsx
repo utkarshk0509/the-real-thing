@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Heart } from 'lucide-react';
 import { readerProgressService } from '../../services/readerProgressService';
 
 export const BookshelfView = ({ works, onSelectWork }) => {
@@ -116,8 +117,12 @@ export const BookshelfView = ({ works, onSelectWork }) => {
                       {/* Cover Typography & Reading Percentage Tag */}
                       <div className="relative z-20 p-4 md:p-5 h-full flex flex-col justify-between pl-6 md:pl-7">
                         <div className="flex items-center justify-between border-b border-[#D5B06C]/30 pb-2">
-                          <span className="font-sans text-[8px] md:text-[9px] uppercase tracking-[0.25em] text-[#D5B06C] font-semibold">
-                            {work.category}
+                          <span className="font-sans text-[8px] md:text-[9px] uppercase tracking-[0.25em] text-[#D5B06C] font-semibold flex items-center gap-1">
+                            <span>{work.category}</span>
+                            <span className="inline-flex items-center gap-0.5 text-[#D5B06C] ml-1">
+                              <Heart className="w-2.5 h-2.5 fill-[#D5B06C]" />
+                              <span className="text-[8px] font-sans">{work.gilded_likes_count || work.gildedLikesCount || 0}</span>
+                            </span>
                           </span>
                           {progress > 0 ? (
                             <span className="bg-[#D5B06C]/25 border border-[#D5B06C]/60 px-1.5 py-0.5 rounded text-[8px] md:text-[9px] font-sans text-[#D5B06C] uppercase tracking-wider font-semibold shadow-[0_0_8px_rgba(213,176,108,0.3)]">

@@ -168,3 +168,25 @@ CREATE POLICY "Admin Update Covers" ON storage.objects
 DROP POLICY IF EXISTS "Admin Delete Covers" ON storage.objects;
 CREATE POLICY "Admin Delete Covers" ON storage.objects
   FOR DELETE USING (bucket_id = 'covers' AND auth.role() = 'authenticated');
+
+-- 11. CREATE READER_WHISPERS TABLE & PUBLIC INSERT RLS POLICY
+CREATE TABLE IF NOT EXISTS reader_whispers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  sender TEXT NOT NULL DEFAULT 'A Quiet Reader',
+  message TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE reader_whispers ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Public insert whispers" ON reader_whispers;
+CREATE POLICY "Public insert whispers" ON reader_whispers
+  FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Public select whispers" ON reader_whispers;
+CREATE POLICY "Public select whispers" ON reader_whispers
+  FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Admin delete whispers" ON reader_whispers;
+CREATE POLICY "Admin delete whispers" ON reader_whispers
+  FOR DELETE USING (auth.role() = 'authenticated');

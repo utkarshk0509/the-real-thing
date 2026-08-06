@@ -29,13 +29,13 @@ export const Navigation = () => {
 
         {/* Right side navigation items */}
         <div className="flex items-center gap-3 md:gap-6">
-          <Link to="/poems" className="font-sans text-[11px] md:text-xs uppercase tracking-widest text-[#8A8177] hover:text-[#D5B06C] transition-colors">
+          <Link to="/poems" replace className="font-sans text-[11px] md:text-xs uppercase tracking-widest text-[#8A8177] hover:text-[#D5B06C] transition-colors">
             Poems
           </Link>
-          <Link to="/stories" className="font-sans text-[11px] md:text-xs uppercase tracking-widest text-[#8A8177] hover:text-[#D5B06C] transition-colors">
+          <Link to="/stories" replace className="font-sans text-[11px] md:text-xs uppercase tracking-widest text-[#8A8177] hover:text-[#D5B06C] transition-colors">
             Stories
           </Link>
-          <Link to="/about" className="hidden sm:inline-block font-sans text-xs uppercase tracking-widest text-[#8A8177] hover:text-[#D5B06C] transition-colors">
+          <Link to="/about" replace className="hidden sm:inline-block font-sans text-xs uppercase tracking-widest text-[#8A8177] hover:text-[#D5B06C] transition-colors">
             About
           </Link>
 

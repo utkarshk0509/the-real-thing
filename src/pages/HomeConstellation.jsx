@@ -481,98 +481,136 @@ export const HomeConstellation = () => {
           </motion.button>
         </div>
 
-        {/* ── Random Inscription Oracle Modal ── */}
+        {/* ── Random Inscription Oracle Modal (Ultra-Premium Astrolabe Edition) ── */}
         <AnimatePresence>
           {isOracleOpen && oracleWork && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#050608]/85 backdrop-blur-xl"
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#050608]/90 backdrop-blur-2xl"
               onClick={() => setIsOracleOpen(false)}
             >
+              {/* Outer Glowing Starlight Container Border */}
               <motion.div
-                initial={{ scale: 0.9, opacity: 0, y: 25 }}
+                initial={{ scale: 0.9, opacity: 0, y: 30 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.9, opacity: 0, y: 25 }}
-                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                exit={{ scale: 0.9, opacity: 0, y: 30 }}
+                transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
                 onClick={(e) => e.stopPropagation()}
-                className="relative max-w-xl w-full bg-gradient-to-b from-[#12161F]/95 via-[#0F1216]/95 to-[#080A06]/98 border border-[#D5B06C]/50 rounded-3xl p-8 md:p-10 text-center space-y-6 shadow-[0_0_80px_rgba(213,176,108,0.25)] overflow-hidden backdrop-blur-2xl"
+                className="relative max-w-xl w-full p-[1.5px] rounded-3xl bg-gradient-to-b from-[#D5B06C] via-[#8A8177]/40 to-[#D5B06C] shadow-[0_0_90px_rgba(213,176,108,0.35)] overflow-hidden"
               >
-                {/* Ambient Starlight Background Pulse */}
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(213,176,108,0.15)_0%,transparent_70%)] pointer-events-none" />
-
-                {/* Astrolabe Corner Accents */}
-                <div className="absolute top-3 left-3 w-3 h-3 border-t-2 border-l-2 border-[#D5B06C]/60" />
-                <div className="absolute top-3 right-3 w-3 h-3 border-t-2 border-r-2 border-[#D5B06C]/60" />
-                <div className="absolute bottom-3 left-3 w-3 h-3 border-b-2 border-l-2 border-[#D5B06C]/60" />
-                <div className="absolute bottom-3 right-3 w-3 h-3 border-b-2 border-r-2 border-[#D5B06C]/60" />
-
-                {/* Close Button */}
-                <button
-                  onClick={() => setIsOracleOpen(false)}
-                  className="absolute top-4 right-4 text-[#8A8177] hover:text-[#D5B06C] transition-colors p-2 font-sans text-xs uppercase cursor-pointer z-20"
-                >
-                  ✕
-                </button>
-
-                {/* Header Tagline */}
-                <div className="relative z-10 space-y-2">
-                  <div className="flex items-center justify-center gap-2">
-                    <Sparkles className="w-3.5 h-3.5 text-[#D5B06C] animate-pulse" />
-                    <span className="font-sans text-[10px] uppercase tracking-[0.35em] text-[#D5B06C] font-semibold">
-                      Oracle Inscription • {oracleWork.category}
-                    </span>
-                    <Sparkles className="w-3.5 h-3.5 text-[#D5B06C] animate-pulse" />
+                {/* Inner Obsidian Luxury Body */}
+                <div className="relative w-full bg-gradient-to-b from-[#141822] via-[#0F1216] to-[#080A06] rounded-[23px] p-8 md:p-11 text-center space-y-7 overflow-hidden">
+                  
+                  {/* Slow Rotating Astronomical Astrolabe Compass SVG in Background */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
+                    <motion.svg
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
+                      viewBox="0 0 300 300"
+                      className="w-[340px] h-[340px] text-[#D5B06C]"
+                    >
+                      <circle cx="150" cy="150" r="140" fill="none" stroke="currentColor" strokeWidth="0.8" strokeDasharray="3 6" />
+                      <circle cx="150" cy="150" r="115" fill="none" stroke="currentColor" strokeWidth="0.5" strokeDasharray="2 4" />
+                      <circle cx="150" cy="150" r="85" fill="none" stroke="currentColor" strokeWidth="0.5" strokeDasharray="1 3" />
+                      <circle cx="150" cy="150" r="50" fill="none" stroke="currentColor" strokeWidth="0.5" />
+                      <line x1="150" y1="5" x2="150" y2="295" stroke="currentColor" strokeWidth="0.5" strokeDasharray="2 4" />
+                      <line x1="5" y1="150" x2="295" y2="150" stroke="currentColor" strokeWidth="0.5" strokeDasharray="2 4" />
+                      <polygon points="150,15 153,30 147,30" fill="currentColor" />
+                      <polygon points="150,285 153,270 147,270" fill="currentColor" />
+                      <polygon points="15,150 30,153 30,147" fill="currentColor" />
+                      <polygon points="285,150 270,153 270,147" fill="currentColor" />
+                    </motion.svg>
                   </div>
 
-                  <h3 className="font-serif text-2xl md:text-4xl text-[#FEEFFF] font-normal tracking-wide">
-                    {oracleWork.title}
-                  </h3>
+                  {/* Ambient Starlight Glow Center Pulse */}
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(213,176,108,0.18)_0%,transparent_65%)] pointer-events-none" />
 
-                  <p className="font-sans text-xs uppercase tracking-[0.25em] text-[#8A8177]">
-                    By {oracleWork.author} {oracleWork.read_time_minutes && `• ${oracleWork.read_time_minutes} min read`}
-                  </p>
-                </div>
+                  {/* Corner Celestial Filigree Accents */}
+                  <div className="absolute top-3.5 left-3.5 w-4 h-4 border-t-2 border-l-2 border-[#D5B06C] shadow-[0_0_8px_#D5B06C]" />
+                  <div className="absolute top-3.5 right-3.5 w-4 h-4 border-t-2 border-r-2 border-[#D5B06C] shadow-[0_0_8px_#D5B06C]" />
+                  <div className="absolute bottom-3.5 left-3.5 w-4 h-4 border-b-2 border-l-2 border-[#D5B06C] shadow-[0_0_8px_#D5B06C]" />
+                  <div className="absolute bottom-3.5 right-3.5 w-4 h-4 border-b-2 border-r-2 border-[#D5B06C] shadow-[0_0_8px_#D5B06C]" />
 
-                <div className="relative z-10 h-px w-32 bg-gradient-to-r from-transparent via-[#D5B06C] to-transparent mx-auto" />
-
-                {/* Poetic Stanza Quote Card */}
-                <motion.div
-                  key={oracleWork.snippet}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="relative z-10 p-6 rounded-2xl bg-black/40 border border-[#D5B06C]/20 backdrop-blur-md space-y-2"
-                >
-                  <span className="font-serif text-3xl text-[#D5B06C]/40 block leading-none select-none">“</span>
-                  <blockquote className="font-serif text-lg md:text-xl text-[#FEEFFF] italic leading-relaxed font-light px-2">
-                    {oracleWork.snippet}
-                  </blockquote>
-                  <span className="font-serif text-3xl text-[#D5B06C]/40 block leading-none select-none text-right">”</span>
-                </motion.div>
-
-                {/* Action Buttons */}
-                <div className="relative z-10 pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+                  {/* Top Close Button */}
                   <button
-                    onClick={() => {
-                      setIsOracleOpen(false);
-                      if (oracleWork.slug && oracleWork.slug !== 'hub') {
-                        navigate(`/read/${oracleWork.slug}`);
-                      }
-                    }}
-                    className="w-full sm:w-auto px-7 py-3 rounded-full bg-[#D5B06C] text-[#080A06] font-sans text-xs font-semibold uppercase tracking-widest hover:bg-[#FEEFFF] transition-all shadow-[0_0_25px_rgba(213,176,108,0.4)] cursor-pointer"
+                    onClick={() => setIsOracleOpen(false)}
+                    className="absolute top-4 right-5 text-[#8A8177] hover:text-[#D5B06C] transition-colors p-2 font-sans text-xs uppercase cursor-pointer z-30"
                   >
-                    Read Full Inscription →
+                    ✕
                   </button>
 
-                  <button
-                    onClick={handleOpenOracle}
-                    className="w-full sm:w-auto px-5 py-3 rounded-full border border-[#D5B06C]/40 bg-[#0F1216]/80 text-[#D5B06C] hover:text-[#FEEFFF] hover:border-[#D5B06C] font-sans text-xs uppercase tracking-widest transition-all cursor-pointer flex items-center justify-center gap-2 backdrop-blur-md"
+                  {/* Header Tagline & Gold Emblem */}
+                  <div className="relative z-20 space-y-3">
+                    <div className="flex items-center justify-center gap-2.5">
+                      <span className="h-px w-8 bg-gradient-to-r from-transparent to-[#D5B06C]" />
+                      <div className="p-1.5 rounded-full bg-[#D5B06C]/15 border border-[#D5B06C]/60 text-[#D5B06C] shadow-[0_0_12px_rgba(213,176,108,0.4)]">
+                        <Sparkles className="w-4 h-4 animate-pulse" />
+                      </div>
+                      <span className="font-sans text-[10px] uppercase tracking-[0.4em] text-[#D5B06C] font-semibold">
+                        ◈ CELESTIAL ORACLE INCRIPTION ◈
+                      </span>
+                      <span className="h-px w-8 bg-gradient-to-l from-transparent to-[#D5B06C]" />
+                    </div>
+
+                    <h3 className="font-serif text-2xl md:text-4xl text-[#FEEFFF] font-normal tracking-wide drop-shadow-lg">
+                      {oracleWork.title}
+                    </h3>
+
+                    <div className="flex items-center justify-center gap-2 font-sans text-[10px] uppercase tracking-[0.25em] text-[#8A8177]">
+                      <span>By {oracleWork.author}</span>
+                      <span className="text-[#D5B06C]">•</span>
+                      <span className="text-[#D5B06C] font-medium">{oracleWork.category}</span>
+                      {oracleWork.read_time_minutes && (
+                        <>
+                          <span className="text-[#D5B06C]">•</span>
+                          <span>{oracleWork.read_time_minutes} min read</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Animated Gold Shimmer Divider */}
+                  <div className="relative z-20 h-px w-40 bg-gradient-to-r from-transparent via-[#D5B06C] to-transparent mx-auto shadow-[0_0_10px_#D5B06C]" />
+
+                  {/* Poetic Stanza Quote Card */}
+                  <motion.div
+                    key={oracleWork.snippet}
+                    initial={{ opacity: 0, scale: 0.96, y: 12 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    transition={{ duration: 0.35, ease: 'easeOut' }}
+                    className="relative z-20 p-6 md:p-8 rounded-2xl bg-black/60 border border-[#D5B06C]/35 backdrop-blur-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] space-y-3"
                   >
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>Another Stanza</span>
-                  </button>
+                    <span className="font-serif text-4xl text-[#D5B06C]/50 block leading-none select-none font-bold">“</span>
+                    <blockquote className="font-serif text-lg md:text-2xl text-[#FEEFFF] italic leading-relaxed font-light px-3 tracking-wide">
+                      {oracleWork.snippet}
+                    </blockquote>
+                    <span className="font-serif text-4xl text-[#D5B06C]/50 block leading-none select-none text-right font-bold">”</span>
+                  </motion.div>
+
+                  {/* Action Buttons */}
+                  <div className="relative z-20 pt-2 flex flex-col sm:flex-row items-center justify-center gap-4">
+                    <button
+                      onClick={() => {
+                        setIsOracleOpen(false);
+                        if (oracleWork.slug && oracleWork.slug !== 'hub') {
+                          navigate(`/read/${oracleWork.slug}`);
+                        }
+                      }}
+                      className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-gradient-to-r from-[#D5B06C] via-[#FEEFFF] to-[#D5B06C] text-[#080A06] font-sans text-xs font-bold uppercase tracking-[0.2em] hover:scale-105 transition-all shadow-[0_0_30px_rgba(213,176,108,0.5)] cursor-pointer"
+                    >
+                      Read Full Inscription →
+                    </button>
+
+                    <button
+                      onClick={handleOpenOracle}
+                      className="w-full sm:w-auto px-6 py-3.5 rounded-full border border-[#D5B06C]/60 bg-[#0F1216]/90 text-[#D5B06C] hover:text-[#FEEFFF] hover:border-[#D5B06C] font-sans text-xs uppercase tracking-[0.2em] transition-all cursor-pointer flex items-center justify-center gap-2 backdrop-blur-md hover:bg-[#D5B06C]/15 shadow-md"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Another Stanza ✨</span>
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             </motion.div>

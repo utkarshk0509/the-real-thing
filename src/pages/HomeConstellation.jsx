@@ -488,39 +488,72 @@ export const HomeConstellation = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#050608]/85 backdrop-blur-xl"
               onClick={() => setIsOracleOpen(false)}
             >
               <motion.div
-                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                initial={{ scale: 0.9, opacity: 0, y: 25 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                exit={{ scale: 0.9, opacity: 0, y: 25 }}
+                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                 onClick={(e) => e.stopPropagation()}
-                className="relative max-w-lg w-full bg-[#0F1216] border border-[#D5B06C]/50 rounded-2xl p-6 md:p-8 text-center space-y-5 shadow-[0_0_60px_rgba(213,176,108,0.3)] overflow-hidden"
+                className="relative max-w-xl w-full bg-gradient-to-b from-[#12161F]/95 via-[#0F1216]/95 to-[#080A06]/98 border border-[#D5B06C]/50 rounded-3xl p-8 md:p-10 text-center space-y-6 shadow-[0_0_80px_rgba(213,176,108,0.25)] overflow-hidden backdrop-blur-2xl"
               >
-                {/* Background Stardust Pulse */}
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(213,176,108,0.1)_0%,transparent_75%)] pointer-events-none" />
+                {/* Ambient Starlight Background Pulse */}
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(213,176,108,0.15)_0%,transparent_70%)] pointer-events-none" />
 
-                <div className="space-y-1">
-                  <span className="font-sans text-[9px] uppercase tracking-[0.35em] text-[#D5B06C] font-semibold block">
-                    Oracle Inscription • {oracleWork.category}
-                  </span>
-                  <h3 className="font-serif text-2xl md:text-3xl text-[#FEEFFF] font-normal capitalize">
+                {/* Astrolabe Corner Accents */}
+                <div className="absolute top-3 left-3 w-3 h-3 border-t-2 border-l-2 border-[#D5B06C]/60" />
+                <div className="absolute top-3 right-3 w-3 h-3 border-t-2 border-r-2 border-[#D5B06C]/60" />
+                <div className="absolute bottom-3 left-3 w-3 h-3 border-b-2 border-l-2 border-[#D5B06C]/60" />
+                <div className="absolute bottom-3 right-3 w-3 h-3 border-b-2 border-r-2 border-[#D5B06C]/60" />
+
+                {/* Close Button */}
+                <button
+                  onClick={() => setIsOracleOpen(false)}
+                  className="absolute top-4 right-4 text-[#8A8177] hover:text-[#D5B06C] transition-colors p-2 font-sans text-xs uppercase cursor-pointer z-20"
+                >
+                  ✕
+                </button>
+
+                {/* Header Tagline */}
+                <div className="relative z-10 space-y-2">
+                  <div className="flex items-center justify-center gap-2">
+                    <Sparkles className="w-3.5 h-3.5 text-[#D5B06C] animate-pulse" />
+                    <span className="font-sans text-[10px] uppercase tracking-[0.35em] text-[#D5B06C] font-semibold">
+                      Oracle Inscription • {oracleWork.category}
+                    </span>
+                    <Sparkles className="w-3.5 h-3.5 text-[#D5B06C] animate-pulse" />
+                  </div>
+
+                  <h3 className="font-serif text-2xl md:text-4xl text-[#FEEFFF] font-normal tracking-wide">
                     {oracleWork.title}
                   </h3>
-                  <p className="font-sans text-xs uppercase tracking-widest text-[#8A8177]">
-                    By {oracleWork.author}
+
+                  <p className="font-sans text-xs uppercase tracking-[0.25em] text-[#8A8177]">
+                    By {oracleWork.author} {oracleWork.read_time_minutes && `• ${oracleWork.read_time_minutes} min read`}
                   </p>
                 </div>
 
-                <div className="h-px w-24 bg-gradient-to-r from-transparent via-[#D5B06C]/60 to-transparent mx-auto" />
+                <div className="relative z-10 h-px w-32 bg-gradient-to-r from-transparent via-[#D5B06C] to-transparent mx-auto" />
 
-                <blockquote className="font-serif text-base md:text-lg text-[#FEEFFF]/90 italic leading-relaxed px-2 font-light">
-                  “{oracleWork.snippet}”
-                </blockquote>
+                {/* Poetic Stanza Quote Card */}
+                <motion.div
+                  key={oracleWork.snippet}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="relative z-10 p-6 rounded-2xl bg-black/40 border border-[#D5B06C]/20 backdrop-blur-md space-y-2"
+                >
+                  <span className="font-serif text-3xl text-[#D5B06C]/40 block leading-none select-none">“</span>
+                  <blockquote className="font-serif text-lg md:text-xl text-[#FEEFFF] italic leading-relaxed font-light px-2">
+                    {oracleWork.snippet}
+                  </blockquote>
+                  <span className="font-serif text-3xl text-[#D5B06C]/40 block leading-none select-none text-right">”</span>
+                </motion.div>
 
-                <div className="pt-2 flex items-center justify-center gap-3">
+                {/* Action Buttons */}
+                <div className="relative z-10 pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
                   <button
                     onClick={() => {
                       setIsOracleOpen(false);
@@ -528,15 +561,17 @@ export const HomeConstellation = () => {
                         navigate(`/read/${oracleWork.slug}`);
                       }
                     }}
-                    className="px-6 py-2.5 rounded-full bg-[#D5B06C] text-[#080A06] font-sans text-xs font-semibold uppercase tracking-widest hover:bg-[#FEEFFF] transition-all shadow-lg cursor-pointer"
+                    className="w-full sm:w-auto px-7 py-3 rounded-full bg-[#D5B06C] text-[#080A06] font-sans text-xs font-semibold uppercase tracking-widest hover:bg-[#FEEFFF] transition-all shadow-[0_0_25px_rgba(213,176,108,0.4)] cursor-pointer"
                   >
                     Read Full Inscription →
                   </button>
+
                   <button
                     onClick={handleOpenOracle}
-                    className="px-4 py-2.5 rounded-full border border-[#8A8177]/40 text-[#8A8177] hover:text-[#FEEFFF] hover:border-[#FEEFFF] font-sans text-xs uppercase tracking-widest transition-all cursor-pointer"
+                    className="w-full sm:w-auto px-5 py-3 rounded-full border border-[#D5B06C]/40 bg-[#0F1216]/80 text-[#D5B06C] hover:text-[#FEEFFF] hover:border-[#D5B06C] font-sans text-xs uppercase tracking-widest transition-all cursor-pointer flex items-center justify-center gap-2 backdrop-blur-md"
                   >
-                    Another Stanza
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Another Stanza</span>
                   </button>
                 </div>
               </motion.div>

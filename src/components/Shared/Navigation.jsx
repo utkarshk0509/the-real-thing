@@ -1,13 +1,25 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import useAuth from '../../hooks/useAuth';
 import { CACHE_KEYS } from '../../config/constants';
 
 export const Navigation = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, userData, isCurator, login, logout } = useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  const handleCategoryNav = (targetPath) => {
+    const isCategoryPage = ['/poems', '/stories', '/about'].includes(location.pathname);
+    if (isCategoryPage) {
+      // If already inside category views, replace slot so /hub remains back destination
+      navigate(targetPath, { replace: true });
+    } else {
+      // Coming from /hub or homepage, push so /hub becomes the back destination
+      navigate(targetPath);
+    }
+  };
 
   const handleGoogleLogin = async () => {
     await login();
@@ -29,15 +41,24 @@ export const Navigation = () => {
 
         {/* Right side navigation items */}
         <div className="flex items-center gap-3 md:gap-6">
-          <Link to="/poems" replace className="font-sans text-[11px] md:text-xs uppercase tracking-widest text-[#8A8177] hover:text-[#D5B06C] transition-colors">
+          <button
+            onClick={() => handleCategoryNav('/poems')}
+            className="font-sans text-[11px] md:text-xs uppercase tracking-widest text-[#8A8177] hover:text-[#D5B06C] transition-colors cursor-pointer"
+          >
             Poems
-          </Link>
-          <Link to="/stories" replace className="font-sans text-[11px] md:text-xs uppercase tracking-widest text-[#8A8177] hover:text-[#D5B06C] transition-colors">
+          </button>
+          <button
+            onClick={() => handleCategoryNav('/stories')}
+            className="font-sans text-[11px] md:text-xs uppercase tracking-widest text-[#8A8177] hover:text-[#D5B06C] transition-colors cursor-pointer"
+          >
             Stories
-          </Link>
-          <Link to="/about" replace className="hidden sm:inline-block font-sans text-xs uppercase tracking-widest text-[#8A8177] hover:text-[#D5B06C] transition-colors">
+          </button>
+          <button
+            onClick={() => handleCategoryNav('/about')}
+            className="hidden sm:inline-block font-sans text-xs uppercase tracking-widest text-[#8A8177] hover:text-[#D5B06C] transition-colors cursor-pointer"
+          >
             About
-          </Link>
+          </button>
 
           {isCurator && (
             <button

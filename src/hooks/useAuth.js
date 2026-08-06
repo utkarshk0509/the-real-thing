@@ -7,7 +7,6 @@ export const useAuth = () => {
   const [isCurator, setIsCurator] = useState(false);
 
   useEffect(() => {
-    // Initial session load
     authService.getSession().then((session) => {
       const u = session?.user ?? null;
       setUser(u);
@@ -17,7 +16,6 @@ export const useAuth = () => {
       }
     });
 
-    // Subscribe to auth changes
     const subscription = authService.onAuthStateChange((_event, session) => {
       const u = session?.user ?? null;
       setUser(u);

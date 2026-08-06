@@ -2,9 +2,6 @@ import { supabase } from '../lib/supabase';
 import { CURATOR_EMAIL, CACHE_KEYS } from '../config/constants';
 
 export const authService = {
-  /**
-   * Triggers Google OAuth sign-in flow.
-   */
   async signInWithGoogle() {
     if (!supabase) return;
 
@@ -15,9 +12,6 @@ export const authService = {
     });
   },
 
-  /**
-   * Signs out current user session.
-   */
   async signOut() {
     if (supabase) {
       await supabase.auth.signOut();
@@ -25,18 +19,12 @@ export const authService = {
     sessionStorage.removeItem(CACHE_KEYS.AUTHOR_AUTH);
   },
 
-  /**
-   * Gets current active auth session.
-   */
   async getSession() {
     if (!supabase) return null;
     const { data: { session } } = await supabase.auth.getSession();
     return session;
   },
 
-  /**
-   * Subscribes to auth state changes.
-   */
   onAuthStateChange(callback) {
     if (!supabase) return { unsubscribe: () => {} };
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -48,18 +36,12 @@ export const authService = {
     return subscription;
   },
 
-  /**
-   * Checks if current user has Curator/Admin permissions.
-   */
   isCurator(user) {
     if (sessionStorage.getItem(CACHE_KEYS.AUTHOR_AUTH) === 'true') return true;
     if (user && CURATOR_EMAIL && user.email === CURATOR_EMAIL) return true;
     return false;
   },
 
-  /**
-   * Fetches user's activity metrics (likes, comments, works) for navigation drawer.
-   */
   async fetchUserData(userId) {
     if (!supabase || !userId) return { likes: [], comments: [], works: [] };
 

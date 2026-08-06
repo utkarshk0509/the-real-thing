@@ -29,12 +29,8 @@ export const useReader = (slug) => {
       const channel = supabase
         .channel(`realtime_work_${slug}`)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'works' }, (payload) => {
-          if (payload.new) {
-            setWork((prev) =>
-              prev && (prev.slug === slug || prev.id === payload.new.id)
-                ? { ...prev, gilded_likes_count: payload.new.gilded_likes_count }
-                : prev
-            );
+          if (payload.new && (payload.new.slug === slug || payload.new.id === work?.id)) {
+            setWork((prev) => (prev ? { ...prev, gilded_likes_count: payload.new.gilded_likes_count } : prev));
           }
         })
         .subscribe();
@@ -43,21 +39,13 @@ export const useReader = (slug) => {
         supabase.removeChannel(channel);
       };
     }
-  }, [slug, fetchWork]);
+  }, [slug, fetchWork, work?.id]);
 
-  /**
-   * Called by GildedHeart with (isLiking: bool, increment: +1 | -1).
-   * Sends the delta to Supabase via RPC.
-   * Throws on failure so GildedHeart can roll back its optimistic UI.
-   */
   const handleToggleLike = async (isLiking, increment) => {
     if (!work?.id) throw new Error('Work ID not available');
 
-    // RPC returns the new authoritative count from the DB
     const newCountFromServer = await workService.incrementLikes(work.id, increment);
 
-    // Update in-memory work with the server's authoritative count if returned,
-    // otherwise fall back to a local ±1 estimate.
     setWork((prev) => {
       if (!prev) return prev;
       const authoritative = typeof newCountFromServer === 'number' ? newCountFromServer : Math.max(0, (prev.gilded_likes_count || 0) + increment);

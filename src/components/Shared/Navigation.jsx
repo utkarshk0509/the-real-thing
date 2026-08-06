@@ -11,9 +11,8 @@ export const Navigation = ({ readingPercent, scrollLinePercent, readingWork }) =
   const { user, userData, isCurator, login, logout } = useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
-  // Profile Drawer Sub-Tabs State
-  const [drawerTab, setDrawerTab] = useState('library'); // 'library' | 'quotes' | 'likes'
-  const [libraryFilter, setLibraryFilter] = useState('Reading'); // 'Reading' | 'Saved' | 'Completed' | 'Want to Read' | 'Abandoned'
+  const [drawerTab, setDrawerTab] = useState('library');
+  const [libraryFilter, setLibraryFilter] = useState('Reading');
 
   const [readerStats, setReaderStats] = useState({ worksFinished: 0, commentsCount: 0, streakDays: 1 });
   const [favoriteQuotes, setFavoriteQuotes] = useState([]);
@@ -57,7 +56,6 @@ export const Navigation = ({ readingPercent, scrollLinePercent, readingWork }) =
         style={{ transform: 'none' }}
         className="fixed top-0 left-0 right-0 z-50 bg-[#080A06]/95 backdrop-blur-xl border-b border-[#8A8177]/20 px-4 md:px-6 py-3 flex items-center justify-between shadow-2xl"
       >
-        {/* Left Logo */}
         <div className="flex items-center gap-3">
           <Link to="/" className="font-serif text-base md:text-xl tracking-wider text-[#FEEFFF] hover:text-[#D5B06C] transition-colors whitespace-nowrap cursor-pointer">
             The Real Thing
@@ -69,7 +67,6 @@ export const Navigation = ({ readingPercent, scrollLinePercent, readingWork }) =
           )}
         </div>
 
-        {/* Right side navigation items */}
         <div className="flex items-center gap-3 md:gap-5">
           <button
             onClick={() => handleCategoryNav('/hub')}
@@ -135,7 +132,6 @@ export const Navigation = ({ readingPercent, scrollLinePercent, readingWork }) =
             )}
           </button>
 
-          {/* Live Reading Percentage Count Badge */}
           {readingPercent !== undefined && (
             <div className="flex items-center gap-1 bg-[#0F1216] border border-[#D5B06C]/50 px-2.5 py-1 rounded-full text-[#D5B06C] font-sans text-[10px] uppercase tracking-widest font-semibold shadow-[0_0_12px_rgba(213,176,108,0.25)]">
               <span>{readingPercent}% READ</span>
@@ -175,7 +171,6 @@ export const Navigation = ({ readingPercent, scrollLinePercent, readingWork }) =
           )}
         </div>
 
-        {/* Bottom edge: Clamped Golden Progress Line */}
         {(scrollLinePercent !== undefined || readingPercent !== undefined) && (
           <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#8A8177]/20 overflow-hidden">
             <div
@@ -186,7 +181,6 @@ export const Navigation = ({ readingPercent, scrollLinePercent, readingWork }) =
         )}
       </nav>
 
-      {/* Reader Activity & Goodreads Personal Library Drawer */}
       <AnimatePresence>
         {isProfileOpen && (
           <div className="fixed inset-0 z-50 flex justify-end bg-[#080A06]/75 backdrop-blur-sm">
@@ -198,7 +192,6 @@ export const Navigation = ({ readingPercent, scrollLinePercent, readingWork }) =
               className="w-full max-w-md bg-[#0F1216] border-l border-[#8A8177]/20 p-6 flex flex-col justify-between h-full overflow-y-auto"
             >
               <div className="space-y-6">
-                {/* Header User Info */}
                 <div className="flex items-center justify-between border-b border-[#8A8177]/20 pb-4">
                   <div className="flex items-center gap-3">
                     <img
@@ -219,7 +212,6 @@ export const Navigation = ({ readingPercent, scrollLinePercent, readingWork }) =
                   </button>
                 </div>
 
-                {/* Reader Profile Action Stats (Streak, Books Finished, Comments) */}
                 <div className="grid grid-cols-3 gap-2 bg-[#080A06]/80 p-3 rounded-xl border border-[#8A8177]/20 text-center">
                   <div>
                     <span className="block font-sans text-[9px] uppercase tracking-widest text-[#8A8177]">Finished</span>
@@ -235,7 +227,6 @@ export const Navigation = ({ readingPercent, scrollLinePercent, readingWork }) =
                   </div>
                 </div>
 
-                {/* Drawer View Tabs */}
                 <div className="flex border-b border-[#8A8177]/20 gap-2 pb-1">
                   <button
                     type="button"
@@ -272,10 +263,8 @@ export const Navigation = ({ readingPercent, scrollLinePercent, readingWork }) =
                   </button>
                 </div>
 
-                {/* TAB 1: Goodreads Personal Library */}
                 {drawerTab === 'library' && (
                   <div className="space-y-4">
-                    {/* Goodreads Category Pills */}
                     <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
                       {['Reading', 'Saved', 'Completed', 'Want to Read', 'Abandoned'].map((cat) => (
                         <button
@@ -293,7 +282,6 @@ export const Navigation = ({ readingPercent, scrollLinePercent, readingWork }) =
                       ))}
                     </div>
 
-                    {/* Filtered Library List */}
                     <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
                       {Object.entries(libraryStatuses).filter(([_, status]) => status === libraryFilter).length === 0 ? (
                         <p className="text-center py-6 font-sans text-xs text-[#8A8177] italic">
@@ -322,7 +310,6 @@ export const Navigation = ({ readingPercent, scrollLinePercent, readingWork }) =
                   </div>
                 )}
 
-                {/* TAB 2: Favorite Quotes Saver */}
                 {drawerTab === 'quotes' && (
                   <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
                     {favoriteQuotes.length === 0 ? (
@@ -354,7 +341,6 @@ export const Navigation = ({ readingPercent, scrollLinePercent, readingWork }) =
                   </div>
                 )}
 
-                {/* TAB 3: Resonances / Likes */}
                 {drawerTab === 'likes' && (
                   <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
                     {userData.likes.length === 0 ? (

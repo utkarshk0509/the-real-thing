@@ -6,7 +6,6 @@ import { CustomCelestialCursor } from './components/Shared/CustomCelestialCursor
 import { MagicStardustTrail } from './components/Shared/MagicStardustTrail';
 import { CelestialAudioPlayer } from './components/Shared/CelestialAudioPlayer';
 
-// Lazy load pages for lightning-fast initial load
 const Landing = lazy(() => import('./pages/Landing'));
 const HomeConstellation = lazy(() => import('./pages/HomeConstellation'));
 const Hub = lazy(() => import('./pages/Hub'));

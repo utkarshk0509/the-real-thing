@@ -24,7 +24,6 @@ export const EmojiReactions = ({ workKey, initialReactions = {} }) => {
     const { reactions: updatedReactions } = readerProgressService.toggleEmojiReaction(workKey, emoji);
     setReactions(updatedReactions);
 
-    // Stardust particle burst
     if (e && e.currentTarget) {
       const rect = e.currentTarget.getBoundingClientRect();
       const originX = rect.left + rect.width / 2;
@@ -62,7 +61,6 @@ export const EmojiReactions = ({ workKey, initialReactions = {} }) => {
 
   return (
     <div className="relative bg-[#0F1216]/60 border border-[#8A8177]/20 p-4 md:p-5 rounded-2xl my-10 backdrop-blur-md">
-      {/* Particle Burst Overlay */}
       <AnimatePresence>
         {burstParticles.map((p) => (
           <motion.div
@@ -83,7 +81,6 @@ export const EmojiReactions = ({ workKey, initialReactions = {} }) => {
         </span>
 
         <div className="flex items-center gap-2 flex-wrap">
-          {/* Render Active Reaction Pills */}
           {activeEmojiList.map((emoji) => {
             const count = reactions[emoji] || 0;
             const hasReacted = readerProgressService.hasUserReacted(workKey, emoji);
@@ -107,7 +104,6 @@ export const EmojiReactions = ({ workKey, initialReactions = {} }) => {
             );
           })}
 
-          {/* Trigger Fancy Custom Selector Popover */}
           <div className="relative">
             <button
               type="button"
@@ -118,7 +114,6 @@ export const EmojiReactions = ({ workKey, initialReactions = {} }) => {
               <span>React</span>
             </button>
 
-            {/* Custom Atmospheric Emoji Popover */}
             <AnimatePresence>
               {isPickerOpen && (
                 <motion.div
@@ -140,7 +135,6 @@ export const EmojiReactions = ({ workKey, initialReactions = {} }) => {
                     </button>
                   </div>
 
-                  {/* Preset Emoji Grid */}
                   <div className="grid grid-cols-6 gap-2 max-h-44 overflow-y-auto p-1 bg-[#080A06]/50 rounded-xl border border-[#8A8177]/10">
                     {PRESET_EMOJIS.map((emoji) => (
                       <button
@@ -157,7 +151,6 @@ export const EmojiReactions = ({ workKey, initialReactions = {} }) => {
                     ))}
                   </div>
 
-                  {/* Direct Custom Input Form */}
                   <form onSubmit={handleAddCustomEmoji} className="flex items-center gap-2 pt-2 border-t border-[#8A8177]/20 w-full">
                     <input
                       type="text"

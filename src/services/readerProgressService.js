@@ -1,6 +1,3 @@
-// Client-Side Reader Progress, Goodreads Library, Paragraph Bookmarks, Quotes, & Draft Service
-// 100% LocalStorage - 0 Network Egress - $0.00 Cost
-
 const KEYS = {
   LAST_READ: 'real_thing_last_read',
   LAST_READ_POEM: 'real_thing_last_read_poem',
@@ -17,7 +14,6 @@ const KEYS = {
 };
 
 export const readerProgressService = {
-  // --- View Mode Preference (Grid vs Animated Bookshelf) ---
   getViewPreference: () => {
     try {
       return localStorage.getItem(KEYS.VIEW_PREFERENCE) || 'grid';
@@ -32,7 +28,6 @@ export const readerProgressService = {
     } catch (e) {}
   },
 
-  // --- 1. Reading Progress & Last Read ---
   getAllProgress: () => {
     try {
       const data = localStorage.getItem(KEYS.ALL_PROGRESS);
@@ -71,7 +66,6 @@ export const readerProgressService = {
 
       const newPercentage = Math.min(100, Math.max(0, Math.round(workData.scrollPercentage || 0)));
 
-      // Update per-work progress high-water mark
       if (workData.slug) {
         const allProgress = readerProgressService.getAllProgress();
         const currentWorkMax = allProgress[workData.slug] || 0;
@@ -83,7 +77,6 @@ export const readerProgressService = {
       const existingOverall = readerProgressService.getLastRead();
       const existingCategory = readerProgressService.getLastRead(category);
 
-      // Keep maximum percentage achieved so scrolling back to top does not clear progress
       const isSameOverall = existingOverall && existingOverall.slug === workData.slug;
       const isSameCategory = existingCategory && existingCategory.slug === workData.slug;
 
@@ -118,8 +111,6 @@ export const readerProgressService = {
     }
   },
 
-  // --- 2. Personal Library Statuses (Goodreads Style) ---
-  // Statuses: 'Reading' | 'Saved' | 'Completed' | 'Want to Read' | 'Abandoned'
   getLibraryStatuses: () => {
     try {
       const data = localStorage.getItem(KEYS.LIBRARY_STATUS);
@@ -148,7 +139,6 @@ export const readerProgressService = {
     }
   },
 
-  // --- 3. Paragraph-Level Bookmarks ---
   getParagraphBookmarks: () => {
     try {
       const data = localStorage.getItem(KEYS.PARAGRAPH_BOOKMARKS);
@@ -173,7 +163,6 @@ export const readerProgressService = {
     }
   },
 
-  // --- 4. Favorite Quotes Saver ---
   getFavoriteQuotes: () => {
     try {
       const data = localStorage.getItem(KEYS.FAVORITE_QUOTES);
@@ -216,7 +205,6 @@ export const readerProgressService = {
     }
   },
 
-  // --- 5. Reader Stats & Streaks ---
   getReaderStats: () => {
     try {
       const data = localStorage.getItem(KEYS.READER_STATS);
@@ -261,7 +249,6 @@ export const readerProgressService = {
     } catch (e) {}
   },
 
-  // --- 6. Multi-Emoji Reactions ---
   getEmojiReactions: (workIdOrSlug) => {
     try {
       const data = localStorage.getItem(KEYS.EMOJI_REACTIONS);
@@ -306,7 +293,6 @@ export const readerProgressService = {
     }
   },
 
-  // --- 7. Curator Auto-Save Draft ---
   getCuratorDraft: () => {
     try {
       const data = localStorage.getItem(KEYS.CURATOR_DRAFT);
@@ -328,7 +314,6 @@ export const readerProgressService = {
     } catch (e) {}
   },
 
-  // --- 8. Reader Theme & Typography Settings ---
   getReaderSettings: () => {
     try {
       const data = localStorage.getItem(KEYS.READER_SETTINGS);

@@ -1,18 +1,3 @@
-/**
- * Utility to compress image files to WebP format using HTML5 Canvas
- * Significantly reduces image payload sizes before uploading to Supabase Storage.
- */
-
-/**
- * Compresses an image File or Data URL string to a WebP File object.
- * @param {File|string} input - Image File object or Data URL / Blob URL string
- * @param {Object} options - Compression options
- * @param {number} [options.maxWidth=1200] - Max width in pixels
- * @param {number} [options.maxHeight=1200] - Max height in pixels
- * @param {number} [options.quality=0.82] - WebP quality (0.0 to 1.0)
- * @param {string} [options.filename='cover.webp'] - Output file name
- * @returns {Promise<File>} WebP compressed File object
- */
 export const compressImageToWebP = (input, options = {}) => {
   const {
     maxWidth = 1200,
@@ -40,7 +25,6 @@ export const compressImageToWebP = (input, options = {}) => {
 
       let { width, height } = img;
 
-      // Scale dimensions proportionally if they exceed max limits
       if (width > maxWidth || height > maxHeight) {
         const ratio = Math.min(maxWidth / width, maxHeight / height);
         width = Math.round(width * ratio);
@@ -56,7 +40,6 @@ export const compressImageToWebP = (input, options = {}) => {
         return reject(new Error('Failed to get canvas 2d context for image compression.'));
       }
 
-      // Smooth scaling settings
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
       ctx.drawImage(img, 0, 0, width, height);

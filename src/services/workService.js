@@ -3,10 +3,6 @@ import { PROJECTIONS, CACHE_KEYS } from '../config/constants';
 import cacheService from './cacheService';
 
 export const workService = {
-  /**
-   * Fetches published works using lightweight CARD_LIST projection.
-   * EXCLUDES heavy 'body' column to prevent PostgREST egress bloat.
-   */
   async getPublishedWorks() {
     let remoteWorks = [];
 
@@ -25,15 +21,11 @@ export const workService = {
       }
     }
 
-    // Only merge local works that are full objects (not just order-map stubs)
-    // CUSTOM_WORKS may contain lightweight {slug, sort_order} stubs from saveOrder —
-    // filter those out so they don't appear as phantom cards.
     const localCustom = (cacheService.get(CACHE_KEYS.CUSTOM_WORKS) || []).filter(
       (item) => item && item.title && item.status === 'published'
     );
 
     const map = new Map();
-    // Remote always wins over local (remote is source of truth)
     [...localCustom, ...remoteWorks].forEach((item) => {
       if (item && item.status === 'published') {
         map.set(item.slug, item);
@@ -43,19 +35,14 @@ export const workService = {
     const uniqueWorks = Array.from(map.values());
     uniqueWorks.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
 
-    // Always update SWR cache (even if empty, so stale data is cleared)
     cacheService.set(CACHE_KEYS.HUB_WORKS, uniqueWorks);
 
     return uniqueWorks;
   },
 
-  /**
-   * Fetches full work payload by slug using WORK_FULL projection for ReaderView.
-   */
   async getWorkBySlug(slug) {
     if (!slug) return null;
 
-    // Check local custom works first
     const localCustom = cacheService.get(CACHE_KEYS.CUSTOM_WORKS) || [];
     let work = localCustom.find((w) => w.slug === slug) || null;
 
@@ -78,9 +65,6 @@ export const workService = {
     return work;
   },
 
-  /**
-   * Admin: Fetches all works (published + drafts) with WORK_FULL projection.
-   */
   async getAllWorksAdmin() {
     let combinedWorks = [];
 
@@ -98,7 +82,6 @@ export const workService = {
       }
     }
 
-    // Re-apply local order map if present
     const savedOrderMap = cacheService.get(CACHE_KEYS.CUSTOM_WORKS) || [];
     const orderMap = new Map(savedOrderMap.map((item) => [item.slug, item.sort_order]));
 
@@ -111,7 +94,6 @@ export const workService = {
 
     combinedWorks.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
     
-    // Refresh Hub cache with published works
     const publishedOnly = combinedWorks.filter((w) => w.status === 'published');
     cacheService.set(CACHE_KEYS.HUB_WORKS, publishedOnly);
 
@@ -135,20 +117,15 @@ export const workService = {
       return data;
     }
 
-    // Supabase not configured — like is already tracked locally in GildedHeart
     return null;
   },
 
-  /**
-   * Admin: Create or update a work entry.
-   */
   async upsertWork(workData) {
     let savedData = workData;
 
     if (supabase) {
       try {
         if (workData.id && !String(workData.id).startsWith('17')) {
-          // UPDATE existing work
           const { data, error } = await supabase
             .from('works')
             .update(workData)
@@ -162,7 +139,6 @@ export const workService = {
           }
           if (data) savedData = data;
         } else {
-          // INSERT new work: omit undefined/null id
           const { id, ...insertPayload } = workData;
           const { data, error } = await supabase
             .from('works')
@@ -177,11 +153,9 @@ export const workService = {
           if (data) savedData = data;
         }
       } catch (err) {
-        // Re-throw so AuthorPortal can show the real error to the author
         throw err;
       }
     } else {
-      // Supabase not configured – fall back to local-only storage
       const localCustom = cacheService.get(CACHE_KEYS.CUSTOM_WORKS) || [];
       const existing = localCustom.findIndex((w) => w.slug === workData.slug);
       if (existing >= 0) {
@@ -192,16 +166,11 @@ export const workService = {
       cacheService.set(CACHE_KEYS.CUSTOM_WORKS, localCustom);
     }
 
-    // Invalidate HUB_WORKS so the next getPublishedWorks call fetches fresh data
     cacheService.invalidate(CACHE_KEYS.HUB_WORKS);
-    // Refresh memory/local cache
     await this.getAllWorksAdmin();
     return savedData;
   },
 
-  /**
-   * Admin: Delete a work entry by ID or Slug.
-   */
   async deleteWork({ id, slug }) {
     if (supabase) {
       try {
@@ -212,7 +181,6 @@ export const workService = {
       }
     }
 
-    // Update local cache
     const currentCustom = cacheService.get(CACHE_KEYS.CUSTOM_WORKS) || [];
     const filteredCustom = currentCustom.filter((w) => w.slug !== slug && w.id !== id);
     cacheService.set(CACHE_KEYS.CUSTOM_WORKS, filteredCustom);
@@ -220,23 +188,18 @@ export const workService = {
     await this.getAllWorksAdmin();
   },
 
-  /**
-   * Admin: Batch update sort_order for constellation cards.
-   */
   async saveOrder(orderedWorks) {
     const updatedWorks = orderedWorks.map((work, idx) => ({
       ...work,
       sort_order: idx
     }));
 
-    // Save lightweight map to local storage
     const lightweightMap = updatedWorks.map((w) => ({
       slug: w.slug,
       sort_order: w.sort_order
     }));
     cacheService.set(CACHE_KEYS.CUSTOM_WORKS, lightweightMap);
 
-    // Sync to Supabase
     if (supabase) {
       for (const work of updatedWorks) {
         try {
@@ -257,7 +220,6 @@ export const workService = {
       }
     }
 
-    // Refresh hub cache
     const publishedOnly = updatedWorks.filter((w) => w.status === 'published');
     cacheService.set(CACHE_KEYS.HUB_WORKS, publishedOnly);
 

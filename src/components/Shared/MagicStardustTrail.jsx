@@ -4,7 +4,6 @@ export const MagicStardustTrail = () => {
   const canvasRef = useRef(null);
 
   useEffect(() => {
-    // Disable strictly on mobile screens (< 768px)
     if (window.innerWidth < 768) {
       return;
     }

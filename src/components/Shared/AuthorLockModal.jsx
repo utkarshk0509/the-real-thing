@@ -10,7 +10,6 @@ export const AuthorLockModal = () => {
 
   const AUTHOR_PASSCODE = import.meta.env.VITE_AUTHOR_PASSCODE || '1234';
 
-  // Secret Keyboard Shortcut Trigger: Ctrl + Shift + K (or Cmd + Shift + K)
   useEffect(() => {
     const handleKeyDown = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'k') {
@@ -42,9 +41,6 @@ export const AuthorLockModal = () => {
 
   return (
     <>
-      {/* Note: The floating button UI element is completely deleted from here */}
-
-      {/* Secret Modal Triggered ONLY via Ctrl + Shift + K */}
       <AnimatePresence>
         {isOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#080A06]/85 backdrop-blur-md">

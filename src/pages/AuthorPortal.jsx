@@ -21,10 +21,8 @@ export const AuthorPortal = () => {
     }
   }, [navigate]);
 
-  // Master Portal View State
-  const [activeView, setActiveView] = useState('write'); // 'write' | 'library' | 'arrange' | 'about' | 'analytics'
+  const [activeView, setActiveView] = useState('write');
 
-  // Work Form State
   const [editingId, setEditingId] = useState(null);
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
@@ -33,14 +31,12 @@ export const AuthorPortal = () => {
   const [body, setBody] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [isDraft, setIsDraft] = useState(false);
-  const [editorSubTab, setEditorSubTab] = useState('edit'); // 'edit' | 'preview'
+  const [editorSubTab, setEditorSubTab] = useState('edit');
   const [isMetadataExpanded, setIsMetadataExpanded] = useState(true);
 
-  // Status & Submit State
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null);
 
-  // About Section Full Editor State
   const [aboutBio, setAboutBio] = useState('');
   const [aboutAuthorName, setAboutAuthorName] = useState('Utkarsh');
   const [aboutAuthorTagline, setAboutAuthorTagline] = useState('Sanctuary Curator & Author');
@@ -53,36 +49,29 @@ export const AuthorPortal = () => {
   const [aboutSpotlightSlug, setAboutSpotlightSlug] = useState('');
   const [workToDelete, setWorkToDelete] = useState(null);
 
-  // Image Crop Modal State (Dual-Crop: Grid View + Bookshelf View)
   const [tempImage, setTempImage] = useState(null);
   const [isCropModalOpen, setIsCropModalOpen] = useState(false);
-  const [cropMode, setCropMode] = useState('grid'); // 'grid' | 'bookshelf'
+  const [cropMode, setCropMode] = useState('grid');
 
-  // Grid View Crop (Horizontal Banner)
   const [cropScale, setCropScale] = useState(1);
   const [cropPosX, setCropPosX] = useState(50);
   const [cropPosY, setCropPosY] = useState(50);
 
-  // Bookshelf View Crop (Vertical Spine)
   const [bookshelfCropScale, setBookshelfCropScale] = useState(1);
   const [bookshelfCropPosX, setBookshelfCropPosX] = useState(50);
   const [bookshelfCropPosY, setBookshelfCropPosY] = useState(50);
 
-  // Interactive Image Drag & Zoom State
   const [isCropDragging, setIsCropDragging] = useState(false);
   const cropDragStartRef = useRef({ x: 0, y: 0 });
   const cropPosStartRef = useRef({ x: 50, y: 50 });
 
-  // Works Data & Category Filter States
   const [allWorks, setAllWorks] = useState([]);
-  const [libraryCategory, setLibraryCategory] = useState('all'); // 'all' | 'poem' | 'story' | 'draft'
+  const [libraryCategory, setLibraryCategory] = useState('all');
   const [librarySearch, setLibrarySearch] = useState('');
 
-  // Constellation Arranger Category State
-  const [arrangerCategory, setArrangerCategory] = useState('poem'); // 'poem' | 'story'
+  const [arrangerCategory, setArrangerCategory] = useState('poem');
   const [draggedItemIndex, setDraggedItemIndex] = useState(null);
 
-  // Reader Messages / Whispers State
   const [readerMessages, setReaderMessages] = useState([]);
 
   useEffect(() => {
@@ -116,7 +105,6 @@ export const AuthorPortal = () => {
     loadWorksAndAbout();
   }, []);
 
-  // Global mouse & touch listeners for interactive image cropping
   useEffect(() => {
     if (!isCropDragging) return;
 
@@ -242,7 +230,6 @@ export const AuthorPortal = () => {
     }
   };
 
-  // Auto-Save Curator Draft Protection
   useEffect(() => {
     if (!editingId && (title.trim() || body.trim())) {
       readerProgressService.saveCuratorDraft({
@@ -285,7 +272,6 @@ export const AuthorPortal = () => {
     }
   };
 
-  // Drag and Drop Handlers for Reordering
   const handleDragStart = (e, index) => {
     setDraggedItemIndex(index);
     e.dataTransfer.effectAllowed = 'move';
@@ -312,7 +298,6 @@ export const AuthorPortal = () => {
     setDraggedItemIndex(null);
   };
 
-  // Explicit Save Order Handler for Category
   const handleSaveOrder = async () => {
     try {
       const finalWorks = await workService.saveOrder(allWorks);
@@ -489,7 +474,6 @@ export const AuthorPortal = () => {
     }
   };
 
-  // Filtered works for Library View
   const filteredLibraryWorks = useMemo(() => {
     return allWorks.filter((work) => {
       const matchesSearch =
@@ -502,11 +486,10 @@ export const AuthorPortal = () => {
       if (libraryCategory === 'poem') return work.category === 'poem' && work.status === 'published';
       if (libraryCategory === 'story') return work.category === 'story' && work.status === 'published';
       if (libraryCategory === 'draft') return work.status === 'draft';
-      return true; // 'all'
+      return true;
     });
   }, [allWorks, libraryCategory, librarySearch]);
 
-  // Filtered works for Constellation Arranger View
   const currentArrangerWorks = useMemo(() => {
     return allWorks.filter((work) => work.category === arrangerCategory && work.status === 'published');
   }, [allWorks, arrangerCategory]);
@@ -516,7 +499,6 @@ export const AuthorPortal = () => {
       <CosmicNebulaBackground variant="about" />
 
       <div className="relative z-10 max-w-6xl mx-auto space-y-6">
-        {/* Top Header */}
         <header className="flex flex-col md:flex-row md:items-center justify-between border-b border-[#8A8177]/20 pb-5 gap-4">
           <div>
             <button
@@ -557,7 +539,6 @@ export const AuthorPortal = () => {
           </div>
         </header>
 
-        {/* Master Navigation Bar */}
         <nav className="flex items-center border border-[#D5B06C]/25 overflow-x-auto bg-[#0F1216]/70 rounded-2xl p-2 backdrop-blur-xl gap-2 shadow-2xl">
           {[
             { id: 'write', label: 'Write & Edit', icon: Feather },
@@ -587,7 +568,6 @@ export const AuthorPortal = () => {
           })}
         </nav>
 
-        {/* Global Notification Banner */}
         {statusMessage && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
@@ -602,10 +582,8 @@ export const AuthorPortal = () => {
           </motion.div>
         )}
 
-        {/* 1. WRITE & EDIT VIEW */}
         {activeView === 'write' && (
           <div className="space-y-6">
-            {/* Title & Sub-tabs */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#8A8177]/20 pb-4">
               <input
                 type="text"
@@ -641,7 +619,6 @@ export const AuthorPortal = () => {
               </div>
             </div>
 
-            {/* Collapsible Metadata Drawer */}
             <div className="bg-[#0F1216] border border-[#8A8177]/20 rounded-xl overflow-hidden">
               <button
                 type="button"
@@ -776,7 +753,6 @@ export const AuthorPortal = () => {
               </AnimatePresence>
             </div>
 
-            {/* Writing Canvas / Preview */}
             {editorSubTab === 'edit' ? (
               <div className="space-y-3">
                 <textarea
@@ -834,12 +810,9 @@ export const AuthorPortal = () => {
           </div>
         )}
 
-        {/* 2. CATEGORIZED LIBRARY VIEW */}
         {activeView === 'library' && (
           <div className="space-y-6 bg-[#0F1216]/40 border border-[#8A8177]/10 p-6 rounded-xl min-h-[400px]">
-            {/* Search and Category Filter Bar */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#8A8177]/20 pb-4">
-              {/* Category Sub-Tabs */}
               <div className="flex items-center gap-2 overflow-x-auto">
                 <button
                   type="button"
@@ -887,7 +860,6 @@ export const AuthorPortal = () => {
                 </button>
               </div>
 
-              {/* Search Bar */}
               <input
                 type="text"
                 placeholder="Search by title, author, or preview..."
@@ -897,7 +869,6 @@ export const AuthorPortal = () => {
               />
             </div>
 
-            {/* Inscriptions List */}
             {filteredLibraryWorks.length === 0 ? (
               <div className="text-center py-12 space-y-2">
                 <p className="font-serif text-lg text-[#8A8177]">No matching inscriptions found.</p>
@@ -955,10 +926,8 @@ export const AuthorPortal = () => {
           </div>
         )}
 
-        {/* 3. CATEGORIZED CONSTELLATION ARRANGER VIEW */}
         {activeView === 'arrange' && (
           <div className="space-y-6 bg-[#0F1216]/40 border border-[#8A8177]/10 p-6 rounded-xl min-h-[400px]">
-            {/* Header & Sub-Category Selector */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#8A8177]/20 pb-4 gap-4">
               <div>
                 <h3 className="font-serif text-xl text-[#FEEFFF]">Arrange Constellation Cards</h3>
@@ -1003,7 +972,6 @@ export const AuthorPortal = () => {
               </div>
             </div>
 
-            {/* Drag and Drop Card List */}
             {currentArrangerWorks.length === 0 ? (
               <p className="font-sans text-xs uppercase tracking-widest text-[#8A8177] py-12 text-center">
                 No published works in the {arrangerCategory} category to arrange.
@@ -1038,7 +1006,6 @@ export const AuthorPortal = () => {
           </div>
         )}
 
-        {/* 4. ABOUT SANCTUARY EDITOR VIEW */}
         {activeView === 'about' && (
           <div className="space-y-6 bg-[#0F1216]/40 border border-[#8A8177]/10 p-6 md:p-8 rounded-xl min-h-[400px]">
             <div className="border-b border-[#8A8177]/20 pb-3 flex items-center justify-between">
@@ -1051,7 +1018,6 @@ export const AuthorPortal = () => {
             </div>
 
             <form onSubmit={handleSaveAboutBio} className="space-y-6">
-              {/* Section 1: Header Profile */}
               <div className="space-y-4 border-b border-[#8A8177]/15 pb-6">
                 <h4 className="font-sans text-xs uppercase tracking-widest text-[#D5B06C] font-semibold">
                   1. Author Profile Header
@@ -1093,14 +1059,12 @@ export const AuthorPortal = () => {
                 </div>
               </div>
 
-              {/* Section 2: Manifesto Cards */}
               <div className="space-y-4 border-b border-[#8A8177]/15 pb-6">
                 <h4 className="font-sans text-xs uppercase tracking-widest text-[#D5B06C] font-semibold">
                   2. Living Manifesto Cards
                 </h4>
 
                 <div className="space-y-4">
-                  {/* Card 1 */}
                   <div className="p-4 rounded-xl bg-[#080A06]/60 border border-[#D5B06C]/30 space-y-3">
                     <span className="font-sans text-[10px] uppercase tracking-widest text-[#D5B06C]">Card 1: Why I Write</span>
                     <input
@@ -1119,7 +1083,6 @@ export const AuthorPortal = () => {
                     />
                   </div>
 
-                  {/* Card 2 */}
                   <div className="p-4 rounded-xl bg-[#080A06]/60 border border-[#7CB9E8]/30 space-y-3">
                     <span className="font-sans text-[10px] uppercase tracking-widest text-[#7CB9E8]">Card 2: The Real Thing</span>
                     <input
@@ -1138,7 +1101,6 @@ export const AuthorPortal = () => {
                     />
                   </div>
 
-                  {/* Card 3 */}
                   <div className="p-4 rounded-xl bg-[#080A06]/60 border border-[#C9A9FF]/30 space-y-3">
                     <span className="font-sans text-[10px] uppercase tracking-widest text-[#C9A9FF]">Card 3: Literary Influences</span>
                     <input
@@ -1159,7 +1121,6 @@ export const AuthorPortal = () => {
                 </div>
               </div>
 
-              {/* Section 3: Spotlight Work Selection */}
               <div className="space-y-3">
                 <h4 className="font-sans text-xs uppercase tracking-widest text-[#D5B06C] font-semibold">
                   3. Author's Choice Spotlight Inscription
@@ -1188,7 +1149,6 @@ export const AuthorPortal = () => {
           </div>
         )}
 
-        {/* 5. CURATOR ANALYTICS VIEW */}
         {activeView === 'analytics' && (
           <div className="space-y-6 bg-[#0F1216]/40 border border-[#8A8177]/10 p-6 rounded-xl min-h-[400px]">
             <div className="border-b border-[#8A8177]/20 pb-3">
@@ -1232,7 +1192,6 @@ export const AuthorPortal = () => {
           </div>
         )}
 
-        {/* 6. READER WHISPERS VIEW */}
         {activeView === 'whispers' && (
           <div className="space-y-6">
             <div className="flex items-center justify-between border-b border-[#8A8177]/20 pb-4">
@@ -1287,7 +1246,6 @@ export const AuthorPortal = () => {
         )}
       </div>
 
-      {/* Interactive Touch & Mouse Image Crop Modal (Dual-Crop: Grid + Bookshelf) */}
       <AnimatePresence>
         {isCropModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#080A06]/85 backdrop-blur-md overflow-y-auto">
@@ -1313,7 +1271,6 @@ export const AuthorPortal = () => {
                 </button>
               </div>
 
-              {/* View Crop Mode Tabs Switcher */}
               <div className="flex bg-[#080A06] border border-[#8A8177]/20 rounded-xl p-1 gap-1">
                 <button
                   type="button"
@@ -1339,7 +1296,6 @@ export const AuthorPortal = () => {
                 </button>
               </div>
 
-              {/* Interactive Drag & Touch Canvas for Selected Mode */}
               <div className="space-y-2">
                 <div className="flex justify-between items-center text-[10px] font-sans uppercase tracking-widest text-[#D5B06C]">
                   <span>
@@ -1379,7 +1335,6 @@ export const AuthorPortal = () => {
                 </div>
               </div>
 
-              {/* Fine-Tuning Sliders for Active Selected Mode */}
               <div className="space-y-3 bg-[#080A06]/50 p-4 rounded-xl border border-[#8A8177]/15">
                 <span className="font-sans text-[10px] uppercase tracking-widest text-[#D5B06C] block font-medium">
                   {cropMode === 'grid' ? 'Grid View Controls' : 'Bookshelf Spine Controls'}
@@ -1445,14 +1400,12 @@ export const AuthorPortal = () => {
                 </div>
               </div>
 
-              {/* Side-by-Side Dual Live Previews Summary */}
               <div className="space-y-3 pt-2">
                 <span className="font-sans text-[10px] uppercase tracking-widest text-[#D5B06C] block font-semibold">
                   Side-by-Side Dual Live Previews
                 </span>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-                  {/* Preview 1: Grid View Banner */}
                   <div className="space-y-1">
                     <span className="font-sans text-[9px] uppercase tracking-widest text-[#8A8177]">
                       1. Grid View Banner Result
@@ -1478,20 +1431,16 @@ export const AuthorPortal = () => {
                     </GlowingCard>
                   </div>
 
-                  {/* Preview 2: 3D Standing Book Cover */}
                   <div className="space-y-1 flex flex-col items-center">
                     <span className="font-sans text-[9px] uppercase tracking-widest text-[#8A8177] self-start">
                       2. Animated Bookshelf Result
                     </span>
                     <div className="relative w-28 h-40 rounded-r-md rounded-l-xs overflow-hidden bg-[#0F1216] border border-[#D5B06C]/40 shadow-lg">
-                      {/* Top Paper Texture */}
                       <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#D9D0C1] via-[#F2E8D9] to-[#C9C0B1] border-b border-black/60 z-30" />
-                      {/* Spine Ribs */}
                       <div className="absolute left-0 top-0 bottom-0 w-2.5 bg-gradient-to-r from-black/90 via-[#1A1E24] to-transparent border-r border-white/10 z-30">
                         <div className="absolute top-3 left-0 right-0 h-0.5 bg-[#D5B06C]" />
                         <div className="absolute bottom-3 left-0 right-0 h-0.5 bg-[#D5B06C]" />
                       </div>
-                      {/* Image */}
                       {tempImage && (
                         <img
                           src={tempImage}
@@ -1557,7 +1506,6 @@ export const AuthorPortal = () => {
         )}
       </AnimatePresence>
 
-      {/* Delete Confirmation Modal */}
       <AnimatePresence>
         {workToDelete && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#080A06]/85 backdrop-blur-md">

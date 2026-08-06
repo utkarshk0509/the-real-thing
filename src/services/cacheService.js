@@ -1,18 +1,8 @@
-/**
- * Stale-While-Revalidate (SWR) Cache Service
- * Provides fast 0ms memory hits with LocalStorage persistence and background revalidation support.
- */
-
 class CacheService {
   constructor() {
     this.memoryCache = new Map();
   }
 
-  /**
-   * Retrieves item from Memory cache or LocalStorage.
-   * @param {string} key - Cache key
-   * @returns {any|null} Parsed cache data or null
-   */
   get(key) {
     if (this.memoryCache.has(key)) {
       return this.memoryCache.get(key);
@@ -32,11 +22,6 @@ class CacheService {
     return null;
   }
 
-  /**
-   * Sets cache data in both Memory and LocalStorage.
-   * @param {string} key - Cache key
-   * @param {any} data - Data to cache
-   */
   set(key, data) {
     this.memoryCache.set(key, data);
     try {
@@ -46,10 +31,6 @@ class CacheService {
     }
   }
 
-  /**
-   * Invalidates a specific cache entry.
-   * @param {string} key - Cache key
-   */
   invalidate(key) {
     this.memoryCache.delete(key);
     try {
@@ -59,9 +40,6 @@ class CacheService {
     }
   }
 
-  /**
-   * Clears all in-memory and local storage caches.
-   */
   clear() {
     this.memoryCache.clear();
   }

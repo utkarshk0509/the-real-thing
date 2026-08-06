@@ -17,7 +17,6 @@ export default function AtmosphericBackground() {
     };
     window.addEventListener('resize', handleResize);
 
-    // Track mouse position for subtle interactivity
     let mouse = { x: -1000, y: -1000 };
     const handleMouseMove = (e) => {
       mouse.x = e.clientX;
@@ -25,7 +24,6 @@ export default function AtmosphericBackground() {
     };
     window.addEventListener('mousemove', handleMouseMove);
 
-    // Generate floating micro pinprick stardust particles
     const particleCount = Math.floor((width * height) / 22000);
     const particles = Array.from({ length: particleCount }, () => ({
       x: Math.random() * width,
@@ -39,25 +37,21 @@ export default function AtmosphericBackground() {
     const render = () => {
       ctx.clearRect(0, 0, width, height);
 
-      // Draw subtle ambient radial glow at the top center
       const gradient = ctx.createRadialGradient(width / 2, 0, 50, width / 2, height / 2, width);
       gradient.addColorStop(0, 'rgba(213, 176, 108, 0.04)');
       gradient.addColorStop(1, 'transparent');
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, width, height);
 
-      // Update and draw particles
       particles.forEach((p) => {
         p.x += p.speedX;
         p.y += p.speedY;
 
-        // Wrap around screen boundaries
         if (p.x < 0) p.x = width;
         if (p.x > width) p.x = 0;
         if (p.y < 0) p.y = height;
         if (p.y > height) p.y = 0;
 
-        // Distance check to mouse for interactive illumination
         const dx = mouse.x - p.x;
         const dy = mouse.y - p.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
@@ -72,7 +66,6 @@ export default function AtmosphericBackground() {
         ctx.fillStyle = `rgba(213, 176, 108, ${currentOpacity})`;
         ctx.fill();
 
-        // Draw faint constellation threads between close particles near the cursor
         particles.forEach((p2) => {
           const distanceBetweenParticles = Math.hypot(p.x - p2.x, p.y - p2.y);
           if (distanceBetweenParticles < 80 && dist < 150) {
@@ -101,7 +94,7 @@ export default function AtmosphericBackground() {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-0"
+      className="pointer-events-none fixed inset-0 z-0 bg-[#080A06]"
     />
   );
 }

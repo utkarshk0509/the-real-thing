@@ -23,24 +23,20 @@ export const ReaderView = () => {
   const [isCoverOpen, setIsCoverOpen] = useState(false);
   const [isClosingBook, setIsClosingBook] = useState(false);
 
-  const [scrollProgressPercent, setScrollProgressPercent] = useState(0); // Instantaneous live scroll %
-  const [maxProgressPercent, setMaxProgressPercent] = useState(0); // Permanent max high-water mark
+  const [scrollProgressPercent, setScrollProgressPercent] = useState(0);
+  const [maxProgressPercent, setMaxProgressPercent] = useState(0);
 
-  // Reader Settings (Theme & Typography Customizer)
   const [readerSettings, setReaderSettings] = useState(() =>
     readerProgressService.getReaderSettings()
   );
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  // Floating Quote Selection State
   const [selectedText, setSelectedText] = useState('');
   const [quoteTooltipPos, setQuoteTooltipPos] = useState(null);
   const [quoteSavedNotice, setQuoteSavedNotice] = useState(false);
 
-  // Paragraph Bookmark State
   const [paragraphBookmarks, setParagraphBookmarks] = useState({});
 
-  // Auto-scroll anchor ref
   const bookmarkedRef = useRef(null);
 
   const categoryRoute = work?.category === 'story' ? '/stories' : '/poems';
@@ -59,7 +55,6 @@ export const ReaderView = () => {
 
   useEffect(() => {
     if (work && work.slug) {
-      // Load existing max reading percentage for this work
       const existingLastRead = readerProgressService.getLastRead(work.category);
       const savedMaxPercentage = (existingLastRead && existingLastRead.slug === work.slug)
         ? (existingLastRead.scrollPercentage || 0)
@@ -67,7 +62,6 @@ export const ReaderView = () => {
 
       setMaxProgressPercent(savedMaxPercentage);
 
-      // Immediately register clicked work so Continue Reading card appears on Hub
       readerProgressService.saveLastRead({
         slug: work.slug,
         title: work.title,
@@ -77,17 +71,14 @@ export const ReaderView = () => {
         paragraphIndex: 0,
       });
 
-      // Load paragraph bookmarks
       const savedBookmarks = readerProgressService.getParagraphBookmarks();
       setParagraphBookmarks(savedBookmarks);
 
-      // Trigger 3D Book Cover Opening sequence
       setIsCoverOpen(false);
       const timer = setTimeout(() => {
         setIsCoverOpen(true);
       }, 150);
 
-      // Auto-scroll to bookmarked paragraph if available
       if (savedBookmarks[work.slug] !== undefined && bookmarkedRef.current) {
         setTimeout(() => {
           bookmarkedRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -98,7 +89,6 @@ export const ReaderView = () => {
     }
   }, [work]);
 
-  // Handle Browser / Phone Back Button Navigation
   useEffect(() => {
     const handlePopState = () => {
       if (!work) return;
@@ -117,9 +107,6 @@ export const ReaderView = () => {
     return () => window.removeEventListener('popstate', handlePopState);
   }, [work, isBookshelfMode, navigate]);
 
-  // Track scroll percentage:
-  // - scrollProgressPercent: live growing line moves up & down dynamically
-  // - maxProgressPercent: text badge retains highest % achieved (100% READ)
   useEffect(() => {
     const handleScroll = () => {
       if (!work || !work.slug) return;
@@ -134,10 +121,8 @@ export const ReaderView = () => {
       const currentScroll = Math.max(0, window.scrollY);
       const currentScrollPercentage = Math.min(100, Math.max(0, Math.round((currentScroll / totalHeight) * 100)));
 
-      // Live growing progress line moves up and down smoothly
       setScrollProgressPercent(currentScrollPercentage);
 
-      // Permanent badge retains maximum high-water mark (100% READ)
       setMaxProgressPercent((prevMax) => {
         const newMaxPercentage = Math.max(prevMax, currentScrollPercentage);
 
@@ -165,7 +150,6 @@ export const ReaderView = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [work, paragraphBookmarks]);
 
-  // Handle Text Selection for Favorite Quote Saver
   const handleTextSelection = () => {
     const selection = window.getSelection();
     const text = selection.toString().trim();
@@ -217,7 +201,6 @@ export const ReaderView = () => {
           ref={isBookmarked ? bookmarkedRef : null}
           className="relative group py-2 px-1 rounded transition-colors hover:bg-white/[0.02]"
         >
-          {/* Paragraph Bookmark Indicator */}
           <button
             onClick={() => handleParagraphBookmark(idx)}
             title={isBookmarked ? 'Remove Bookmark' : 'Bookmark Paragraph'}
@@ -332,7 +315,6 @@ export const ReaderView = () => {
         readingWork={work}
       />
 
-      {/* Floating Save Quote Tooltip */}
       <AnimatePresence>
         {quoteTooltipPos && (
           <motion.div
@@ -357,7 +339,6 @@ export const ReaderView = () => {
         )}
       </AnimatePresence>
 
-      {/* Quote Saved Notice */}
       <AnimatePresence>
         {quoteSavedNotice && (
           <motion.div
@@ -372,7 +353,6 @@ export const ReaderView = () => {
       </AnimatePresence>
 
       <main className={`relative z-10 mx-auto px-4 md:px-6 pt-28 sm:pt-36 pb-24 ${isBookshelfMode ? 'max-w-5xl' : 'max-w-3xl'}`}>
-        {/* Return Button & Reader Settings Customizer Trigger */}
         <div className="mb-6 flex flex-wrap items-center justify-between gap-2.5">
           <button
             onClick={handleReturnNav}
@@ -382,7 +362,6 @@ export const ReaderView = () => {
             <span>Return to {categoryLabel}</span>
           </button>
 
-          {/* Reader Customizer Toggle Button */}
           <button
             onClick={() => setIsSettingsOpen(!isSettingsOpen)}
             className={`flex items-center gap-1.5 font-sans text-[10px] sm:text-xs uppercase tracking-[0.2em] px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg border transition-all cursor-pointer backdrop-blur-md shadow-sm ${
@@ -396,7 +375,6 @@ export const ReaderView = () => {
           </button>
         </div>
 
-        {/* Reader Customizer Drawer / Control Panel */}
         <AnimatePresence>
           {isSettingsOpen && (
             <motion.div
@@ -420,7 +398,6 @@ export const ReaderView = () => {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {/* Theme Selector */}
                   <div className="space-y-2">
                     <span className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177] block">
                       Theme
@@ -444,7 +421,6 @@ export const ReaderView = () => {
                     </div>
                   </div>
 
-                  {/* Font Size Selector */}
                   <div className="space-y-2">
                     <span className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177] block">
                       Font Size
@@ -471,7 +447,6 @@ export const ReaderView = () => {
                     </div>
                   </div>
 
-                  {/* Font Family Selector */}
                   <div className="space-y-2">
                     <span className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177] block">
                       Typography
@@ -502,28 +477,20 @@ export const ReaderView = () => {
           )}
         </AnimatePresence>
 
-        {/* 3D Opened Book Layout in Bookshelf Mode */}
         {isBookshelfMode ? (
           <div className="relative shadow-[0_30px_90px_rgba(0,0,0,0.95)]" style={{ perspective: 1400 }}>
-            {/* Outer Leather Hardcover Frame */}
             <div className="relative bg-[#0A0C10] border-2 border-[#D5B06C]/50 rounded-2xl p-4 md:p-8 overflow-hidden shadow-2xl">
-              {/* Top Parchment Edge */}
               <div className="absolute top-0 left-0 right-0 h-3 bg-gradient-to-r from-[#D9D0C1] via-[#F2E8D9] to-[#C9C0B1] border-b border-black/80 shadow-inner z-30" />
               
-              {/* Corner Gold Guards */}
               <div className="absolute top-3 left-3 w-4 h-4 border-t-2 border-l-2 border-[#D5B06C] z-30" />
               <div className="absolute top-3 right-3 w-4 h-4 border-t-2 border-r-2 border-[#D5B06C] z-30" />
               <div className="absolute bottom-3 left-3 w-4 h-4 border-b-2 border-l-2 border-[#D5B06C] z-30" />
               <div className="absolute bottom-3 right-3 w-4 h-4 border-b-2 border-r-2 border-[#D5B06C] z-30" />
 
-              {/* Two-Page Book Spread (Desktop: Left Page + Spine + Right Page) */}
               <div className="flex flex-col md:flex-row items-stretch justify-between pt-4 relative">
-                {/* Left Page (Title & Chapter Information) */}
                 <div className="hidden md:flex md:w-5/12 bg-[#0F1216] border border-[#8A8177]/20 rounded-l-xl p-8 flex-col justify-between relative shadow-inner">
-                  {/* Left Spine Fold Shadow */}
                   <div className="absolute top-0 bottom-0 right-0 w-8 bg-gradient-to-l from-black/60 to-transparent pointer-events-none z-10" />
 
-                  {/* Left Page Header */}
                   <div className="space-y-4 text-center border-b border-[#D5B06C]/30 pb-6 flex flex-col items-center">
                     <span className="font-sans text-[9px] uppercase tracking-[0.3em] text-[#D5B06C] font-semibold">
                       Sanctuary Archive • {work.category}
@@ -555,15 +522,11 @@ export const ReaderView = () => {
                   </div>
                 </div>
 
-                {/* Center Book Spine Binding Crease */}
                 <div className="hidden md:block w-5 bg-gradient-to-r from-black/70 via-[#181B22] to-black/70 border-x border-black/80 shadow-inner z-20 flex-shrink-0" />
 
-                {/* Right Page (Text Body & Inscriptions) */}
                 <div className="w-full md:w-7/12 bg-[#0F1216] border border-[#8A8177]/20 rounded-r-xl p-6 md:p-10 relative shadow-inner">
-                  {/* Right Spine Fold Shadow */}
                   <div className="absolute top-0 bottom-0 left-0 w-8 bg-gradient-to-r from-black/60 to-transparent pointer-events-none z-10" />
 
-                  {/* Mobile Header */}
                   <header className="block md:hidden text-center mb-8 space-y-3 border-b border-[#D5B06C]/30 pb-4 flex flex-col items-center">
                     <span className="font-sans text-[8px] uppercase tracking-[0.25em] text-[#D5B06C]">
                       {work.category}
@@ -586,12 +549,10 @@ export const ReaderView = () => {
                     </div>
                   </header>
 
-                  {/* Text Body with Bookmarks */}
                   <div className={`${FONT_FAMILIES[readerSettings.fontFamily] || 'font-serif'} ${FONT_SIZES[readerSettings.fontSize] || 'text-base md:text-lg'} ${activeTheme.text} mb-10 text-left relative z-20`}>
                     {renderParagraphs(work.body)}
                   </div>
 
-                  {/* Comments Section */}
                   <div className="relative z-20">
                     <AnonymousComments
                       comments={comments}
@@ -606,7 +567,6 @@ export const ReaderView = () => {
               </div>
             </div>
 
-            {/* Front Hardcover Swinging Open/Shut Animation (Right to Left Around Left Spine) */}
             <motion.div
               initial={{ rotateY: 0 }}
               animate={
@@ -620,13 +580,11 @@ export const ReaderView = () => {
               className="absolute inset-0 bg-[#07090C] border-2 border-[#D5B06C] rounded-2xl shadow-2xl overflow-hidden origin-left pointer-events-none z-40"
               style={{ transformStyle: 'preserve-3d', backfaceVisibility: 'hidden' }}
             >
-              {/* Hardcover Outer Spine Ribs */}
               <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-black via-[#1E222A] to-transparent border-r border-white/10 z-30">
                 <div className="absolute top-6 left-0 right-0 h-0.5 bg-[#D5B06C]" />
                 <div className="absolute bottom-6 left-0 right-0 h-0.5 bg-[#D5B06C]" />
               </div>
 
-              {/* Cover Artwork */}
               {work.image_url && (
                 <img
                   src={work.image_url}
@@ -649,7 +607,6 @@ export const ReaderView = () => {
             </motion.div>
           </div>
         ) : (
-          /* Grid View Minimalist Container */
           <div className={`${activeTheme.cardBg} border ${activeTheme.border} p-6 md:p-12 rounded-2xl shadow-xl transition-colors duration-500`}>
             <header className="text-center mb-14 space-y-4 pt-2 flex flex-col items-center">
               <h1 className="font-serif text-3xl md:text-5xl text-[#FEEFFF] font-normal leading-tight capitalize text-center">
@@ -669,12 +626,10 @@ export const ReaderView = () => {
               </div>
             </header>
 
-            {/* Text Body with Bookmarks */}
             <div className={`${FONT_FAMILIES[readerSettings.fontFamily] || 'font-serif'} ${FONT_SIZES[readerSettings.fontSize] || 'text-lg md:text-xl'} ${activeTheme.text} mb-12 text-left`}>
               {renderParagraphs(work.body)}
             </div>
 
-            {/* Comments Section */}
             <AnonymousComments
               comments={comments}
               onAddComment={(text) => {

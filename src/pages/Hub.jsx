@@ -19,7 +19,7 @@ export const Hub = ({ filter }) => {
   const [aboutBio, setAboutBio] = useState('');
   const [lastRead, setLastRead] = useState(null);
   const [allProgress, setAllProgress] = useState({});
-  const [viewMode, setViewMode] = useState(() => readerProgressService.getViewPreference()); // 'grid' | 'bookshelf'
+  const [viewMode, setViewMode] = useState(() => readerProgressService.getViewPreference());
 
   const handleViewModeChange = (mode) => {
     setViewMode(mode);
@@ -51,8 +51,6 @@ export const Hub = ({ filter }) => {
       setLastRead(null);
     }
   }, [isAboutOnly, isPoemsOnly, isStoriesOnly, currentPath]);
-
-
 
   const poems = works.filter((w) => w.category === 'poem');
   const stories = works.filter((w) => w.category === 'story');
@@ -90,7 +88,6 @@ export const Hub = ({ filter }) => {
       <Navigation />
 
       <main className="relative z-10 max-w-5xl mx-auto px-4 md:px-6 pt-32 md:pt-36 space-y-8">
-        {/* Navigation Return Button & View Mode Toggle */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#8A8177]/20 pb-4">
           <button
             onClick={() => {
@@ -136,7 +133,6 @@ export const Hub = ({ filter }) => {
           )}
         </div>
 
-        {/* 1. Continue Reading Progress Sync Card */}
         {lastRead && !isAboutOnly && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
@@ -178,7 +174,6 @@ export const Hub = ({ filter }) => {
           </div>
         ) : (
           <AnimatePresence mode="wait">
-            {/* 3D ANIMATED BOOKSHELF VIEW */}
             {viewMode === 'bookshelf' && !isAboutOnly ? (
               <motion.div
                 key="bookshelf-view"
@@ -193,7 +188,6 @@ export const Hub = ({ filter }) => {
               </motion.div>
             ) : (
               <>
-                {/* HUB / POEMS VIEW */}
                 {(currentPath === '/hub' || isPoemsOnly) && (
                   <motion.section
                     key="poems-section"
@@ -249,7 +243,6 @@ export const Hub = ({ filter }) => {
                   </motion.section>
                 )}
 
-                {/* STORIES VIEW */}
                 {(currentPath === '/hub' || isStoriesOnly) && (
                   <motion.section
                     key="stories-section"
@@ -307,7 +300,6 @@ export const Hub = ({ filter }) => {
                   </motion.section>
                 )}
 
-                {/* ABOUT SECTION */}
                 {isAboutOnly && (
                   <motion.section
                     key="about-section"

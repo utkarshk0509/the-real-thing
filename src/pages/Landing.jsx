@@ -10,7 +10,6 @@ import CosmicNebulaBackground from '../components/Shared/CosmicNebulaBackground'
 export default function Landing() {
   const navigate = useNavigate();
 
-  // Mouse Parallax Springs
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
 
@@ -50,10 +49,8 @@ export default function Landing() {
       exit={{ opacity: 0, filter: 'blur(10px)', transition: { duration: 0.8 } }}
       transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
     >
-      {/* Dynamic Deep Space Cosmic Nebula */}
       <CosmicNebulaBackground variant="poems" />
 
-      {/* Top Navigation Bar */}
       <motion.nav
         initial={{ opacity: 0, y: -15 }}
         animate={{ opacity: 1, y: 0 }}
@@ -89,7 +86,6 @@ export default function Landing() {
         </span>
       </motion.nav>
 
-      {/* Parallax Glowing Moon Asset */}
       <motion.div
         style={{ x: moonX, y: moonY }}
         className="absolute top-[5%] right-[5%] md:top-[7%] md:right-[10%] w-[200px] md:w-[320px] pointer-events-none z-10"
@@ -99,7 +95,6 @@ export default function Landing() {
           transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
           className="relative"
         >
-          {/* Ethereal Moon Aura Glow */}
           <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgba(213,176,108,0.25)_0%,transparent_70%)] blur-2xl pointer-events-none" />
           <img
             src={moonImg}
@@ -109,7 +104,6 @@ export default function Landing() {
         </motion.div>
       </motion.div>
 
-      {/* Main Hero Section */}
       <motion.div
         style={{ x: heroX, y: heroY }}
         className="relative z-20 flex flex-col items-center text-center space-y-6 max-w-2xl px-4"
@@ -125,7 +119,6 @@ export default function Landing() {
           ease: [0.16, 1, 0.3, 1],
         }}
       >
-        {/* Celestial Subtitle Badge */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -138,7 +131,6 @@ export default function Landing() {
           </span>
         </motion.div>
 
-        {/* Title */}
         <motion.h1
           initial={{ filter: 'blur(12px)', opacity: 0 }}
           animate={{ filter: 'blur(0px)', opacity: 1 }}
@@ -148,7 +140,6 @@ export default function Landing() {
           The Real Thing
         </motion.h1>
 
-        {/* Decorative Gradient Line */}
         <motion.div
           initial={{ scaleX: 0 }}
           animate={{ scaleX: 1 }}
@@ -156,7 +147,6 @@ export default function Landing() {
           className="h-px w-40 md:w-60 bg-gradient-to-r from-transparent via-[#D5B06C] to-transparent opacity-85"
         />
 
-        {/* Atmospheric Welcoming Threshold Inscription */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -171,14 +161,12 @@ export default function Landing() {
           </p>
         </motion.div>
 
-        {/* Action Gateway Button */}
         <motion.div
           whileHover={{ scale: 1.07 }}
           whileTap={{ scale: 0.93 }}
           className="relative cursor-pointer group pt-4"
           onClick={handleEnterSanctuary}
         >
-          {/* Outer Pulsing Glow */}
           <div className="absolute inset-0 rounded-full bg-[#D5B06C]/30 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
           <div className="relative flex flex-col items-center gap-2">
@@ -197,7 +185,6 @@ export default function Landing() {
         </motion.div>
       </motion.div>
 
-      {/* Layered Mountains Silhouette with Parallax */}
       <motion.div
         style={{ x: mountainsX }}
         initial={{ opacity: 0, y: 40 }}

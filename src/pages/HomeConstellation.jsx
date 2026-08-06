@@ -9,7 +9,6 @@ import cacheService from '../services/cacheService';
 import readerProgressService from '../services/readerProgressService';
 import { CACHE_KEYS } from '../config/constants';
 
-/* ── Node definitions ─────────────────────────────── */
 const NODES = [
   {
     id: 'poems',
@@ -49,25 +48,21 @@ const NODES = [
   },
 ];
 
-/* Pairs for constellation lines */
 const EDGES = [
   ['poems', 'stories'],
   ['stories', 'about'],
   ['about', 'poems'],
 ];
 
-/* ── Animated dash offset for "light traveling" effect ── */
 function TravelingEdge({ x1, y1, x2, y2, color, active }) {
   return (
     <g>
-      {/* base faint line always visible */}
       <line
         x1={x1} y1={y1} x2={x2} y2={y2}
         stroke={color}
         strokeWidth="0.8"
         strokeOpacity="0.2"
       />
-      {/* animated light pulse along path */}
       <motion.line
         x1={x1} y1={y1} x2={x2} y2={y2}
         stroke={color}
@@ -82,7 +77,6 @@ function TravelingEdge({ x1, y1, x2, y2, color, active }) {
   );
 }
 
-/* ── Individual star node ─────────────────────────── */
 function StarNode({ node, isHovered, isExploding, onEnter, onLeave, onClick, count }) {
   const { cx, cy, color, glowColor, orbitColor, label, glyph, description } = node;
 
@@ -93,10 +87,8 @@ function StarNode({ node, isHovered, isExploding, onEnter, onLeave, onClick, cou
       onMouseLeave={onLeave}
       onClick={onClick}
     >
-      {/* Snug responsive hit area */}
       <circle cx={cx} cy={cy} r={48} fill="transparent" stroke="none" />
 
-      {/* Outer glow pulse ring — hugs the orbit closely */}
       {!isExploding && (
         <motion.circle
           cx={cx} cy={cy} r={isHovered ? 32 : 24}
@@ -112,7 +104,6 @@ function StarNode({ node, isHovered, isExploding, onEnter, onLeave, onClick, cou
         />
       )}
 
-      {/* Snug Orbit ring — rotates smoothly around star core */}
       {!isExploding && (
         <motion.g
           animate={{ rotate: isHovered ? 360 : 0 }}
@@ -127,7 +118,6 @@ function StarNode({ node, isHovered, isExploding, onEnter, onLeave, onClick, cou
             strokeDasharray="3 4"
             strokeOpacity={isHovered ? 1 : 0.5}
           />
-          {/* Orbit satellite dot */}
           <motion.circle
             cx={cx} cy={cy - (isHovered ? 26 : 22)} r={isHovered ? 3.2 : 2}
             fill={color}
@@ -137,7 +127,6 @@ function StarNode({ node, isHovered, isExploding, onEnter, onLeave, onClick, cou
         </motion.g>
       )}
 
-      {/* Supernova burst particles on click */}
       {isExploding &&
         Array.from({ length: 20 }).map((_, i) => {
           const angle = (i / 20) * Math.PI * 2;
@@ -159,7 +148,6 @@ function StarNode({ node, isHovered, isExploding, onEnter, onLeave, onClick, cou
           );
         })}
 
-      {/* Cross diffraction spikes on hover */}
       {isHovered && !isExploding && (
         <>
           <motion.line
@@ -183,7 +171,6 @@ function StarNode({ node, isHovered, isExploding, onEnter, onLeave, onClick, cou
         </>
       )}
 
-      {/* Star core */}
       <motion.circle
         cx={cx} cy={cy}
         r={isExploding ? 30 : isHovered ? 9 : 5.5}
@@ -203,7 +190,6 @@ function StarNode({ node, isHovered, isExploding, onEnter, onLeave, onClick, cou
         }}
       />
 
-      {/* Glyph inside the star on hover */}
       {isHovered && !isExploding && (
         <motion.text
           x={cx} y={cy + 1}
@@ -219,7 +205,6 @@ function StarNode({ node, isHovered, isExploding, onEnter, onLeave, onClick, cou
         </motion.text>
       )}
 
-      {/* Label below star — clear readable size */}
       {!isExploding && (
         <g>
           <motion.text
@@ -237,7 +222,6 @@ function StarNode({ node, isHovered, isExploding, onEnter, onLeave, onClick, cou
             {label.toUpperCase()}
           </motion.text>
 
-          {/* Astronomical Star Code Name */}
           <text
             x={cx} y={cy + 54}
             textAnchor="middle"
@@ -253,7 +237,6 @@ function StarNode({ node, isHovered, isExploding, onEnter, onLeave, onClick, cou
         </g>
       )}
 
-      {/* Count badge below label */}
       {count !== undefined && !isExploding && (
         <text
           x={cx} y={cy + 68}
@@ -271,7 +254,6 @@ function StarNode({ node, isHovered, isExploding, onEnter, onLeave, onClick, cou
   );
 }
 
-/* ── Main page ────────────────────────────────────── */
 export const HomeConstellation = () => {
   const navigate = useNavigate();
   const [hoveredNode, setHoveredNode] = useState(null);
@@ -279,7 +261,6 @@ export const HomeConstellation = () => {
   const [counts, setCounts] = useState({ poems: 0, stories: 0 });
   const [lastReadWork, setLastReadWork] = useState(null);
 
-  // Smooth cursor-driven parallax for the SVG frame
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
   const springX = useSpring(mouseX, { stiffness: 50, damping: 20 });
@@ -329,21 +310,17 @@ export const HomeConstellation = () => {
   }, []);
 
   const handleOpenOracle = async () => {
-    // Filter strictly for POEMS ONLY (exclude stories)
     const poems = allWorks.filter((w) => w.category === 'poem');
 
     if (poems.length === 0) return;
 
-    // Pick a random poem
     const chosenPoem = poems[Math.floor(Math.random() * poems.length)];
 
     try {
-      // Fetch full poem object including 'body' column
       const fullPoem = await workService.getWorkBySlug(chosenPoem.slug);
 
       const rawBody = (fullPoem?.body || chosenPoem.excerpt || '').trim();
 
-      // Split poem body into individual poetic lines
       const lines = rawBody
         .split(/\r?\n/)
         .map((l) => l.replace(/^[#*->\s]+/, '').trim())
@@ -351,13 +328,11 @@ export const HomeConstellation = () => {
 
       let poemLine = '';
       if (lines.length > 0) {
-        // Pick a random line directly from THIS poem's actual body
         poemLine = lines[Math.floor(Math.random() * lines.length)];
       } else {
         poemLine = rawBody || chosenPoem.title;
       }
 
-      // Limit length cleanly if line is overly long
       if (poemLine.length > 180) {
         poemLine = poemLine.slice(0, 175).replace(/\s+\S*$/, '') + '...';
       }
@@ -392,11 +367,9 @@ export const HomeConstellation = () => {
       transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
       className="relative h-screen w-full bg-[#050608] text-[#FEEFFF] overflow-hidden select-none"
     >
-      {/* Cosmic nebula — gold/violet palette for the hub */}
       <CosmicNebulaBackground variant="poems" />
       <Navigation />
 
-      {/* Fullscreen Starlight Flash on Supernova Explosion */}
       <AnimatePresence>
         {explodingNode && (
           <motion.div
@@ -410,8 +383,6 @@ export const HomeConstellation = () => {
       </AnimatePresence>
 
       <main className="relative z-10 h-screen flex flex-col items-center justify-center px-4 md:px-6 pt-16 pb-3 gap-2">
-
-        {/* ── Header ───────────────────────────────── */}
         <div className="text-center space-y-1.5 mb-2 max-w-2xl mx-auto z-20">
           <motion.span
             initial={{ opacity: 0, y: -12 }}
@@ -449,7 +420,6 @@ export const HomeConstellation = () => {
           </motion.p>
         </div>
 
-        {/* ── Action Bar: Resume Reading & Discover Stanza Oracle ── */}
         <div className="flex flex-wrap items-center justify-center gap-2 mb-2 z-20">
           <AnimatePresence>
             {lastReadWork && (
@@ -468,7 +438,6 @@ export const HomeConstellation = () => {
             )}
           </AnimatePresence>
 
-          {/* Random Stanza Oracle Button */}
           <motion.button
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -481,7 +450,6 @@ export const HomeConstellation = () => {
           </motion.button>
         </div>
 
-        {/* ── Random Inscription Oracle Modal (Ultra-Premium Astrolabe Edition) ── */}
         <AnimatePresence>
           {isOracleOpen && oracleWork && (
             <motion.div
@@ -491,7 +459,6 @@ export const HomeConstellation = () => {
               className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#050608]/90 backdrop-blur-2xl"
               onClick={() => setIsOracleOpen(false)}
             >
-              {/* Outer Subtle Starlight Container Border */}
               <motion.div
                 initial={{ scale: 0.92, opacity: 0, y: 25 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -500,10 +467,7 @@ export const HomeConstellation = () => {
                 onClick={(e) => e.stopPropagation()}
                 className="relative max-w-xl w-full p-[1px] rounded-3xl bg-gradient-to-b from-[#D5B06C]/70 via-[#8A8177]/25 to-[#D5B06C]/70 shadow-[0_0_40px_rgba(213,176,108,0.18)] overflow-hidden"
               >
-                {/* Inner Obsidian Luxury Body */}
                 <div className="relative w-full bg-gradient-to-b from-[#141822] via-[#0F1216] to-[#080A06] rounded-[23px] p-8 md:p-11 text-center space-y-7 overflow-hidden">
-                  
-                  {/* Slow Rotating Astronomical Astrolabe Compass SVG in Background */}
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-15">
                     <motion.svg
                       animate={{ rotate: 360 }}
@@ -524,16 +488,13 @@ export const HomeConstellation = () => {
                     </motion.svg>
                   </div>
 
-                  {/* Ambient Starlight Glow Center Pulse */}
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(213,176,108,0.12)_0%,transparent_65%)] pointer-events-none" />
 
-                  {/* Corner Celestial Filigree Accents */}
                   <div className="absolute top-3.5 left-3.5 w-3.5 h-3.5 border-t border-l border-[#D5B06C]/70" />
                   <div className="absolute top-3.5 right-3.5 w-3.5 h-3.5 border-t border-r border-[#D5B06C]/70" />
                   <div className="absolute bottom-3.5 left-3.5 w-3.5 h-3.5 border-b border-l border-[#D5B06C]/70" />
                   <div className="absolute bottom-3.5 right-3.5 w-3.5 h-3.5 border-b border-r border-[#D5B06C]/70" />
 
-                  {/* Top Close Button */}
                   <button
                     onClick={() => setIsOracleOpen(false)}
                     className="absolute top-4 right-5 text-[#8A8177] hover:text-[#D5B06C] transition-colors p-2 font-sans text-xs uppercase cursor-pointer z-30"
@@ -541,7 +502,6 @@ export const HomeConstellation = () => {
                     ✕
                   </button>
 
-                  {/* Header Tagline & Gold Emblem */}
                   <div className="relative z-20 space-y-3">
                     <div className="flex items-center justify-center gap-2.5">
                       <span className="h-px w-8 bg-gradient-to-r from-transparent to-[#D5B06C]/60" />
@@ -571,10 +531,8 @@ export const HomeConstellation = () => {
                     </div>
                   </div>
 
-                  {/* Animated Gold Shimmer Divider */}
                   <div className="relative z-20 h-px w-36 bg-gradient-to-r from-transparent via-[#D5B06C]/70 to-transparent mx-auto" />
 
-                  {/* Poetic Stanza Quote Card */}
                   <motion.div
                     key={oracleWork.snippet}
                     initial={{ opacity: 0, scale: 0.96, y: 10 }}
@@ -589,7 +547,6 @@ export const HomeConstellation = () => {
                     <span className="font-serif text-3xl text-[#D5B06C]/40 block leading-none select-none text-right font-bold">”</span>
                   </motion.div>
 
-                  {/* Action Buttons */}
                   <div className="relative z-20 pt-2 flex flex-col sm:flex-row items-center justify-center gap-4">
                     <button
                       onClick={() => {
@@ -617,7 +574,6 @@ export const HomeConstellation = () => {
           )}
         </AnimatePresence>
 
-        {/* ── SVG Constellation Map ─────────────────── */}
         <motion.div
           className="relative w-full max-w-3xl z-20"
           style={{ x: springX, y: springY }}
@@ -627,27 +583,21 @@ export const HomeConstellation = () => {
             className="w-full max-h-[42vh]"
             style={{ overflow: 'visible' }}
           >
-            {/* ── Astronomical Astrolabe Coordinates Grid ── */}
             <g className="opacity-30 pointer-events-none">
-              {/* Concentric Coordinate Rings */}
               <circle cx="300" cy="180" r="165" fill="none" stroke="#D5B06C" strokeWidth="0.5" strokeDasharray="3 5" opacity="0.4" />
               <circle cx="300" cy="180" r="110" fill="none" stroke="#D5B06C" strokeWidth="0.4" strokeDasharray="2 4" opacity="0.3" />
               <circle cx="300" cy="180" r="55" fill="none" stroke="#D5B06C" strokeWidth="0.4" strokeDasharray="1 3" opacity="0.25" />
 
-              {/* Declination / Right Ascension Axes */}
               <line x1="300" y1="15" x2="300" y2="345" stroke="#D5B06C" strokeWidth="0.4" strokeDasharray="2 4" opacity="0.3" />
               <line x1="35" y1="180" x2="565" y2="180" stroke="#D5B06C" strokeWidth="0.4" strokeDasharray="2 4" opacity="0.3" />
 
-              {/* Cardinal Celestial Ticks */}
               <text x="300" y="10" textAnchor="middle" fontSize="6.5" fill="#8A8177" letterSpacing="1.5">N 000°</text>
               <text x="580" y="182" textAnchor="start" fontSize="6.5" fill="#8A8177" letterSpacing="1.5">E 090°</text>
               <text x="300" y="356" textAnchor="middle" fontSize="6.5" fill="#8A8177" letterSpacing="1.5">S 180°</text>
               <text x="20" y="182" textAnchor="end" fontSize="6.5" fill="#8A8177" letterSpacing="1.5">W 270°</text>
             </g>
 
-            {/* ── Minor Constellation Framework Lines & Stars ── */}
             <g className="pointer-events-none opacity-40">
-              {/* Secondary Constellation Connecting Lines */}
               <line x1="155" y1="120" x2="95" y2="65" stroke="#D5B06C" strokeWidth="0.5" strokeDasharray="2 3" />
               <line x1="155" y1="120" x2="235" y2="45" stroke="#D5B06C" strokeWidth="0.5" strokeDasharray="2 3" />
               <line x1="445" y1="140" x2="515" y2="75" stroke="#7CB9E8" strokeWidth="0.5" strokeDasharray="2 3" />
@@ -655,7 +605,6 @@ export const HomeConstellation = () => {
               <line x1="300" y1="270" x2="185" y2="315" stroke="#C9A9FF" strokeWidth="0.5" strokeDasharray="2 3" />
               <line x1="300" y1="270" x2="415" y2="305" stroke="#C9A9FF" strokeWidth="0.5" strokeDasharray="2 3" />
 
-              {/* Minor Stars */}
               {[
                 { x: 95, y: 65, color: '#D5B06C' },
                 { x: 235, y: 45, color: '#D5B06C' },
@@ -671,7 +620,6 @@ export const HomeConstellation = () => {
               ))}
             </g>
 
-            {/* ── Major Constellation edges ── */}
             {EDGES.map(([aId, bId]) => {
               const a = NODES.find((n) => n.id === aId);
               const b = NODES.find((n) => n.id === bId);
@@ -687,7 +635,6 @@ export const HomeConstellation = () => {
               );
             })}
 
-            {/* ── Star nodes ── */}
             {NODES.map((node) => (
               <StarNode
                 key={node.id}
@@ -703,7 +650,6 @@ export const HomeConstellation = () => {
           </svg>
         </motion.div>
 
-        {/* ── Bottom legend ─────────────────────────── */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}

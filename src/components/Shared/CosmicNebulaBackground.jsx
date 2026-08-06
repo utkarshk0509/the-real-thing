@@ -1,22 +1,5 @@
 import React, { useEffect, useRef } from 'react';
 
-/**
- * CosmicNebulaBackground
- *
- * A canvas-driven deep-space nebula with:
- *  - Layered star fields (near / mid / far) with parallax on mouse
- *  - Slow-rotating nebula dust clouds (radial gradient blobs)
- *  - Shooting stars that streak across the canvas periodically
- *  - Mouse: stars near cursor illuminate + subtle parallax layers shift
- *  - Scroll: deeper layers drift upward as page scrolls (parallax)
- *
- * Variants (per-page palettes):
- *  'poems'   — deep violet + gold
- *  'stories' — midnight blue + teal
- *  'about'   — warm rose + amber
- *  'reader'  — deep indigo + soft lavender
- */
-
 const PALETTES = {
   poems: {
     clouds: [
@@ -92,7 +75,6 @@ export default function CosmicNebulaBackground({ variant = 'reader' }) {
     const onScroll = () => { scrollY = window.scrollY; };
     window.addEventListener('scroll', onScroll, { passive: true });
 
-    // Star layers
     const makeStars = (count, minSize, maxSize, speedFactor, parallaxFactor) =>
       Array.from({ length: count }, () => ({
         x: rand(0, window.innerWidth),
@@ -110,7 +92,6 @@ export default function CosmicNebulaBackground({ variant = 'reader' }) {
     const midStars  = makeStars(60,  0.5, 1.2, 0.7, 0.06);
     const nearStars = makeStars(25,  1.0, 2.2, 1.0, 0.12);
 
-    // Nebula clouds
     const clouds = Array.from({ length: 7 }, () => ({
       cx: rand(0.1, 0.9),
       cy: rand(0.05, 0.85),
@@ -125,7 +106,6 @@ export default function CosmicNebulaBackground({ variant = 'reader' }) {
       parallax: rand(0.005, 0.018),
     }));
 
-    // Shooting stars
     const shooters = [];
     const spawnShooter = () => {
       shooters.push({
@@ -153,14 +133,12 @@ export default function CosmicNebulaBackground({ variant = 'reader' }) {
 
       ctx.clearRect(0, 0, W, H);
 
-      // Core ambient radial glow
       const coreGrad = ctx.createRadialGradient(W / 2, H * 0.1, 0, W / 2, H * 0.4, W * 0.7);
       coreGrad.addColorStop(0, coreGlow);
       coreGrad.addColorStop(1, 'transparent');
       ctx.fillStyle = coreGrad;
       ctx.fillRect(0, 0, W, H);
 
-      // Nebula clouds
       clouds.forEach((cloud) => {
         const col = cloudColors[cloud.colorIndex];
         const pulse = Math.sin(time * cloud.pulseSpeed * 1000 + cloud.pulseOffset) * 0.015;
@@ -189,7 +167,6 @@ export default function CosmicNebulaBackground({ variant = 'reader' }) {
         cloud.rotation += cloud.rotationSpeed;
       });
 
-      // Star layers
       const drawStarLayer = (stars) => {
         stars.forEach((s) => {
           s.x += s.speedX;
@@ -212,7 +189,6 @@ export default function CosmicNebulaBackground({ variant = 'reader' }) {
           const sx = s.x + px;
           const sy3 = s.y + py - sy2;
 
-          // Glow halo for near stars
           if (s.size > 1.2) {
             const halo = ctx.createRadialGradient(sx, sy3, 0, sx, sy3, s.size * 4);
             halo.addColorStop(0, `rgba(${starColor.r}, ${starColor.g}, ${starColor.b}, ${opacity * 0.3})`);
@@ -228,7 +204,6 @@ export default function CosmicNebulaBackground({ variant = 'reader' }) {
           ctx.fillStyle = `rgba(${starColor.r}, ${starColor.g}, ${starColor.b}, ${opacity})`;
           ctx.fill();
 
-          // Cross sparkle for brightest near stars
           if (s.size > 1.8 && opacity > 0.5) {
             const armLen = s.size * 5;
             ctx.save();
@@ -247,7 +222,6 @@ export default function CosmicNebulaBackground({ variant = 'reader' }) {
       drawStarLayer(midStars);
       drawStarLayer(nearStars);
 
-      // Constellation threads near cursor
       const allStars = [...midStars, ...nearStars];
       for (let i = 0; i < allStars.length; i++) {
         const a = allStars[i];
@@ -270,7 +244,6 @@ export default function CosmicNebulaBackground({ variant = 'reader' }) {
         }
       }
 
-      // Shooting stars
       for (let i = shooters.length - 1; i >= 0; i--) {
         const sh = shooters[i];
         sh.x += Math.cos(sh.angle) * sh.speed;

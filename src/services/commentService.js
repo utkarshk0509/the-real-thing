@@ -2,11 +2,6 @@ import { supabase } from '../lib/supabase';
 import { PROJECTIONS } from '../config/constants';
 
 export const commentService = {
-  /**
-   * Fetches comments for a specific work ID.
-   * @param {string} workId
-   * @returns {Promise<Array>}
-   */
   async getCommentsByWorkId(workId) {
     if (!workId || !supabase) return [];
 
@@ -27,11 +22,6 @@ export const commentService = {
     return [];
   },
 
-  /**
-   * Posts a new anonymous reflection / comment.
-   * @param {Object} commentPayload
-   * @returns {Promise<Object|null>}
-   */
   async addComment(commentPayload) {
     const { work_id, author_alias, avatar_seed, content } = commentPayload;
 
@@ -62,11 +52,6 @@ export const commentService = {
     return null;
   },
 
-  /**
-   * Deletes a comment by ID (Curator action).
-   * @param {string} commentId
-   * @returns {Promise<boolean>}
-   */
   async deleteComment(commentId) {
     if (!commentId || !supabase) return false;
 

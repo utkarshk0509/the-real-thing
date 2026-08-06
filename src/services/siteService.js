@@ -3,10 +3,6 @@ import { CACHE_KEYS, DEFAULT_AUTHOR_BIO } from '../config/constants';
 import cacheService from './cacheService';
 
 export const siteService = {
-  /**
-   * Fetches site author bio with SWR caching.
-   * @returns {Promise<string>}
-   */
   async getAuthorBio() {
     const cachedBio = cacheService.get(CACHE_KEYS.AUTHOR_BIO);
     if (cachedBio) return cachedBio;
@@ -31,11 +27,6 @@ export const siteService = {
     return DEFAULT_AUTHOR_BIO;
   },
 
-  /**
-   * Updates site author bio in Supabase and SWR cache.
-   * @param {string} newBio
-   * @returns {Promise<boolean>}
-   */
   async updateAuthorBio(newBio) {
     cacheService.set(CACHE_KEYS.AUTHOR_BIO, newBio);
 
@@ -58,9 +49,6 @@ export const siteService = {
     return true;
   },
 
-  /**
-   * Fetches full About Author Sanctuary custom settings.
-   */
   async getAboutData() {
     const cached = cacheService.get('real_thing_about_data');
     if (cached) return cached;
@@ -91,9 +79,6 @@ export const siteService = {
     return null;
   },
 
-  /**
-   * Updates full About Author Sanctuary custom settings.
-   */
   async updateAboutData(aboutData) {
     cacheService.set('real_thing_about_data', aboutData);
     try {
@@ -117,13 +102,9 @@ export const siteService = {
     return true;
   },
 
-  /**
-   * Fetches reader whispers from Supabase (or local fallback).
-   */
   async getWhispers() {
     if (supabase) {
       try {
-        // Try dedicated reader_whispers table first
         const { data, error } = await supabase
           .from('reader_whispers')
           .select('*')
@@ -143,7 +124,6 @@ export const siteService = {
         console.warn('[siteService] reader_whispers fetch error:', err);
       }
 
-      // Fallback to site_settings key
       try {
         const { data, error } = await supabase
           .from('site_settings')
@@ -167,9 +147,6 @@ export const siteService = {
     return [];
   },
 
-  /**
-   * Saves a new reader whisper into Supabase & LocalStorage.
-   */
   async sendWhisper(whisperData) {
     const payload = {
       sender: whisperData.sender || 'A Quiet Reader',
@@ -190,7 +167,6 @@ export const siteService = {
         console.warn('[siteService] reader_whispers insert notice:', err);
       }
 
-      // Fallback to site_settings
       try {
         const existing = await siteService.getWhispers();
         const newWhisper = {
@@ -225,9 +201,6 @@ export const siteService = {
     return updated;
   },
 
-  /**
-   * Deletes a reader whisper by ID from Supabase & LocalStorage.
-   */
   async deleteWhisper(id) {
     if (supabase) {
       try {

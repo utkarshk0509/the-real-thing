@@ -7,7 +7,6 @@ export const CustomCelestialCursor = () => {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    // Check if mobile screen (< 768px)
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
@@ -18,7 +17,6 @@ export const CustomCelestialCursor = () => {
     const handleMouseMove = (e) => {
       setPos({ x: e.clientX, y: e.clientY });
 
-      // Check if mouse is hovering over interactive elements
       const element = e.target && e.target.nodeType === 1 ? e.target : e.target?.parentElement;
       const isInteractive = element && (
         element.tagName === 'BUTTON' ||
@@ -41,7 +39,6 @@ export const CustomCelestialCursor = () => {
 
   return (
     <div className="pointer-events-none fixed inset-0 z-[9999] overflow-hidden">
-      {/* Outer Smooth Celestial Ring Follower */}
       <motion.div
         animate={{
           x: pos.x - (isHovered ? 20 : 14),
@@ -59,7 +56,6 @@ export const CustomCelestialCursor = () => {
         className="fixed top-0 left-0 w-7 h-7 rounded-full border shadow-[0_0_12px_rgba(213,176,108,0.3)] backdrop-blur-[1px] pointer-events-none"
       />
 
-      {/* Inner Golden Stardust Pointer Dot */}
       <motion.div
         animate={{
           x: pos.x - 3,

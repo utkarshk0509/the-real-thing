@@ -93,8 +93,7 @@ export const AboutAuthorSanctuary = ({ works = [], bio = '' }) => {
   ];
 
   return (
-    <div className="space-y-12 max-w-4xl mx-auto py-6">
-      {/* ── Author Profile Header Badge ── */}
+    <div className="space-[#D5B06C] space-y-12 max-w-4xl mx-auto py-6">
       <motion.div
         initial={{ opacity: 0, scale: 0.96, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -102,10 +101,8 @@ export const AboutAuthorSanctuary = ({ works = [], bio = '' }) => {
         className="relative overflow-hidden rounded-3xl p-[1px] bg-gradient-to-b from-[#D5B06C]/60 via-[#8A8177]/25 to-[#D5B06C]/60 shadow-[0_0_50px_rgba(213,176,108,0.18)]"
       >
         <div className="relative w-full bg-gradient-to-b from-[#141822] via-[#0F1216] to-[#080A06] rounded-[23px] p-8 md:p-12 text-center space-y-7 overflow-hidden">
-          {/* Ambient Starlight Background Pulse */}
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(213,176,108,0.15)_0%,transparent_70%)] pointer-events-none" />
 
-          {/* Corner Celestial Filigree Accents */}
           <div className="absolute top-3.5 left-3.5 w-3.5 h-3.5 border-t border-l border-[#D5B06C]/70" />
           <div className="absolute top-3.5 right-3.5 w-3.5 h-3.5 border-t border-r border-[#D5B06C]/70" />
           <div className="absolute bottom-3.5 left-3.5 w-3.5 h-3.5 border-b border-l border-[#D5B06C]/70" />
@@ -134,7 +131,6 @@ export const AboutAuthorSanctuary = ({ works = [], bio = '' }) => {
             </p>
           </div>
 
-          {/* ── Sanctuary Metrics Counter Row ── */}
           <div className="relative z-10 pt-4 grid grid-cols-3 gap-3 max-w-lg mx-auto border-t border-[#8A8177]/20">
             <div className="p-3.5 rounded-2xl bg-black/50 border border-[#D5B06C]/30 text-center backdrop-blur-md">
               <div className="font-serif text-xl md:text-2xl text-[#D5B06C] font-semibold">{poemsCount}</div>
@@ -152,7 +148,6 @@ export const AboutAuthorSanctuary = ({ works = [], bio = '' }) => {
         </div>
       </motion.div>
 
-      {/* ── Interactive Manifesto & Philosophy Cards ── */}
       <div className="space-y-4">
         <h3 className="font-sans text-xs uppercase tracking-[0.3em] text-[#D5B06C] font-semibold text-center flex items-center justify-center gap-2">
           <span className="h-px w-6 bg-gradient-to-r from-transparent to-[#D5B06C]/50" />
@@ -195,7 +190,6 @@ export const AboutAuthorSanctuary = ({ works = [], bio = '' }) => {
         </div>
       </div>
 
-      {/* ── Author's Choice Spotlight Card ── */}
       {spotlightWork && (
         <div className="p-6 md:p-8 rounded-3xl bg-gradient-to-b from-[#141822] to-[#0A0D12] border border-[#D5B06C]/35 shadow-[0_0_30px_rgba(0,0,0,0.8)] space-y-4">
           <div className="flex items-center gap-2 text-[#D5B06C]">
@@ -223,7 +217,6 @@ export const AboutAuthorSanctuary = ({ works = [], bio = '' }) => {
         </div>
       )}
 
-      {/* ── Interactive "Whisper to the Author" Message Box ── */}
       <div className="p-7 md:p-10 rounded-3xl bg-gradient-to-b from-[#12161F]/90 via-[#0F1216]/95 to-[#080A06] border border-[#8A8177]/25 backdrop-blur-2xl shadow-[0_0_40px_rgba(0,0,0,0.8)] space-y-6">
         <div className="text-center space-y-2">
           <span className="font-sans text-[10px] uppercase tracking-[0.35em] text-[#D5B06C] font-semibold block">

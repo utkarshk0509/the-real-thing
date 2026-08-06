@@ -19,10 +19,9 @@ export const GlowingCard = ({
     const y = e.clientY - rect.top;
     setMousePosition({ x, y });
 
-    // Calculate subtle 3D tilt angles
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
-    const rotateX = ((y - centerY) / centerY) * -5; // max 5deg tilt
+    const rotateX = ((y - centerY) / centerY) * -5;
     const rotateY = ((x - centerX) / centerX) * 5;
 
     setTilt({ rotateX, rotateY });
@@ -54,7 +53,6 @@ export const GlowingCard = ({
         }}
         className={`group relative overflow-hidden rounded-xl border border-[#8A8177]/20 bg-[#0F1216] p-6 transition-all duration-300 hover:border-[#D5B06C]/50 cursor-pointer shadow-xl ${className}`}
       >
-        {/* Background Radial Glow Following Cursor */}
         <div
           className="pointer-events-none absolute -inset-px transition-opacity duration-300 z-10"
           style={{
@@ -63,7 +61,6 @@ export const GlowingCard = ({
           }}
         />
 
-        {/* Solar Flare Diffraction Light Sweep Beam */}
         <div
           className="pointer-events-none absolute inset-0 z-20 transition-opacity duration-500 opacity-0 group-hover:opacity-100"
           style={{
@@ -73,7 +70,6 @@ export const GlowingCard = ({
           }}
         />
 
-        {/* Atmospheric Image Banner Overlay */}
         {image && (
           <div className="absolute right-0 top-0 bottom-0 w-2/5 overflow-hidden pointer-events-none opacity-60 group-hover:opacity-90 transition-opacity duration-500">
             <img 
@@ -85,7 +81,6 @@ export const GlowingCard = ({
                 transformOrigin: 'center center'
               }}
             />
-            {/* Smooth gradient blending mask into the card background */}
             <div className="absolute inset-0 bg-gradient-to-r from-[#0F1216] via-[#0F1216]/60 to-transparent mix-blend-normal group-hover:opacity-40 transition-opacity duration-500" />
           </div>
         )}

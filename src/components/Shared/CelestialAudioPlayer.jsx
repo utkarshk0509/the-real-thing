@@ -16,13 +16,11 @@ export const CelestialAudioPlayer = () => {
       const ctx = new AudioCtx();
       audioCtxRef.current = ctx;
 
-      // Master Gain
       const masterGain = ctx.createGain();
       masterGain.gain.setValueAtTime(0.001, ctx.currentTime);
-      masterGain.gain.exponentialRampToValueAtTime(0.12, ctx.currentTime + 3); // Soft 3s fade in
+      masterGain.gain.exponentialRampToValueAtTime(0.12, ctx.currentTime + 3);
       gainNodeRef.current = masterGain;
 
-      // Lowpass Filter for warm atmospheric tone
       const filter = ctx.createBiquadFilter();
       filter.type = 'lowpass';
       filter.frequency.setValueAtTime(450, ctx.currentTime);
@@ -30,7 +28,6 @@ export const CelestialAudioPlayer = () => {
       masterGain.connect(filter);
       filter.connect(ctx.destination);
 
-      // 432Hz Warm Harmonic Chord (A3, C#4, E4, G#4 celestial chord)
       const frequencies = [216.0, 272.2, 324.0, 432.0, 540.0];
       const oscs = [];
 
@@ -39,7 +36,6 @@ export const CelestialAudioPlayer = () => {
         osc.type = 'sine';
         osc.frequency.setValueAtTime(freq, ctx.currentTime);
 
-        // Gentle detuning for spatial warmth
         const detuneAmt = (Math.random() - 0.5) * 8;
         osc.detune.setValueAtTime(detuneAmt, ctx.currentTime);
 
@@ -55,9 +51,8 @@ export const CelestialAudioPlayer = () => {
 
       oscillatorsRef.current = oscs;
 
-      // Subtle LFO modulation for breathing celestial swell
       const lfo = ctx.createOscillator();
-      lfo.frequency.setValueAtTime(0.1, ctx.currentTime); // 0.1Hz pulse
+      lfo.frequency.setValueAtTime(0.1, ctx.currentTime);
       const lfoGain = ctx.createGain();
       lfoGain.gain.setValueAtTime(150, ctx.currentTime);
 
@@ -75,7 +70,6 @@ export const CelestialAudioPlayer = () => {
   const stopCelestialSoundscape = () => {
     if (gainNodeRef.current && audioCtxRef.current) {
       const ctx = audioCtxRef.current;
-      // Soft 1.5s fade out
       gainNodeRef.current.gain.setValueAtTime(gainNodeRef.current.gain.value, ctx.currentTime);
       gainNodeRef.current.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.5);
 
@@ -107,7 +101,6 @@ export const CelestialAudioPlayer = () => {
 
   useEffect(() => {
     return () => {
-      // Clean up on unmount
       if (audioCtxRef.current) {
         try { audioCtxRef.current.close(); } catch (_) {}
       }
@@ -140,9 +133,9 @@ export const CelestialAudioPlayer = () => {
           </>
         ) : (
           <>
-            <VolumeX className="w-3.5 h-3.5" />
-            <span className="font-sans text-[10px] uppercase tracking-widest hidden sm:inline">
-              Ambient Audio
+            <VolumeX className="w-3.5 h-3.5 text-[#8A8177] group-hover:text-[#D5B06C]" />
+            <span className="font-sans text-[10px] uppercase tracking-widest font-medium">
+              Soundscape Off
             </span>
           </>
         )}

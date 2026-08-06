@@ -74,11 +74,11 @@ export const AuthorPortal = () => {
       const dx = e.clientX - cropDragStartRef.current.x;
       const dy = e.clientY - cropDragStartRef.current.y;
 
-      const deltaX = (dx / 350) * 100;
-      const deltaY = (dy / 150) * 100;
+      const deltaX = (dx / 250) * 100;
+      const deltaY = (dy / 120) * 100;
 
-      const newX = Math.max(0, Math.min(100, cropPosStartRef.current.x - deltaX));
-      const newY = Math.max(0, Math.min(100, cropPosStartRef.current.y - deltaY));
+      const newX = Math.max(-200, Math.min(300, cropPosStartRef.current.x - deltaX));
+      const newY = Math.max(-200, Math.min(300, cropPosStartRef.current.y - deltaY));
 
       setCropPosX(Math.round(newX));
       setCropPosY(Math.round(newY));
@@ -89,11 +89,11 @@ export const AuthorPortal = () => {
       const dx = e.touches[0].clientX - cropDragStartRef.current.x;
       const dy = e.touches[0].clientY - cropDragStartRef.current.y;
 
-      const deltaX = (dx / 350) * 100;
-      const deltaY = (dy / 150) * 100;
+      const deltaX = (dx / 250) * 100;
+      const deltaY = (dy / 120) * 100;
 
-      const newX = Math.max(0, Math.min(100, cropPosStartRef.current.x - deltaX));
-      const newY = Math.max(0, Math.min(100, cropPosStartRef.current.y - deltaY));
+      const newX = Math.max(-200, Math.min(300, cropPosStartRef.current.x - deltaX));
+      const newY = Math.max(-200, Math.min(300, cropPosStartRef.current.y - deltaY));
 
       setCropPosX(Math.round(newX));
       setCropPosY(Math.round(newY));
@@ -1047,6 +1047,55 @@ export const AuthorPortal = () => {
                       Drag to Pan • Scroll to Zoom
                     </span>
                   </div>
+                </div>
+              </div>
+
+              {/* Fine-Tuning Sliders */}
+              <div className="space-y-3 pt-1">
+                <div>
+                  <div className="flex justify-between font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mb-1">
+                    <span>Zoom Scale</span>
+                    <span>{cropScale.toFixed(1)}x</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="1"
+                    max="3"
+                    step="0.1"
+                    value={cropScale}
+                    onChange={(e) => setCropScale(parseFloat(e.target.value))}
+                    className="w-full accent-[#D5B06C] cursor-pointer"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex justify-between font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mb-1">
+                    <span>Horizontal Alignment (X)</span>
+                    <span>{cropPosX}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="-200"
+                    max="300"
+                    value={cropPosX}
+                    onChange={(e) => setCropPosX(parseInt(e.target.value))}
+                    className="w-full accent-[#D5B06C] cursor-pointer"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex justify-between font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mb-1">
+                    <span>Vertical Alignment (Y)</span>
+                    <span>{cropPosY}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="-200"
+                    max="300"
+                    value={cropPosY}
+                    onChange={(e) => setCropPosY(parseInt(e.target.value))}
+                    className="w-full accent-[#D5B06C] cursor-pointer"
+                  />
                 </div>
               </div>
 

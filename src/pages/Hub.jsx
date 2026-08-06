@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navigation from '../components/Shared/Navigation';
-import AtmosphericBackground from '../components/Shared/AtmosphericBackground';
+import CosmicNebulaBackground from '../components/Shared/CosmicNebulaBackground';
 import { GlowingCard } from '../components/Shared/GlowingCard';
 import BookshelfView from '../components/Hub/BookshelfView';
 import useWorks from '../hooks/useWorks';
@@ -81,7 +81,7 @@ export const Hub = ({ filter }) => {
       transition={{ duration: 0.3, ease: 'easeInOut' }}
       className="relative min-h-screen bg-[#080A06] text-[#FEEFFF] selection:bg-[#D5B06C]/30 selection:text-[#FEEFFF] pb-24"
     >
-      <AtmosphericBackground />
+      <CosmicNebulaBackground variant={isAboutOnly ? 'about' : isStoriesOnly ? 'stories' : 'poems'} />
       <Navigation />
 
       <main className="relative z-10 max-w-5xl mx-auto px-4 md:px-6 pt-32 md:pt-36 space-y-8">

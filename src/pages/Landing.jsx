@@ -1,123 +1,194 @@
-import React, { useMemo } from 'react';
-import { motion } from 'framer-motion';
+import React, { useEffect } from 'react';
+import { motion, useMotionValue, useSpring } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { MoveDown } from 'lucide-react';
+import { MoveDown, Sparkles, Compass } from 'lucide-react';
 
 import moonImg from '../assets/moon.png';
 import mountainsImg from '../assets/mountains.png';
+import CosmicNebulaBackground from '../components/Shared/CosmicNebulaBackground';
 
 export default function Landing() {
   const navigate = useNavigate();
 
-  const stars = useMemo(() => {
-    return Array.from({ length: 80 }).map((_, i) => ({
-      id: i,
-      top: `${Math.random() * 65}%`,
-      left: `${Math.random() * 100}%`,
-      size: `${Math.random() * 2 + 1}px`,
-      delay: Math.random() * 4,
-      duration: Math.random() * 3 + 2,
-    }));
-  }, []);
+  // Mouse Parallax Springs
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  const moonX = useSpring(mouseX, { stiffness: 40, damping: 25 });
+  const moonY = useSpring(mouseY, { stiffness: 40, damping: 25 });
+  const heroX = useSpring(mouseX, { stiffness: 65, damping: 30 });
+  const heroY = useSpring(mouseY, { stiffness: 65, damping: 30 });
+  const mountainsX = useSpring(mouseX, { stiffness: 20, damping: 20 });
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      const cx = window.innerWidth / 2;
+      const cy = window.innerHeight / 2;
+      mouseX.set(((e.clientX - cx) / cx) * 20);
+      mouseY.set(((e.clientY - cy) / cy) * 15);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, [mouseX, mouseY]);
 
   return (
-    <motion.div 
-      className="absolute inset-0 min-h-screen w-full overflow-hidden bg-[#080A06] flex flex-col items-center justify-center z-10"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0, filter: "blur(10px)", transition: { duration: 0.8 } }}
+    <motion.div
+      className="relative h-screen w-full overflow-hidden bg-[#050608] text-[#FEEFFF] flex flex-col items-center justify-center select-none"
+      initial={{ opacity: 0, filter: 'blur(8px)' }}
+      animate={{ opacity: 1, filter: 'blur(0px)' }}
+      exit={{ opacity: 0, filter: 'blur(10px)', transition: { duration: 0.8 } }}
+      transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
     >
-      <div className="absolute inset-0 z-0 bg-[radial-gradient(circle_at_center,rgba(213,176,108,0.03)_0%,transparent_100%)] pointer-events-none" />
-      
-      {/* Twinkling Stars */}
-      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-        {stars.map((star) => (
-          <motion.div 
-            key={star.id} 
-            className="absolute bg-white rounded-full" 
-            style={{ top: star.top, left: star.left, width: star.size, height: star.size }} 
-            animate={{ opacity: [0.1, 0.8, 0.1] }} 
-            transition={{ duration: star.duration, repeat: Infinity, delay: star.delay, ease: "easeInOut" }} 
-          />
-        ))}
-      </div>
+      {/* Dynamic Deep Space Cosmic Nebula */}
+      <CosmicNebulaBackground variant="poems" />
 
-      {/* Navigation Header */}
-      <motion.nav 
-        initial={{ opacity: 0, y: -10 }} 
-        animate={{ opacity: 1, y: 0 }} 
-        transition={{ duration: 1, delay: 0.5 }} 
-        className="absolute top-10 w-full flex justify-center gap-8 text-[#8A8177] font-sans text-[11px] uppercase tracking-[0.35em] z-20"
+      {/* Top Navigation Bar */}
+      <motion.nav
+        initial={{ opacity: 0, y: -15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 1, delay: 0.4 }}
+        className="absolute top-8 md:top-10 w-full flex justify-center items-center gap-6 md:gap-10 text-[#8A8177] font-sans text-[11px] uppercase tracking-[0.35em] z-30 px-4"
       >
-        <span onClick={() => navigate('/hub')} className="hover:text-[#D5B06C] transition-colors cursor-pointer">Home</span><span className="opacity-30">|</span>
-        <span onClick={() => navigate('/poems')} className="hover:text-[#D5B06C] transition-colors cursor-pointer">Poems</span><span className="opacity-30">|</span>
-        <span onClick={() => navigate('/stories')} className="hover:text-[#D5B06C] transition-colors cursor-pointer">Stories</span><span className="opacity-30">|</span>
-        <span onClick={() => navigate('/about')} className="hover:text-[#D5B06C] transition-colors cursor-pointer">About</span>
+        <span
+          onClick={() => navigate('/hub')}
+          className="hover:text-[#D5B06C] transition-all cursor-pointer hover:drop-shadow-[0_0_8px_rgba(213,176,108,0.8)]"
+        >
+          Constellation
+        </span>
+        <span className="opacity-25">✦</span>
+        <span
+          onClick={() => navigate('/poems')}
+          className="hover:text-[#D5B06C] transition-all cursor-pointer hover:drop-shadow-[0_0_8px_rgba(213,176,108,0.8)]"
+        >
+          Poems
+        </span>
+        <span className="opacity-25">✦</span>
+        <span
+          onClick={() => navigate('/stories')}
+          className="hover:text-[#7CB9E8] transition-all cursor-pointer hover:drop-shadow-[0_0_8px_rgba(124,185,232,0.8)]"
+        >
+          Stories
+        </span>
+        <span className="opacity-25">✦</span>
+        <span
+          onClick={() => navigate('/about')}
+          className="hover:text-[#C9A9FF] transition-all cursor-pointer hover:drop-shadow-[0_0_8px_rgba(201,169,255,0.8)]"
+        >
+          About
+        </span>
       </motion.nav>
 
-      {/* Moon Image */}
-      <motion.img 
-        src={moonImg} 
-        alt="Moon" 
-        initial={{ opacity: 0 }} 
-        animate={{ opacity: 0.85, x: [-5, 5] }} 
-        transition={{ opacity: { duration: 2, delay: 0.3 }, x: { duration: 40, repeat: Infinity, repeatType: "reverse", ease: "linear" } }} 
-        className="absolute top-[8%] right-[10%] w-[250px] object-contain mix-blend-screen z-0 pointer-events-none" 
-      />
-
-      {/* Mountains Footer Asset */}
-      <motion.div 
-        initial={{ opacity: 0, y: 50 }} 
-        animate={{ opacity: 0.8, y: 0 }} 
-        transition={{ duration: 1.5, delay: 0.3, ease: "easeOut" }} 
-        className="absolute bottom-0 left-0 w-full h-[40vh] z-0 pointer-events-none"
+      {/* Parallax Glowing Moon Asset */}
+      <motion.div
+        style={{ x: moonX, y: moonY }}
+        className="absolute top-[5%] right-[5%] md:top-[7%] md:right-[10%] w-[200px] md:w-[320px] pointer-events-none z-10"
       >
-        <img src={mountainsImg} alt="Mountains" className="w-full h-full object-cover object-bottom [mask-image:linear-gradient(to_bottom,transparent_0%,black_20%)]" />
+        <motion.div
+          animate={{ opacity: [0.75, 0.95, 0.75], scale: [0.98, 1.02, 0.98] }}
+          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+          className="relative"
+        >
+          {/* Ethereal Moon Aura Glow */}
+          <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgba(213,176,108,0.25)_0%,transparent_70%)] blur-2xl pointer-events-none" />
+          <img
+            src={moonImg}
+            alt="Sanctuary Moon"
+            className="w-full object-contain mix-blend-screen drop-shadow-[0_0_45px_rgba(213,176,108,0.4)]"
+          />
+        </motion.div>
       </motion.div>
 
-      {/* Hero Title, Subtitle, & Begin Reading Button */}
-      <motion.div 
-        className="relative z-10 flex flex-col items-center text-center space-y-8" 
-        initial={{ y: 20, opacity: 0 }} 
-        animate={{ y: 0, opacity: 1 }} 
-        transition={{ duration: 0.8, delay: 0.2 }}
+      {/* Main Hero Section */}
+      <motion.div
+        style={{ x: heroX, y: heroY }}
+        className="relative z-20 flex flex-col items-center text-center space-y-6 max-w-2xl px-4"
+        initial={{ y: 25, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 1, delay: 0.2 }}
       >
-        <motion.h1 
-          initial={{ filter: "blur(8px)" }} 
-          animate={{ filter: "blur(0px)" }} 
-          transition={{ duration: 1.2, ease: "easeOut" }} 
-          className="font-serif text-5xl md:text-7xl font-medium text-[#FEEFFF] tracking-wide"
+        {/* Celestial Subtitle Badge */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, delay: 0.3 }}
+          className="flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#D5B06C]/35 bg-[#D5B06C]/10 backdrop-blur-md shadow-[0_0_20px_rgba(213,176,108,0.15)]"
+        >
+          <Sparkles className="w-3.5 h-3.5 text-[#D5B06C] animate-pulse" />
+          <span className="font-sans text-[10px] md:text-[11px] uppercase tracking-[0.35em] text-[#D5B06C] font-semibold">
+            Poetic & Story Sanctuary
+          </span>
+        </motion.div>
+
+        {/* Title */}
+        <motion.h1
+          initial={{ filter: 'blur(12px)', opacity: 0 }}
+          animate={{ filter: 'blur(0px)', opacity: 1 }}
+          transition={{ duration: 1.3, ease: 'easeOut', delay: 0.2 }}
+          className="font-serif text-5xl md:text-7xl lg:text-8xl font-normal text-[#FEEFFF] tracking-widest leading-none drop-shadow-[0_0_55px_rgba(213,176,108,0.3)]"
         >
           The Real Thing
         </motion.h1>
 
-        <motion.p 
-          initial={{ opacity: 0, y: 15 }} 
-          animate={{ opacity: 1, y: 0 }} 
-          transition={{ duration: 1, ease: "easeOut", delay: 0.3 }} 
-          className="font-sans text-[#8A8177] text-base md:text-lg max-w-[500px] leading-relaxed italic"
+        {/* Decorative Gradient Line */}
+        <motion.div
+          initial={{ scaleX: 0 }}
+          animate={{ scaleX: 1 }}
+          transition={{ duration: 0.8, delay: 0.4 }}
+          className="h-px w-40 md:w-60 bg-gradient-to-r from-transparent via-[#D5B06C] to-transparent opacity-85"
+        />
+
+        {/* Poetic Tagline */}
+        <motion.p
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, ease: 'easeOut', delay: 0.45 }}
+          className="font-serif text-base md:text-xl text-[#FEEFFF]/90 font-light leading-relaxed italic max-w-lg tracking-wide text-shadow-sm"
         >
-          Not every story asks to be remembered.<br/>Some only ask to be felt.
+          “Not every story asks to be remembered.
+          <br className="hidden sm:block" />
+          Some only ask to be felt.”
         </motion.p>
 
-        {/* Begin Reading Action Trigger */}
-        <motion.div 
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="flex flex-col items-center cursor-pointer group pt-4" 
+        {/* Action Gateway Button */}
+        <motion.div
+          whileHover={{ scale: 1.07 }}
+          whileTap={{ scale: 0.93 }}
+          className="relative cursor-pointer group pt-4"
           onClick={() => navigate('/hub')}
         >
-          <span className="font-sans text-[#8A8177] text-[11px] uppercase tracking-[0.35em] mb-2 group-hover:text-[#D5B06C] transition-colors">
-            Begin Reading
-          </span>
-          <motion.div 
-            animate={{ y: [0, 6, 0] }} 
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }} 
-            className="text-[#8A8177] group-hover:text-[#D5B06C] transition-colors p-2 rounded-full border border-[#8A8177]/20 group-hover:border-[#D5B06C]/50 bg-[#0F1216]/40 backdrop-blur-sm"
-          >
-            <MoveDown size={16} strokeWidth={1.5} />
-          </motion.div>
+          {/* Outer Pulsing Glow */}
+          <div className="absolute inset-0 rounded-full bg-[#D5B06C]/30 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+
+          <div className="relative flex flex-col items-center gap-2">
+            <div className="flex items-center gap-3 px-8 py-3.5 rounded-full border border-[#D5B06C]/60 bg-[#0F1216]/85 backdrop-blur-md group-hover:border-[#D5B06C] group-hover:bg-[#D5B06C]/20 shadow-[0_0_30px_rgba(213,176,108,0.25)] group-hover:shadow-[0_0_50px_rgba(213,176,108,0.55)] transition-all duration-300">
+              <Compass className="w-4 h-4 text-[#D5B06C] group-hover:rotate-90 transition-transform duration-700" />
+              <span className="font-sans text-xs uppercase tracking-[0.35em] text-[#FEEFFF] group-hover:text-[#D5B06C] font-semibold transition-colors">
+                Enter Sanctuary
+              </span>
+              <MoveDown className="w-4 h-4 text-[#D5B06C] animate-bounce" />
+            </div>
+
+            <span className="font-sans text-[9.5px] uppercase tracking-[0.25em] text-[#8A8177] group-hover:text-[#D5B06C] transition-colors font-medium">
+              Click to open constellation map
+            </span>
+          </div>
         </motion.div>
+      </motion.div>
+
+      {/* Layered Mountains Silhouette with Parallax */}
+      <motion.div
+        style={{ x: mountainsX }}
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 0.85, y: 0 }}
+        transition={{ duration: 1.6, delay: 0.3, ease: 'easeOut' }}
+        className="absolute bottom-0 left-0 w-full h-[36vh] md:h-[42vh] z-10 pointer-events-none"
+      >
+        <img
+          src={mountainsImg}
+          alt="Sanctuary Mountains"
+          className="w-full h-full object-cover object-bottom [mask-image:linear-gradient(to_bottom,transparent_0%,black_25%)] opacity-90 filter drop-shadow-[0_-10px_20px_rgba(0,0,0,0.8)]"
+        />
       </motion.div>
     </motion.div>
   );

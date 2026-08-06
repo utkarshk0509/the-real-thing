@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import AtmosphericBackground from '../components/Shared/AtmosphericBackground';
+import CosmicNebulaBackground from '../components/Shared/CosmicNebulaBackground';
 import Navigation from '../components/Shared/Navigation';
 import AnonymousComments from '../components/Engagement/AnonymousComments';
 import GildedHeart from '../components/Engagement/GildedHeart';
@@ -211,7 +211,7 @@ export const ReaderView = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#080A06] flex items-center justify-center">
-        <AtmosphericBackground />
+        <CosmicNebulaBackground variant="reader" />
         <div className="text-center space-y-3 z-10">
           <div className="w-8 h-8 border-2 border-[#D5B06C] border-t-transparent rounded-full animate-spin mx-auto" />
           <p className="font-serif text-sm text-[#8A8177]">Opening Sanctuary Book...</p>
@@ -223,7 +223,7 @@ export const ReaderView = () => {
   if (!work) {
     return (
       <div className="min-h-screen bg-[#080A06] text-[#FEEFFF] flex flex-col items-center justify-center p-6 text-center">
-        <AtmosphericBackground />
+        <CosmicNebulaBackground variant="reader" />
         <Navigation />
         <div className="z-10 space-y-4">
           <h2 className="font-serif text-3xl">Inscription Missing</h2>
@@ -247,7 +247,7 @@ export const ReaderView = () => {
       onTouchEnd={handleTextSelection}
       className="relative min-h-screen bg-[#080A06] text-[#FEEFFF] selection:bg-[#D5B06C]/30 selection:text-[#FEEFFF]"
     >
-      <AtmosphericBackground />
+      <CosmicNebulaBackground variant="reader" />
       <Navigation />
 
       {/* Clamped Golden Reading Progress Bar */}

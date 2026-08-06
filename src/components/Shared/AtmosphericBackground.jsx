@@ -79,7 +79,7 @@ export default function AtmosphericBackground() {
             ctx.beginPath();
             ctx.moveTo(p.x, p.y);
             ctx.lineTo(p2.x, p2.y);
-            ctx.strokeStyle = `rgba(213, 176, 108, {0.08 * (1 - dist / 150))}`;
+            ctx.strokeStyle = `rgba(213, 176, 108, ${0.08 * (1 - dist / 150)})`;
             ctx.lineWidth = 0.5;
             ctx.stroke();
           }

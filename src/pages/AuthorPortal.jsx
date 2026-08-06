@@ -6,6 +6,7 @@ import { GlowingCard } from '../components/Shared/GlowingCard';
 import workService from '../services/workService';
 import storageService from '../services/storageService';
 import siteService from '../services/siteService';
+import readerProgressService from '../services/readerProgressService';
 
 export const AuthorPortal = () => {
   const navigate = useNavigate();
@@ -41,12 +42,20 @@ export const AuthorPortal = () => {
   const [aboutBio, setAboutBio] = useState('');
   const [workToDelete, setWorkToDelete] = useState(null);
 
-  // Image Crop Modal State
+  // Image Crop Modal State (Dual-Crop: Grid View + Bookshelf View)
   const [tempImage, setTempImage] = useState(null);
   const [isCropModalOpen, setIsCropModalOpen] = useState(false);
+  const [cropMode, setCropMode] = useState('grid'); // 'grid' | 'bookshelf'
+
+  // Grid View Crop (Horizontal Banner)
   const [cropScale, setCropScale] = useState(1);
   const [cropPosX, setCropPosX] = useState(50);
   const [cropPosY, setCropPosY] = useState(50);
+
+  // Bookshelf View Crop (Vertical Spine)
+  const [bookshelfCropScale, setBookshelfCropScale] = useState(1);
+  const [bookshelfCropPosX, setBookshelfCropPosX] = useState(50);
+  const [bookshelfCropPosY, setBookshelfCropPosY] = useState(50);
 
   // Interactive Image Drag & Zoom State
   const [isCropDragging, setIsCropDragging] = useState(false);
@@ -80,8 +89,13 @@ export const AuthorPortal = () => {
       const newX = Math.max(-100, Math.min(200, cropPosStartRef.current.x + deltaX));
       const newY = Math.max(-100, Math.min(200, cropPosStartRef.current.y + deltaY));
 
-      setCropPosX(Math.round(newX));
-      setCropPosY(Math.round(newY));
+      if (cropMode === 'grid') {
+        setCropPosX(Math.round(newX));
+        setCropPosY(Math.round(newY));
+      } else {
+        setBookshelfCropPosX(Math.round(newX));
+        setBookshelfCropPosY(Math.round(newY));
+      }
     };
 
     const handleTouchMove = (e) => {
@@ -95,8 +109,13 @@ export const AuthorPortal = () => {
       const newX = Math.max(-100, Math.min(200, cropPosStartRef.current.x + deltaX));
       const newY = Math.max(-100, Math.min(200, cropPosStartRef.current.y + deltaY));
 
-      setCropPosX(Math.round(newX));
-      setCropPosY(Math.round(newY));
+      if (cropMode === 'grid') {
+        setCropPosX(Math.round(newX));
+        setCropPosY(Math.round(newY));
+      } else {
+        setBookshelfCropPosX(Math.round(newX));
+        setBookshelfCropPosY(Math.round(newY));
+      }
     };
 
     const handleMouseUp = () => {
@@ -120,21 +139,29 @@ export const AuthorPortal = () => {
     e.preventDefault();
     setIsCropDragging(true);
     cropDragStartRef.current = { x: e.clientX, y: e.clientY };
-    cropPosStartRef.current = { x: cropPosX, y: cropPosY };
+    const currentX = cropMode === 'grid' ? cropPosX : bookshelfCropPosX;
+    const currentY = cropMode === 'grid' ? cropPosY : bookshelfCropPosY;
+    cropPosStartRef.current = { x: currentX, y: currentY };
   };
 
   const handleCropTouchStart = (e) => {
     if (e.touches.length === 1) {
       setIsCropDragging(true);
       cropDragStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-      cropPosStartRef.current = { x: cropPosX, y: cropPosY };
+      const currentX = cropMode === 'grid' ? cropPosX : bookshelfCropPosX;
+      const currentY = cropMode === 'grid' ? cropPosY : bookshelfCropPosY;
+      cropPosStartRef.current = { x: currentX, y: currentY };
     }
   };
 
   const handleCropWheel = (e) => {
     e.preventDefault();
     const zoomFactor = e.deltaY < 0 ? 0.15 : -0.15;
-    setCropScale((prev) => Math.max(1.0, Math.min(3.0, parseFloat((prev + zoomFactor).toFixed(1)))));
+    if (cropMode === 'grid') {
+      setCropScale((prev) => Math.max(1.0, Math.min(3.0, parseFloat((prev + zoomFactor).toFixed(1)))));
+    } else {
+      setBookshelfCropScale((prev) => Math.max(1.0, Math.min(3.0, parseFloat((prev + zoomFactor).toFixed(1)))));
+    }
   };
 
   const loadWorksAndAbout = async () => {
@@ -143,7 +170,40 @@ export const AuthorPortal = () => {
 
     const combinedWorks = await workService.getAllWorksAdmin();
     setAllWorks(combinedWorks);
+
+    const draft = readerProgressService.getCuratorDraft();
+    if (draft && draft.body && !editingId) {
+      setTitle(draft.title || '');
+      setAuthor(draft.author || '');
+      setCategory(draft.category || 'poem');
+      setExcerpt(draft.excerpt || '');
+      setBody(draft.body || '');
+      setImageUrl(draft.imageUrl || '');
+      setIsDraft(draft.isDraft || false);
+      if (draft.cropScale) setCropScale(draft.cropScale);
+      if (draft.cropPosX) setCropPosX(draft.cropPosX);
+      if (draft.cropPosY) setCropPosY(draft.cropPosY);
+      setStatusMessage({ type: 'success', text: 'Restored auto-saved working draft.' });
+    }
   };
+
+  // Auto-Save Curator Draft Protection
+  useEffect(() => {
+    if (!editingId && (title.trim() || body.trim())) {
+      readerProgressService.saveCuratorDraft({
+        title,
+        author,
+        category,
+        excerpt,
+        body,
+        imageUrl,
+        isDraft,
+        cropScale,
+        cropPosX,
+        cropPosY,
+      });
+    }
+  }, [title, author, category, excerpt, body, imageUrl, isDraft, cropScale, cropPosX, cropPosY, editingId]);
 
   const handleSaveAboutBio = async (e) => {
     e.preventDefault();
@@ -257,6 +317,9 @@ export const AuthorPortal = () => {
     if (work.crop_scale) setCropScale(work.crop_scale);
     if (work.crop_pos_x) setCropPosX(work.crop_pos_x);
     if (work.crop_pos_y) setCropPosY(work.crop_pos_y);
+    setBookshelfCropScale(work.bookshelf_crop_scale || work.crop_scale || 1);
+    setBookshelfCropPosX(work.bookshelf_crop_pos_x ?? work.crop_pos_x ?? 50);
+    setBookshelfCropPosY(work.bookshelf_crop_pos_y ?? work.crop_pos_y ?? 50);
     setActiveView('write');
     setEditorSubTab('edit');
     setStatusMessage({ type: 'success', text: `Loaded: "${work.title || 'Untitled'}"` });
@@ -289,6 +352,10 @@ export const AuthorPortal = () => {
     setCropScale(1);
     setCropPosX(50);
     setCropPosY(50);
+    setBookshelfCropScale(1);
+    setBookshelfCropPosX(50);
+    setBookshelfCropPosY(50);
+    readerProgressService.clearCuratorDraft();
   };
 
   const handleSubmit = async (e) => {
@@ -331,10 +398,14 @@ export const AuthorPortal = () => {
       crop_scale: cropScale,
       crop_pos_x: cropPosX,
       crop_pos_y: cropPosY,
+      bookshelf_crop_scale: bookshelfCropScale,
+      bookshelf_crop_pos_x: bookshelfCropPosX,
+      bookshelf_crop_pos_y: bookshelfCropPosY,
       sort_order: allWorks.length
     };
 
     await workService.upsertWork(newWork);
+    readerProgressService.clearCuratorDraft();
 
     loadWorksAndAbout();
     setStatusMessage({ type: 'success', text: 'Inscription successfully saved and published.' });
@@ -997,18 +1068,23 @@ export const AuthorPortal = () => {
         )}
       </div>
 
-      {/* Interactive Touch & Mouse Image Crop Modal */}
+      {/* Interactive Touch & Mouse Image Crop Modal (Dual-Crop: Grid + Bookshelf) */}
       <AnimatePresence>
         {isCropModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#080A06]/85 backdrop-blur-md">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#080A06]/85 backdrop-blur-md overflow-y-auto">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-[#0F1216] border border-[#D5B06C]/40 p-6 md:p-8 rounded-2xl max-w-lg w-full space-y-6 shadow-2xl relative"
+              className="bg-[#0F1216] border border-[#D5B06C]/40 p-6 md:p-8 rounded-2xl max-w-2xl w-full space-y-6 shadow-2xl relative my-8 max-h-[90vh] overflow-y-auto"
             >
               <div className="flex items-center justify-between border-b border-[#8A8177]/20 pb-4">
-                <h3 className="font-serif text-xl text-[#FEEFFF]">Adjust Banner Image Crop</h3>
+                <div>
+                  <h3 className="font-serif text-xl text-[#FEEFFF]">Adjust Cover Image Layout</h3>
+                  <p className="font-sans text-[10px] uppercase tracking-widest text-[#D5B06C] mt-0.5">
+                    1 Uploaded Image • Independent Alignment for Grid & 3D Bookshelf
+                  </p>
+                </div>
                 <button
                   type="button"
                   onClick={() => setIsCropModalOpen(false)}
@@ -1018,18 +1094,50 @@ export const AuthorPortal = () => {
                 </button>
               </div>
 
-              {/* Interactive Canvas */}
+              {/* View Crop Mode Tabs Switcher */}
+              <div className="flex bg-[#080A06] border border-[#8A8177]/20 rounded-xl p-1 gap-1">
+                <button
+                  type="button"
+                  onClick={() => setCropMode('grid')}
+                  className={`flex-1 py-2 rounded-lg font-sans text-xs uppercase tracking-widest transition-all cursor-pointer ${
+                    cropMode === 'grid'
+                      ? 'bg-[#D5B06C] text-[#080A06] font-semibold shadow-md'
+                      : 'text-[#8A8177] hover:text-[#FEEFFF]'
+                  }`}
+                >
+                  Grid View Crop (Horizontal Banner)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCropMode('bookshelf')}
+                  className={`flex-1 py-2 rounded-lg font-sans text-xs uppercase tracking-widest transition-all cursor-pointer ${
+                    cropMode === 'bookshelf'
+                      ? 'bg-[#D5B06C] text-[#080A06] font-semibold shadow-md'
+                      : 'text-[#8A8177] hover:text-[#FEEFFF]'
+                  }`}
+                >
+                  Bookshelf Crop (Vertical 3D Spine)
+                </button>
+              </div>
+
+              {/* Interactive Drag & Touch Canvas for Selected Mode */}
               <div className="space-y-2">
                 <div className="flex justify-between items-center text-[10px] font-sans uppercase tracking-widest text-[#D5B06C]">
-                  <span>Interactive Canvas (Drag image to align, Scroll wheel to zoom)</span>
-                  <span>{cropScale.toFixed(1)}x Zoom</span>
+                  <span>
+                    {cropMode === 'grid' ? 'Grid View Canvas' : 'Animated Bookshelf Canvas'} (Drag image to align, Scroll to zoom)
+                  </span>
+                  <span>
+                    {(cropMode === 'grid' ? cropScale : bookshelfCropScale).toFixed(1)}x Zoom
+                  </span>
                 </div>
 
                 <div
                   onMouseDown={handleCropMouseDown}
                   onTouchStart={handleCropTouchStart}
                   onWheel={handleCropWheel}
-                  className="w-full h-44 rounded-xl overflow-hidden border border-[#D5B06C]/40 bg-[#080A06] relative cursor-grab active:cursor-grabbing select-none group"
+                  className={`w-full ${
+                    cropMode === 'grid' ? 'h-40' : 'h-56'
+                  } rounded-xl overflow-hidden border border-[#D5B06C]/40 bg-[#080A06] relative cursor-grab active:cursor-grabbing select-none group flex items-center justify-center`}
                 >
                   {tempImage && (
                     <img
@@ -1037,33 +1145,44 @@ export const AuthorPortal = () => {
                       alt="Interactive crop"
                       className="w-full h-full object-cover pointer-events-none transition-transform duration-75"
                       style={{
-                        transform: `scale(${cropScale}) translate(${cropPosX - 50}%, ${cropPosY - 50}%)`,
-                        transformOrigin: 'center center'
+                        transform: `scale(${cropMode === 'grid' ? cropScale : bookshelfCropScale}) translate(${
+                          (cropMode === 'grid' ? cropPosX : bookshelfCropPosX) - 50
+                        }%, ${(cropMode === 'grid' ? cropPosY : bookshelfCropPosY) - 50}%)`,
+                        transformOrigin: 'center center',
                       }}
                     />
                   )}
-                  <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors pointer-events-none flex items-center justify-center">
-                    <span className="bg-[#0F1216]/80 text-[#FEEFFF] px-3 py-1 rounded text-[10px] uppercase font-sans tracking-widest pointer-events-none border border-[#8A8177]/20">
-                      Drag to Pan • Scroll to Zoom
+                  <div className="absolute inset-0 bg-black/25 group-hover:bg-transparent transition-colors pointer-events-none flex items-center justify-center">
+                    <span className="bg-[#0F1216]/90 text-[#FEEFFF] px-3.5 py-1.5 rounded-lg text-[10px] uppercase font-sans tracking-widest pointer-events-none border border-[#8A8177]/20 shadow-md">
+                      Drag to Pan • Scroll to Zoom ({cropMode === 'grid' ? 'Grid Banner' : 'Bookshelf Spine'})
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* Fine-Tuning Sliders */}
-              <div className="space-y-3 pt-1">
+              {/* Fine-Tuning Sliders for Active Selected Mode */}
+              <div className="space-y-3 bg-[#080A06]/50 p-4 rounded-xl border border-[#8A8177]/15">
+                <span className="font-sans text-[10px] uppercase tracking-widest text-[#D5B06C] block font-medium">
+                  {cropMode === 'grid' ? 'Grid View Controls' : 'Bookshelf Spine Controls'}
+                </span>
                 <div>
                   <div className="flex justify-between font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mb-1">
                     <span>Zoom Scale</span>
-                    <span>{cropScale.toFixed(1)}x</span>
+                    <span>
+                      {(cropMode === 'grid' ? cropScale : bookshelfCropScale).toFixed(1)}x
+                    </span>
                   </div>
                   <input
                     type="range"
                     min="1"
                     max="3"
                     step="0.1"
-                    value={cropScale}
-                    onChange={(e) => setCropScale(parseFloat(e.target.value))}
+                    value={cropMode === 'grid' ? cropScale : bookshelfCropScale}
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value);
+                      if (cropMode === 'grid') setCropScale(val);
+                      else setBookshelfCropScale(val);
+                    }}
                     className="w-full accent-[#D5B06C] cursor-pointer"
                   />
                 </div>
@@ -1071,14 +1190,18 @@ export const AuthorPortal = () => {
                 <div>
                   <div className="flex justify-between font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mb-1">
                     <span>Horizontal Alignment (X)</span>
-                    <span>{cropPosX}%</span>
+                    <span>{cropMode === 'grid' ? cropPosX : bookshelfCropPosX}%</span>
                   </div>
                   <input
                     type="range"
                     min="-200"
                     max="300"
-                    value={cropPosX}
-                    onChange={(e) => setCropPosX(parseInt(e.target.value))}
+                    value={cropMode === 'grid' ? cropPosX : bookshelfCropPosX}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value);
+                      if (cropMode === 'grid') setCropPosX(val);
+                      else setBookshelfCropPosX(val);
+                    }}
                     className="w-full accent-[#D5B06C] cursor-pointer"
                   />
                 </div>
@@ -1086,56 +1209,112 @@ export const AuthorPortal = () => {
                 <div>
                   <div className="flex justify-between font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mb-1">
                     <span>Vertical Alignment (Y)</span>
-                    <span>{cropPosY}%</span>
+                    <span>{cropMode === 'grid' ? cropPosY : bookshelfCropPosY}%</span>
                   </div>
                   <input
                     type="range"
                     min="-200"
                     max="300"
-                    value={cropPosY}
-                    onChange={(e) => setCropPosY(parseInt(e.target.value))}
+                    value={cropMode === 'grid' ? cropPosY : bookshelfCropPosY}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value);
+                      if (cropMode === 'grid') setCropPosY(val);
+                      else setBookshelfCropPosY(val);
+                    }}
                     className="w-full accent-[#D5B06C] cursor-pointer"
                   />
                 </div>
               </div>
 
-              {/* Live Card Preview Box */}
-              <div className="space-y-2 pt-2">
-                <span className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177]">
-                  Public Card Banner Result
+              {/* Side-by-Side Dual Live Previews Summary */}
+              <div className="space-y-3 pt-2">
+                <span className="font-sans text-[10px] uppercase tracking-widest text-[#D5B06C] block font-semibold">
+                  Side-by-Side Dual Live Previews
                 </span>
-                <GlowingCard
-                  image={tempImage}
-                  cropScale={cropScale}
-                  cropPosX={cropPosX}
-                  cropPosY={cropPosY}
-                  className="h-[110px]"
-                >
-                  <div>
-                    <h3 className="font-serif text-lg text-[#FEEFFF]">
-                      {title || 'Untitled Work'}
-                    </h3>
-                    <p className="font-sans text-xs text-[#D5B06C]/80 mt-1">
-                      By {author || 'Anonymous'}
-                    </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+                  {/* Preview 1: Grid View Banner */}
+                  <div className="space-y-1">
+                    <span className="font-sans text-[9px] uppercase tracking-widest text-[#8A8177]">
+                      1. Grid View Banner Result
+                    </span>
+                    <GlowingCard
+                      image={tempImage}
+                      cropScale={cropScale}
+                      cropPosX={cropPosX}
+                      cropPosY={cropPosY}
+                      className="h-[100px]"
+                    >
+                      <div>
+                        <h4 className="font-serif text-sm text-[#FEEFFF] truncate">
+                          {title || 'Untitled Work'}
+                        </h4>
+                        <p className="font-sans text-[10px] text-[#D5B06C]/80 mt-0.5">
+                          By {author || 'Anonymous'}
+                        </p>
+                      </div>
+                      <span className="font-sans text-[8px] uppercase tracking-widest text-[#8A8177]">
+                        {category}
+                      </span>
+                    </GlowingCard>
                   </div>
-                  <div className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177]">
-                    {metrics.readTime} min read
+
+                  {/* Preview 2: 3D Standing Book Cover */}
+                  <div className="space-y-1 flex flex-col items-center">
+                    <span className="font-sans text-[9px] uppercase tracking-widest text-[#8A8177] self-start">
+                      2. Animated Bookshelf Result
+                    </span>
+                    <div className="relative w-28 h-40 rounded-r-md rounded-l-xs overflow-hidden bg-[#0F1216] border border-[#D5B06C]/40 shadow-lg">
+                      {/* Top Paper Texture */}
+                      <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#D9D0C1] via-[#F2E8D9] to-[#C9C0B1] border-b border-black/60 z-30" />
+                      {/* Spine Ribs */}
+                      <div className="absolute left-0 top-0 bottom-0 w-2.5 bg-gradient-to-r from-black/90 via-[#1A1E24] to-transparent border-r border-white/10 z-30">
+                        <div className="absolute top-3 left-0 right-0 h-0.5 bg-[#D5B06C]" />
+                        <div className="absolute bottom-3 left-0 right-0 h-0.5 bg-[#D5B06C]" />
+                      </div>
+                      {/* Image */}
+                      {tempImage && (
+                        <img
+                          src={tempImage}
+                          alt="Bookshelf Preview"
+                          className="absolute inset-0 w-full h-full object-cover opacity-85"
+                          style={{
+                            transform: `scale(${bookshelfCropScale})`,
+                            objectPosition: `${bookshelfCropPosX}% ${bookshelfCropPosY}%`,
+                          }}
+                        />
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#080A06] via-transparent to-transparent z-10" />
+                      <div className="relative z-20 p-2 h-full flex flex-col justify-end pl-4">
+                        <h4 className="font-serif text-xs text-[#FEEFFF] truncate">
+                          {title || 'Untitled'}
+                        </h4>
+                        <p className="font-sans text-[8px] text-[#8A8177] truncate">
+                          By {author || 'Anonymous'}
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                </GlowingCard>
+                </div>
               </div>
 
-              <div className="flex gap-3 justify-between items-center pt-2">
+              <div className="flex gap-3 justify-between items-center pt-3 border-t border-[#8A8177]/20">
                 <button
                   type="button"
                   onClick={() => {
-                    setCropScale(1.0);
-                    setCropPosX(50);
-                    setCropPosY(50);
+                    if (cropMode === 'grid') {
+                      setCropScale(1.0);
+                      setCropPosX(50);
+                      setCropPosY(50);
+                    } else {
+                      setBookshelfCropScale(1.0);
+                      setBookshelfCropPosX(50);
+                      setBookshelfCropPosY(50);
+                    }
                   }}
                   className="text-[10px] font-sans uppercase tracking-widest text-[#8A8177] hover:text-[#D5B06C] cursor-pointer"
                 >
-                  Reset Alignment
+                  Reset Active Alignment
                 </button>
                 <div className="flex gap-3">
                   <button
@@ -1148,7 +1327,7 @@ export const AuthorPortal = () => {
                   <button
                     type="button"
                     onClick={handleApplyCrop}
-                    className="px-6 py-2 rounded bg-[#D5B06C] text-[#080A06] font-sans text-xs font-semibold uppercase tracking-widest hover:bg-[#FEEFFF] transition-colors cursor-pointer"
+                    className="px-6 py-2 rounded bg-[#D5B06C] text-[#080A06] font-sans text-xs font-semibold uppercase tracking-widest hover:bg-[#FEEFFF] transition-colors cursor-pointer shadow-md"
                   >
                     Apply and Attach
                   </button>

@@ -2,25 +2,68 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const GildedHeart = ({ workId, initialCount = 0, onToggleLike }) => {
-  const storageKey = `real_thing_like_${workId}`;
-  
-  const [hasLiked, setHasLiked] = useState(() => {
-    return localStorage.getItem(storageKey) === 'true';
-  });
+  const effectiveId = workId || 'default';
+  const storageKey = `real_thing_like_${effectiveId}`;
+  const countKey = `real_thing_like_count_${effectiveId}`;
+
+  const [hasLiked, setHasLiked] = useState(false);
   const [likes, setLikes] = useState(initialCount);
   const [particles, setParticles] = useState([]);
 
+  // Sync state whenever workId or initialCount changes, OR whenever localStorage updates across tabs/windows
   useEffect(() => {
-    setLikes(initialCount);
-  }, [initialCount]);
+    if (!workId) return;
+
+    const currentLiked = localStorage.getItem(storageKey) === 'true';
+    const savedCount = localStorage.getItem(countKey);
+    const currentLikes = savedCount !== null ? parseInt(savedCount, 10) : initialCount;
+
+    setHasLiked(currentLiked);
+    setLikes(currentLikes);
+
+    const handleStorageChange = (e) => {
+      if (e.key === storageKey) {
+        setHasLiked(e.newValue === 'true');
+      }
+      if (e.key === countKey && e.newValue !== null) {
+        setLikes(parseInt(e.newValue, 10));
+      }
+    };
+
+    const handleCustomBroadcast = (e) => {
+      if (e.detail && (e.detail.workId === workId || e.detail.slug === workId)) {
+        if (e.detail.hasLiked !== undefined) setHasLiked(e.detail.hasLiked);
+        if (e.detail.likes !== undefined) setLikes(e.detail.likes);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('real_thing_like_sync', handleCustomBroadcast);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('real_thing_like_sync', handleCustomBroadcast);
+    };
+  }, [workId, initialCount, storageKey, countKey]);
 
   const handleToggle = async () => {
+    if (!workId) return;
+
     const nextState = !hasLiked;
     const nextCount = nextState ? likes + 1 : Math.max(0, likes - 1);
 
     setHasLiked(nextState);
     setLikes(nextCount);
+
     localStorage.setItem(storageKey, nextState ? 'true' : 'false');
+    localStorage.setItem(countKey, nextCount.toString());
+
+    // Broadcast event across components & open tabs
+    window.dispatchEvent(
+      new CustomEvent('real_thing_like_sync', {
+        detail: { workId, hasLiked: nextState, likes: nextCount },
+      })
+    );
 
     // Spawn golden spark particles on like
     if (nextState) {

@@ -404,16 +404,23 @@ export const AuthorPortal = () => {
       sort_order: allWorks.length
     };
 
-    await workService.upsertWork(newWork);
-    readerProgressService.clearCuratorDraft();
+    try {
+      await workService.upsertWork(newWork);
+      readerProgressService.clearCuratorDraft();
+      setStatusMessage({ type: 'success', text: isDraft ? 'Draft saved.' : 'Inscription successfully saved and published.' });
 
-    await workService.getPublishedWorks();
-    setStatusMessage({ type: 'success', text: 'Inscription successfully saved and published.' });
-
-    setTimeout(() => {
+      setTimeout(() => {
+        setIsSubmitting(false);
+        navigate('/hub');
+      }, 1200);
+    } catch (err) {
+      console.error('[AuthorPortal] Publish error:', err);
       setIsSubmitting(false);
-      navigate('/hub');
-    }, 1200);
+      setStatusMessage({
+        type: 'error',
+        text: `Failed to save: ${err.message || 'Unknown error. Check console for details.'}`,
+      });
+    }
   };
 
   // Filtered works for Library View

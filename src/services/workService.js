@@ -25,11 +25,16 @@ export const workService = {
       }
     }
 
-    // Merge with any custom local works stored offline
-    const localCustom = cacheService.get(CACHE_KEYS.CUSTOM_WORKS) || [];
-    const map = new Map();
+    // Only merge local works that are full objects (not just order-map stubs)
+    // CUSTOM_WORKS may contain lightweight {slug, sort_order} stubs from saveOrder —
+    // filter those out so they don't appear as phantom cards.
+    const localCustom = (cacheService.get(CACHE_KEYS.CUSTOM_WORKS) || []).filter(
+      (item) => item && item.title && item.status === 'published'
+    );
 
-    [...remoteWorks, ...localCustom].forEach((item) => {
+    const map = new Map();
+    // Remote always wins over local (remote is source of truth)
+    [...localCustom, ...remoteWorks].forEach((item) => {
       if (item && item.status === 'published') {
         map.set(item.slug, item);
       }
@@ -38,10 +43,8 @@ export const workService = {
     const uniqueWorks = Array.from(map.values());
     uniqueWorks.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
 
-    // Update SWR cache
-    if (uniqueWorks.length > 0) {
-      cacheService.set(CACHE_KEYS.HUB_WORKS, uniqueWorks);
-    }
+    // Always update SWR cache (even if empty, so stale data is cleared)
+    cacheService.set(CACHE_KEYS.HUB_WORKS, uniqueWorks);
 
     return uniqueWorks;
   },
@@ -146,6 +149,7 @@ export const workService = {
     if (supabase) {
       try {
         if (workData.id && !String(workData.id).startsWith('17')) {
+          // UPDATE existing work
           const { data, error } = await supabase
             .from('works')
             .update(workData)
@@ -153,9 +157,13 @@ export const workService = {
             .select(PROJECTIONS.WORK_FULL)
             .single();
 
-          if (!error && data) savedData = data;
+          if (error) {
+            console.error('[workService] Update failed:', error.message, error.details);
+            throw new Error(`Update failed: ${error.message}`);
+          }
+          if (data) savedData = data;
         } else {
-          // New insert: omit temporary numeric ID if generated client-side
+          // INSERT new work: omit undefined/null id
           const { id, ...insertPayload } = workData;
           const { data, error } = await supabase
             .from('works')
@@ -163,13 +171,30 @@ export const workService = {
             .select(PROJECTIONS.WORK_FULL)
             .single();
 
-          if (!error && data) savedData = data;
+          if (error) {
+            console.error('[workService] Insert failed:', error.message, error.details);
+            throw new Error(`Insert failed: ${error.message}`);
+          }
+          if (data) savedData = data;
         }
       } catch (err) {
-        console.warn('[workService] Upsert work warning:', err);
+        // Re-throw so AuthorPortal can show the real error to the author
+        throw err;
       }
+    } else {
+      // Supabase not configured – fall back to local-only storage
+      const localCustom = cacheService.get(CACHE_KEYS.CUSTOM_WORKS) || [];
+      const existing = localCustom.findIndex((w) => w.slug === workData.slug);
+      if (existing >= 0) {
+        localCustom[existing] = workData;
+      } else {
+        localCustom.push(workData);
+      }
+      cacheService.set(CACHE_KEYS.CUSTOM_WORKS, localCustom);
     }
 
+    // Invalidate HUB_WORKS so the next getPublishedWorks call fetches fresh data
+    cacheService.invalidate(CACHE_KEYS.HUB_WORKS);
     // Refresh memory/local cache
     await this.getAllWorksAdmin();
     return savedData;

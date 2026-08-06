@@ -5,11 +5,11 @@
 
 // Supabase Projections
 export const PROJECTIONS = {
-  // Lightweight projection for lists/cards (Excludes heavy 'body' column)
-  CARD_LIST: 'id, slug, title, category, author, image_url, published_at, read_time_minutes, status, sort_order',
+  // Lightweight projection for lists/cards
+  CARD_LIST: 'id, slug, title, category, author, image_url, published_at, read_time_minutes, status, sort_order, crop_scale, crop_pos_x, crop_pos_y, bookshelf_crop_scale, bookshelf_crop_pos_x, bookshelf_crop_pos_y',
   
   // Full projection for Reader view
-  WORK_FULL: 'id, slug, title, category, author, excerpt, body, image_url, published_at, read_time_minutes, status, sort_order, gilded_likes_count, crop_scale, crop_pos_x, crop_pos_y',
+  WORK_FULL: 'id, slug, title, category, author, excerpt, body, image_url, published_at, read_time_minutes, status, sort_order, gilded_likes_count, crop_scale, crop_pos_x, crop_pos_y, bookshelf_crop_scale, bookshelf_crop_pos_x, bookshelf_crop_pos_y',
   
   // Comments projection
   COMMENT_LIST: 'id, work_id, author_alias, avatar_seed, content, created_at, is_approved'

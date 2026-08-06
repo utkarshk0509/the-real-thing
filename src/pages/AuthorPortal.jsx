@@ -6,7 +6,6 @@ import { GlowingCard } from '../components/Shared/GlowingCard';
 import workService from '../services/workService';
 import storageService from '../services/storageService';
 import siteService from '../services/siteService';
-import authService from '../services/authService';
 
 export const AuthorPortal = () => {
   const navigate = useNavigate();
@@ -19,6 +18,10 @@ export const AuthorPortal = () => {
     }
   }, [navigate]);
 
+  // Master Portal View State
+  const [activeView, setActiveView] = useState('write'); // 'write' | 'library' | 'arrange' | 'about' | 'analytics'
+
+  // Work Form State
   const [editingId, setEditingId] = useState(null);
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
@@ -27,23 +30,31 @@ export const AuthorPortal = () => {
   const [body, setBody] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [isDraft, setIsDraft] = useState(false);
-  const [activeTab, setActiveTab] = useState('manage'); 
+  const [editorSubTab, setEditorSubTab] = useState('edit'); // 'edit' | 'preview'
+  const [isMetadataExpanded, setIsMetadataExpanded] = useState(true);
+
+  // Status & Submit State
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null);
 
+  // About Bio & Delete Modal State
   const [aboutBio, setAboutBio] = useState('');
   const [workToDelete, setWorkToDelete] = useState(null);
 
+  // Image Crop Modal State
   const [tempImage, setTempImage] = useState(null);
   const [isCropModalOpen, setIsCropModalOpen] = useState(false);
   const [cropScale, setCropScale] = useState(1);
   const [cropPosX, setCropPosX] = useState(50);
   const [cropPosY, setCropPosY] = useState(50);
 
+  // Works Data & Category Filter States
   const [allWorks, setAllWorks] = useState([]);
-  const [totalCommentsCount, setTotalCommentsCount] = useState(0);
+  const [libraryCategory, setLibraryCategory] = useState('all'); // 'all' | 'poem' | 'story' | 'draft'
+  const [librarySearch, setLibrarySearch] = useState('');
 
-  // Drag and drop sorting state
+  // Constellation Arranger Category State
+  const [arrangerCategory, setArrangerCategory] = useState('poem'); // 'poem' | 'story'
   const [draggedItemIndex, setDraggedItemIndex] = useState(null);
 
   useEffect(() => {
@@ -62,7 +73,7 @@ export const AuthorPortal = () => {
     e.preventDefault();
     try {
       await siteService.updateAuthorBio(aboutBio);
-      setStatusMessage({ type: 'success', text: 'About the Author bio successfully published!' });
+      setStatusMessage({ type: 'success', text: 'About the Author bio successfully published.' });
     } catch (err) {
       console.warn('Bio save notice:', err);
       setStatusMessage({ type: 'success', text: 'Bio saved locally.' });
@@ -84,32 +95,41 @@ export const AuthorPortal = () => {
     e.preventDefault();
     if (draggedItemIndex === null || draggedItemIndex === targetIndex) return;
 
-    const updatedWorks = [...allWorks];
-    const [movedItem] = updatedWorks.splice(draggedItemIndex, 1);
-    updatedWorks.splice(targetIndex, 0, movedItem);
+    // Filter current category items
+    const categoryWorks = allWorks.filter((w) => w.category === arrangerCategory);
+    const otherWorks = allWorks.filter((w) => w.category !== arrangerCategory);
 
-    setAllWorks(updatedWorks);
+    const reorderedCategory = [...categoryWorks];
+    const [movedItem] = reorderedCategory.splice(draggedItemIndex, 1);
+    reorderedCategory.splice(targetIndex, 0, movedItem);
+
+    // Merge back
+    const finalMerged = [...reorderedCategory, ...otherWorks];
+    setAllWorks(finalMerged);
     setDraggedItemIndex(null);
   };
 
-  // Explicit Save Order Handler
+  // Explicit Save Order Handler for Category
   const handleSaveOrder = async () => {
     try {
       const finalWorks = await workService.saveOrder(allWorks);
       setAllWorks(finalWorks);
-      setStatusMessage({ type: 'success', text: '✨ Constellation order successfully saved!' });
+      setStatusMessage({ type: 'success', text: 'Constellation order successfully saved.' });
     } catch (err) {
       console.warn('Order save notice:', err.message);
-      setStatusMessage({ type: 'success', text: '✨ Constellation order saved locally!' });
+      setStatusMessage({ type: 'success', text: 'Constellation order saved locally.' });
     }
   };
 
   const analytics = useMemo(() => {
     const totalWorks = allWorks.length;
+    const totalPoems = allWorks.filter((w) => w.category === 'poem').length;
+    const totalStories = allWorks.filter((w) => w.category === 'story').length;
+    const totalDrafts = allWorks.filter((w) => w.status === 'draft').length;
     const totalResonances = allWorks.reduce((acc, w) => acc + (w.gilded_likes_count || 0), 0);
     const totalWords = allWorks.reduce((acc, w) => acc + (w.body ? w.body.trim().split(/\s+/).length : 0), 0);
     const avgWords = totalWorks > 0 ? Math.round(totalWords / totalWorks) : 0;
-    return { totalWorks, totalResonances, avgWords };
+    return { totalWorks, totalPoems, totalStories, totalDrafts, totalResonances, avgWords };
   }, [allWorks]);
 
   const metrics = useMemo(() => {
@@ -143,7 +163,7 @@ export const AuthorPortal = () => {
       const compressedUrl = await storageService.uploadCoverImage(tempImage);
       setImageUrl(compressedUrl);
       setIsCropModalOpen(false);
-      setStatusMessage({ type: 'success', text: 'Image successfully compressed into WebP & applied.' });
+      setStatusMessage({ type: 'success', text: 'Image successfully compressed into WebP and applied.' });
     } catch (err) {
       setImageUrl(tempImage);
       setIsCropModalOpen(false);
@@ -163,7 +183,8 @@ export const AuthorPortal = () => {
     if (work.crop_scale) setCropScale(work.crop_scale);
     if (work.crop_pos_x) setCropPosX(work.crop_pos_x);
     if (work.crop_pos_y) setCropPosY(work.crop_pos_y);
-    setActiveTab('edit');
+    setActiveView('write');
+    setEditorSubTab('edit');
     setStatusMessage({ type: 'success', text: `Loaded: "${work.title || 'Untitled'}"` });
   };
 
@@ -242,7 +263,7 @@ export const AuthorPortal = () => {
     await workService.upsertWork(newWork);
 
     loadWorksAndAbout();
-    setStatusMessage({ type: 'success', text: 'Inscription successfully saved and published!' });
+    setStatusMessage({ type: 'success', text: 'Inscription successfully saved and published.' });
 
     setTimeout(() => {
       setIsSubmitting(false);
@@ -250,53 +271,135 @@ export const AuthorPortal = () => {
     }, 1200);
   };
 
+  // Filtered works for Library View
+  const filteredLibraryWorks = useMemo(() => {
+    return allWorks.filter((work) => {
+      const matchesSearch =
+        work.title?.toLowerCase().includes(librarySearch.toLowerCase()) ||
+        work.author?.toLowerCase().includes(librarySearch.toLowerCase()) ||
+        work.excerpt?.toLowerCase().includes(librarySearch.toLowerCase());
+
+      if (!matchesSearch) return false;
+
+      if (libraryCategory === 'poem') return work.category === 'poem' && work.status === 'published';
+      if (libraryCategory === 'story') return work.category === 'story' && work.status === 'published';
+      if (libraryCategory === 'draft') return work.status === 'draft';
+      return true; // 'all'
+    });
+  }, [allWorks, libraryCategory, librarySearch]);
+
+  // Filtered works for Constellation Arranger View
+  const currentArrangerWorks = useMemo(() => {
+    return allWorks.filter((work) => work.category === arrangerCategory && work.status === 'published');
+  }, [allWorks, arrangerCategory]);
+
   return (
-    <div className="relative min-h-screen bg-[#080A06] text-[#FEEFFF] selection:bg-[#D5B06C]/30 selection:text-[#FEEFFF] p-6 md:p-12">
+    <div className="relative min-h-screen bg-[#080A06] text-[#FEEFFF] selection:bg-[#D5B06C]/30 selection:text-[#FEEFFF] p-4 md:p-10">
       <AtmosphericBackground />
 
-      <div className="relative z-10 max-w-5xl mx-auto space-y-8">
-        <header className="flex flex-col md:flex-row md:items-center justify-between border-b border-[#8A8177]/20 pb-6 gap-4">
+      <div className="relative z-10 max-w-6xl mx-auto space-y-6">
+        {/* Top Header */}
+        <header className="flex flex-col md:flex-row md:items-center justify-between border-b border-[#8A8177]/20 pb-5 gap-4">
           <div>
             <button
               onClick={() => navigate('/hub')}
-              className="font-sans text-xs uppercase tracking-widest text-[#8A8177] hover:text-[#D5B06C] transition-colors mb-2 block cursor-pointer"
+              className="font-sans text-xs uppercase tracking-widest text-[#8A8177] hover:text-[#D5B06C] transition-colors mb-1 block cursor-pointer"
             >
               ← Return to Hub
             </button>
             <h1 className="font-serif text-3xl text-[#FEEFFF]">Curator Portal</h1>
-            <p className="font-sans text-xs uppercase tracking-widest text-[#8A8177] mt-1">
-              Inscribe & Manage Literary Works
+            <p className="font-sans text-[11px] uppercase tracking-widest text-[#8A8177] mt-1">
+              Sanctuary Content Management & Architecture
             </p>
           </div>
 
-          <div className="flex items-center gap-4">
-            <span className="font-sans text-xs text-[#8A8177]">
-              {metrics.words} words • ~{metrics.readTime} min read
-            </span>
-            {editingId && (
+          <div className="flex items-center gap-3">
+            {editingId && activeView === 'write' && (
               <button
                 type="button"
                 onClick={clearForm}
-                className="text-xs uppercase tracking-widest text-[#8A8177] hover:text-red-400 transition-colors cursor-pointer"
+                className="text-xs uppercase tracking-widest text-[#8A8177] hover:text-red-400 transition-colors cursor-pointer border border-[#8A8177]/20 px-3 py-2 rounded"
               >
                 Clear Form
               </button>
             )}
-            <button
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              className="bg-[#D5B06C] text-[#080A06] font-sans text-xs font-semibold uppercase tracking-widest px-6 py-2.5 rounded hover:bg-[#FEEFFF] transition-all duration-300 disabled:opacity-50 cursor-pointer shadow-[0_0_15px_rgba(213,176,108,0.2)]"
-            >
-              {isSubmitting ? 'Inscribing...' : isDraft ? 'Save Draft' : 'Publish Work'}
-            </button>
+            {activeView === 'write' && (
+              <button
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="bg-[#D5B06C] text-[#080A06] font-sans text-xs font-semibold uppercase tracking-widest px-6 py-2.5 rounded hover:bg-[#FEEFFF] transition-all duration-300 disabled:opacity-50 cursor-pointer shadow-[0_0_15px_rgba(213,176,108,0.2)]"
+              >
+                {isSubmitting ? 'Inscribing...' : isDraft ? 'Save Draft' : 'Publish Work'}
+              </button>
+            )}
           </div>
         </header>
 
+        {/* Master Navigation Bar - NO EMOJIS */}
+        <nav className="flex items-center border-b border-[#8A8177]/20 overflow-x-auto bg-[#0F1216]/50 rounded-xl p-1.5 backdrop-blur-sm gap-1">
+          <button
+            type="button"
+            onClick={() => setActiveView('write')}
+            className={`px-5 py-2.5 rounded-lg font-sans text-xs uppercase tracking-widest transition-all cursor-pointer whitespace-nowrap ${
+              activeView === 'write'
+                ? 'bg-[#D5B06C]/15 text-[#D5B06C] border border-[#D5B06C]/40 font-semibold'
+                : 'text-[#8A8177] hover:text-[#FEEFFF]'
+            }`}
+          >
+            Write & Edit
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveView('library')}
+            className={`px-5 py-2.5 rounded-lg font-sans text-xs uppercase tracking-widest transition-all cursor-pointer whitespace-nowrap ${
+              activeView === 'library'
+                ? 'bg-[#D5B06C]/15 text-[#D5B06C] border border-[#D5B06C]/40 font-semibold'
+                : 'text-[#8A8177] hover:text-[#FEEFFF]'
+            }`}
+          >
+            Library ({allWorks.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveView('arrange')}
+            className={`px-5 py-2.5 rounded-lg font-sans text-xs uppercase tracking-widest transition-all cursor-pointer whitespace-nowrap ${
+              activeView === 'arrange'
+                ? 'bg-[#D5B06C]/15 text-[#D5B06C] border border-[#D5B06C]/40 font-semibold'
+                : 'text-[#8A8177] hover:text-[#FEEFFF]'
+            }`}
+          >
+            Constellation Arranger
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveView('about')}
+            className={`px-5 py-2.5 rounded-lg font-sans text-xs uppercase tracking-widest transition-all cursor-pointer whitespace-nowrap ${
+              activeView === 'about'
+                ? 'bg-[#D5B06C]/15 text-[#D5B06C] border border-[#D5B06C]/40 font-semibold'
+                : 'text-[#8A8177] hover:text-[#FEEFFF]'
+            }`}
+          >
+            About Bio
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveView('analytics')}
+            className={`px-5 py-2.5 rounded-lg font-sans text-xs uppercase tracking-widest transition-all cursor-pointer whitespace-nowrap ${
+              activeView === 'analytics'
+                ? 'bg-[#D5B06C]/15 text-[#D5B06C] border border-[#D5B06C]/40 font-semibold'
+                : 'text-[#8A8177] hover:text-[#FEEFFF]'
+            }`}
+          >
+            Analytics
+          </button>
+        </nav>
+
+        {/* Global Notification Banner */}
         {statusMessage && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`p-4 rounded-lg font-sans text-xs uppercase tracking-wider text-center border ${
+            className={`p-3.5 rounded-lg font-sans text-xs uppercase tracking-wider text-center border ${
               statusMessage.type === 'error'
                 ? 'bg-red-900/40 border-red-500 text-red-200'
                 : 'bg-[#D5B06C]/10 border-[#D5B06C] text-[#D5B06C]'
@@ -306,201 +409,198 @@ export const AuthorPortal = () => {
           </motion.div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="bg-[#0F1216] border border-[#8A8177]/20 p-6 rounded-xl h-fit space-y-6">
-            <h2 className="font-sans text-xs uppercase tracking-widest text-[#D5B06C]">
-              Work Metadata
-            </h2>
-
-            <div>
-              <label className="block font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mb-2">
-                Author Name / Alias
-              </label>
+        {/* 1. WRITE & EDIT VIEW */}
+        {activeView === 'write' && (
+          <div className="space-y-6">
+            {/* Title & Sub-tabs */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#8A8177]/20 pb-4">
               <input
                 type="text"
-                placeholder="e.g. Aureligious"
-                value={author}
-                onChange={(e) => setAuthor(e.target.value)}
-                className="w-full bg-[#080A06] border border-[#8A8177]/30 text-[#FEEFFF] font-sans text-xs px-3 py-2 rounded focus:outline-none focus:border-[#D5B06C]"
+                placeholder="Title of Work..."
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="w-full bg-transparent border-b border-[#8A8177]/30 py-2 text-2xl md:text-3xl font-serif text-[#FEEFFF] placeholder-[#8A8177]/40 focus:outline-none focus:border-[#D5B06C]"
               />
-            </div>
 
-            <div>
-              <label className="block font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mb-2">
-                Category
-              </label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-full bg-[#080A06] border border-[#8A8177]/30 text-[#FEEFFF] font-sans text-xs px-3 py-2 rounded focus:outline-none focus:border-[#D5B06C] cursor-pointer"
-              >
-                <option value="poem">Poem</option>
-                <option value="story">Story</option>
-                <option value="essay">Essay</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mb-2">
-                State
-              </label>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 flex-shrink-0">
                 <button
                   type="button"
-                  onClick={() => setIsDraft(false)}
-                  className={`flex-1 py-2 text-[10px] font-sans uppercase tracking-widest border rounded transition-all cursor-pointer ${
-                    !isDraft ? 'border-[#D5B06C] text-[#D5B06C] bg-[#D5B06C]/10' : 'border-[#8A8177]/20 text-[#8A8177]'
+                  onClick={() => setEditorSubTab('edit')}
+                  className={`px-4 py-1.5 rounded text-xs font-sans uppercase tracking-widest transition-all cursor-pointer ${
+                    editorSubTab === 'edit'
+                      ? 'border border-[#D5B06C] text-[#D5B06C] bg-[#D5B06C]/10'
+                      : 'border border-[#8A8177]/20 text-[#8A8177]'
                   }`}
                 >
-                  Public
+                  Editor
                 </button>
                 <button
                   type="button"
-                  onClick={() => setIsDraft(true)}
-                  className={`flex-1 py-2 text-[10px] font-sans uppercase tracking-widest border rounded transition-all cursor-pointer ${
-                    isDraft ? 'border-[#D5B06C] text-[#D5B06C] bg-[#D5B06C]/10' : 'border-[#8A8177]/20 text-[#8A8177]'
+                  onClick={() => setEditorSubTab('preview')}
+                  className={`px-4 py-1.5 rounded text-xs font-sans uppercase tracking-widest transition-all cursor-pointer ${
+                    editorSubTab === 'preview'
+                      ? 'border border-[#D5B06C] text-[#D5B06C] bg-[#D5B06C]/10'
+                      : 'border border-[#8A8177]/20 text-[#8A8177]'
                   }`}
                 >
-                  Draft
+                  Live Card Preview
                 </button>
               </div>
             </div>
 
-            <div className="space-y-3 pt-2 border-t border-[#8A8177]/10">
-              <label className="block font-sans text-[10px] uppercase tracking-widest text-[#8A8177]">
-                Card Image Banner
-              </label>
-
-              <input
-                type="file"
-                ref={fileInputRef}
-                accept="image/*"
-                onChange={handleFileSelect}
-                className="hidden"
-              />
+            {/* Collapsible Metadata Drawer */}
+            <div className="bg-[#0F1216] border border-[#8A8177]/20 rounded-xl overflow-hidden">
               <button
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="w-full py-2 px-3 bg-[#080A06] border border-[#8A8177]/30 text-[#FEEFFF] font-sans text-xs rounded hover:border-[#D5B06C] transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                onClick={() => setIsMetadataExpanded(!isMetadataExpanded)}
+                className="w-full px-6 py-3 bg-[#080A06]/50 flex items-center justify-between cursor-pointer border-b border-[#8A8177]/10"
               >
-                📷 Upload & Crop Image (WebP)
+                <span className="font-sans text-xs uppercase tracking-widest text-[#D5B06C] font-medium">
+                  Work Metadata and Banner Configuration
+                </span>
+                <span className="text-[#8A8177] text-xs">
+                  {isMetadataExpanded ? '▲ Hide Settings' : '▼ Expand Settings'}
+                </span>
               </button>
 
-              <input
-                type="url"
-                placeholder="Or paste image URL..."
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                className="w-full bg-[#080A06] border border-[#8A8177]/30 text-[#FEEFFF] font-sans text-xs px-3 py-2 rounded focus:outline-none focus:border-[#D5B06C]"
-              />
+              <AnimatePresence>
+                {isMetadataExpanded && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6"
+                  >
+                    <div>
+                      <label className="block font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mb-2">
+                        Author Name / Alias
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Aureligious"
+                        value={author}
+                        onChange={(e) => setAuthor(e.target.value)}
+                        className="w-full bg-[#080A06] border border-[#8A8177]/30 text-[#FEEFFF] font-sans text-xs px-3 py-2.5 rounded focus:outline-none focus:border-[#D5B06C]"
+                      />
+                    </div>
 
-              {imageUrl && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setTempImage(imageUrl);
-                    setIsCropModalOpen(true);
-                  }}
-                  className="w-full text-[10px] font-sans uppercase tracking-widest text-[#D5B06C] hover:underline cursor-pointer pt-1"
-                >
-                  Adjust Image Crop & Alignment
-                </button>
-              )}
+                    <div>
+                      <label className="block font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mb-2">
+                        Category
+                      </label>
+                      <select
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value)}
+                        className="w-full bg-[#080A06] border border-[#8A8177]/30 text-[#FEEFFF] font-sans text-xs px-3 py-2.5 rounded focus:outline-none focus:border-[#D5B06C] cursor-pointer"
+                      >
+                        <option value="poem">Poem</option>
+                        <option value="story">Story</option>
+                        <option value="essay">Essay</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mb-2">
+                        Publishing State
+                      </label>
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setIsDraft(false)}
+                          className={`flex-1 py-2 text-[10px] font-sans uppercase tracking-widest border rounded transition-all cursor-pointer ${
+                            !isDraft ? 'border-[#D5B06C] text-[#D5B06C] bg-[#D5B06C]/10' : 'border-[#8A8177]/20 text-[#8A8177]'
+                          }`}
+                        >
+                          Public
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setIsDraft(true)}
+                          className={`flex-1 py-2 text-[10px] font-sans uppercase tracking-widest border rounded transition-all cursor-pointer ${
+                            isDraft ? 'border-[#D5B06C] text-[#D5B06C] bg-[#D5B06C]/10' : 'border-[#8A8177]/20 text-[#8A8177]'
+                          }`}
+                        >
+                          Draft
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="md:col-span-2 space-y-3">
+                      <label className="block font-sans text-[10px] uppercase tracking-widest text-[#8A8177]">
+                        Card Image Banner
+                      </label>
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          accept="image/*"
+                          onChange={handleFileSelect}
+                          className="hidden"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="py-2 px-4 bg-[#080A06] border border-[#8A8177]/30 text-[#FEEFFF] font-sans text-xs rounded hover:border-[#D5B06C] transition-colors cursor-pointer"
+                        >
+                          Upload and Crop Image (WebP)
+                        </button>
+                        <input
+                          type="url"
+                          placeholder="Or paste image URL..."
+                          value={imageUrl}
+                          onChange={(e) => setImageUrl(e.target.value)}
+                          className="flex-1 bg-[#080A06] border border-[#8A8177]/30 text-[#FEEFFF] font-sans text-xs px-3 py-2 rounded focus:outline-none focus:border-[#D5B06C]"
+                        />
+                      </div>
+                      {imageUrl && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTempImage(imageUrl);
+                            setIsCropModalOpen(true);
+                          }}
+                          className="text-[10px] font-sans uppercase tracking-widest text-[#D5B06C] hover:underline cursor-pointer"
+                        >
+                          Adjust Image Crop and Alignment
+                        </button>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mb-2">
+                        Short Excerpt Preview
+                      </label>
+                      <textarea
+                        rows={2}
+                        value={excerpt}
+                        onChange={(e) => setExcerpt(e.target.value)}
+                        placeholder="Succinct preview excerpt..."
+                        className="w-full bg-[#080A06] border border-[#8A8177]/30 text-[#FEEFFF] font-serif text-xs p-2.5 rounded focus:outline-none focus:border-[#D5B06C] resize-none"
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
-            <div>
-              <label className="block font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mb-2">
-                Short Excerpt
-              </label>
-              <textarea
-                rows={3}
-                value={excerpt}
-                onChange={(e) => setExcerpt(e.target.value)}
-                placeholder="A succinct atmospheric preview..."
-                className="w-full bg-[#080A06] border border-[#8A8177]/30 text-[#FEEFFF] font-serif text-xs p-3 rounded focus:outline-none focus:border-[#D5B06C] resize-none"
-              />
-            </div>
-          </div>
-
-          <div className="lg:col-span-2 space-y-6">
-            <input
-              type="text"
-              placeholder="Title of Work..."
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full bg-transparent border-b border-[#8A8177]/30 py-3 text-3xl md:text-4xl font-serif text-[#FEEFFF] placeholder-[#8A8177]/40 focus:outline-none focus:border-[#D5B06C]"
-            />
-
-            <div className="flex border-b border-[#8A8177]/20 overflow-x-auto">
-              <button
-                type="button"
-                onClick={() => setActiveTab('edit')}
-                className={`px-4 py-2 font-sans text-xs uppercase tracking-widest transition-colors cursor-pointer whitespace-nowrap ${
-                  activeTab === 'edit' ? 'text-[#D5B06C] border-b-2 border-[#D5B06C]' : 'text-[#8A8177] hover:text-[#FEEFFF]'
-                }`}
-              >
-                Editor
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('preview')}
-                className={`px-4 py-2 font-sans text-xs uppercase tracking-widest transition-colors cursor-pointer whitespace-nowrap ${
-                  activeTab === 'preview' ? 'text-[#D5B06C] border-b-2 border-[#D5B06C]' : 'text-[#8A8177] hover:text-[#FEEFFF]'
-                }`}
-              >
-                Live Card Preview
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('manage')}
-                className={`px-4 py-2 font-sans text-xs uppercase tracking-widest transition-colors cursor-pointer whitespace-nowrap ${
-                  activeTab === 'manage' ? 'text-[#D5B06C] border-b-2 border-[#D5B06C]' : 'text-[#8A8177] hover:text-[#FEEFFF]'
-                }`}
-              >
-                Saved Inscriptions ({allWorks.length})
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('arrange')}
-                className={`px-4 py-2 font-sans text-xs uppercase tracking-widest transition-colors cursor-pointer whitespace-nowrap ${
-                  activeTab === 'arrange' ? 'text-[#D5B06C] border-b-2 border-[#D5B06C]' : 'text-[#8A8177] hover:text-[#FEEFFF]'
-                }`}
-              >
-                Arrange Constellation
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('about-editor')}
-                className={`px-4 py-2 font-sans text-xs uppercase tracking-widest transition-colors cursor-pointer whitespace-nowrap ${
-                  activeTab === 'about-editor' ? 'text-[#D5B06C] border-b-2 border-[#D5B06C]' : 'text-[#8A8177] hover:text-[#FEEFFF]'
-                }`}
-              >
-                About Editor
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('analytics')}
-                className={`px-4 py-2 font-sans text-xs uppercase tracking-widest transition-colors cursor-pointer whitespace-nowrap ${
-                  activeTab === 'analytics' ? 'text-[#D5B06C] border-b-2 border-[#D5B06C]' : 'text-[#8A8177] hover:text-[#FEEFFF]'
-                }`}
-              >
-                Analytics
-              </button>
-            </div>
-
-            {activeTab === 'edit' && (
-              <textarea
-                rows={16}
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                placeholder="Compose your literary piece here..."
-                className="w-full bg-[#0F1216]/60 border border-[#8A8177]/20 p-6 rounded-xl font-serif text-lg text-[#FEEFFF] leading-relaxed focus:outline-none focus:border-[#D5B06C]/50 resize-y"
-              />
-            )}
-
-            {activeTab === 'preview' && (
+            {/* Writing Canvas / Preview */}
+            {editorSubTab === 'edit' ? (
+              <div className="space-y-3">
+                <textarea
+                  rows={18}
+                  value={body}
+                  onChange={(e) => setBody(e.target.value)}
+                  placeholder="Compose your literary work here..."
+                  className="w-full bg-[#0F1216]/60 border border-[#8A8177]/20 p-6 rounded-xl font-serif text-lg text-[#FEEFFF] leading-relaxed focus:outline-none focus:border-[#D5B06C]/50 resize-y min-h-[400px]"
+                />
+                <div className="flex justify-between items-center text-xs font-sans text-[#8A8177] px-2">
+                  <span>{metrics.words} words • ~{metrics.readTime} min read</span>
+                  <span className="uppercase tracking-widest">{category} mode</span>
+                </div>
+              </div>
+            ) : (
               <div className="space-y-6">
-                <div className="p-4 bg-[#0F1216]/30 border border-[#8A8177]/10 rounded-xl space-y-2">
+                <div className="p-5 bg-[#0F1216]/30 border border-[#8A8177]/10 rounded-xl space-y-2">
                   <span className="font-sans text-[10px] uppercase tracking-widest text-[#D5B06C]">
                     Content Hub Card Preview
                   </span>
@@ -535,183 +635,289 @@ export const AuthorPortal = () => {
                 </div>
               </div>
             )}
+          </div>
+        )}
 
-            {activeTab === 'manage' && (
-              <div className="space-y-4 bg-[#0F1216]/40 border border-[#8A8177]/10 p-6 rounded-xl min-h-[350px]">
-                <h3 className="font-serif text-xl text-[#FEEFFF] mb-4">Inscriptions & Drafts</h3>
-                {allWorks.length === 0 ? (
-                  <p className="font-sans text-xs uppercase tracking-widest text-[#8A8177] py-8 text-center">
-                    No inscriptions stored yet.
-                  </p>
-                ) : (
-                  <div className="space-y-3">
-                    {allWorks.map((work) => (
-                      <div
-                        key={work.id || work.slug}
-                        className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-lg border border-[#8A8177]/20 bg-[#080A06]/60 hover:border-[#D5B06C]/40 transition-colors gap-4"
-                      >
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-serif text-lg text-[#FEEFFF]">
-                              {work.title || 'Untitled Work'}
-                            </h4>
-                            <span
-                              className={`text-[9px] font-sans uppercase tracking-wider px-2 py-0.5 rounded ${
-                                work.status === 'published'
-                                  ? 'bg-[#D5B06C]/20 text-[#D5B06C] border border-[#D5B06C]/40'
-                                  : 'bg-[#8A8177]/20 text-[#8A8177]'
-                              }`}
-                            >
-                              {work.status}
-                            </span>
-                          </div>
-                          <p className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mt-1">
-                            {work.category} • By {work.author || 'Anonymous'} • {work.read_time_minutes} min read
-                          </p>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleLoadWork(work)}
-                            className="px-4 py-1.5 rounded border border-[#D5B06C]/40 text-[#D5B06C] font-sans text-xs uppercase tracking-widest hover:bg-[#D5B06C] hover:text-[#080A06] transition-colors cursor-pointer"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => promptDeleteWork(work)}
-                            className="px-3 py-1.5 rounded border border-red-500/30 text-red-400 font-sans text-xs uppercase tracking-widest hover:bg-red-500/20 transition-colors cursor-pointer"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+        {/* 2. CATEGORIZED LIBRARY VIEW */}
+        {activeView === 'library' && (
+          <div className="space-y-6 bg-[#0F1216]/40 border border-[#8A8177]/10 p-6 rounded-xl min-h-[400px]">
+            {/* Search and Category Filter Bar */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#8A8177]/20 pb-4">
+              {/* Category Sub-Tabs */}
+              <div className="flex items-center gap-2 overflow-x-auto">
+                <button
+                  type="button"
+                  onClick={() => setLibraryCategory('all')}
+                  className={`px-4 py-1.5 rounded text-xs font-sans uppercase tracking-widest transition-all cursor-pointer ${
+                    libraryCategory === 'all'
+                      ? 'border border-[#D5B06C] text-[#D5B06C] bg-[#D5B06C]/10'
+                      : 'border border-[#8A8177]/20 text-[#8A8177]'
+                  }`}
+                >
+                  All ({allWorks.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLibraryCategory('poem')}
+                  className={`px-4 py-1.5 rounded text-xs font-sans uppercase tracking-widest transition-all cursor-pointer ${
+                    libraryCategory === 'poem'
+                      ? 'border border-[#D5B06C] text-[#D5B06C] bg-[#D5B06C]/10'
+                      : 'border border-[#8A8177]/20 text-[#8A8177]'
+                  }`}
+                >
+                  Poems ({allWorks.filter((w) => w.category === 'poem' && w.status === 'published').length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLibraryCategory('story')}
+                  className={`px-4 py-1.5 rounded text-xs font-sans uppercase tracking-widest transition-all cursor-pointer ${
+                    libraryCategory === 'story'
+                      ? 'border border-[#D5B06C] text-[#D5B06C] bg-[#D5B06C]/10'
+                      : 'border border-[#8A8177]/20 text-[#8A8177]'
+                  }`}
+                >
+                  Stories ({allWorks.filter((w) => w.category === 'story' && w.status === 'published').length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLibraryCategory('draft')}
+                  className={`px-4 py-1.5 rounded text-xs font-sans uppercase tracking-widest transition-all cursor-pointer ${
+                    libraryCategory === 'draft'
+                      ? 'border border-[#D5B06C] text-[#D5B06C] bg-[#D5B06C]/10'
+                      : 'border border-[#8A8177]/20 text-[#8A8177]'
+                  }`}
+                >
+                  Drafts ({allWorks.filter((w) => w.status === 'draft').length})
+                </button>
               </div>
-            )}
 
-            {/* Drag and Drop Arrange Tab */}
-            {activeTab === 'arrange' && (
-              <div className="space-y-4 bg-[#0F1216]/40 border border-[#8A8177]/10 p-6 rounded-xl min-h-[350px]">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#8A8177]/20 pb-3 gap-3">
-                  <div>
-                    <h3 className="font-serif text-xl text-[#FEEFFF]">Arrange Constellation Cards</h3>
-                    <p className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mt-1">
-                      Drag cards to reorder your works, then click save.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleSaveOrder}
-                    className="px-5 py-2 rounded bg-[#D5B06C] text-[#080A06] font-sans text-xs font-semibold uppercase tracking-widest hover:bg-[#FEEFFF] transition-colors cursor-pointer shadow-md"
+              {/* Search Bar */}
+              <input
+                type="text"
+                placeholder="Search by title, author, or preview..."
+                value={librarySearch}
+                onChange={(e) => setLibrarySearch(e.target.value)}
+                className="bg-[#080A06] border border-[#8A8177]/30 text-[#FEEFFF] font-sans text-xs px-4 py-2 rounded-lg focus:outline-none focus:border-[#D5B06C] w-full md:w-64"
+              />
+            </div>
+
+            {/* Inscriptions List */}
+            {filteredLibraryWorks.length === 0 ? (
+              <div className="text-center py-12 space-y-2">
+                <p className="font-serif text-lg text-[#8A8177]">No matching inscriptions found.</p>
+                <p className="font-sans text-xs uppercase tracking-widest text-[#8A8177]/50">
+                  Try adjusting your search or category filter.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {filteredLibraryWorks.map((work) => (
+                  <div
+                    key={work.id || work.slug}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-lg border border-[#8A8177]/20 bg-[#080A06]/60 hover:border-[#D5B06C]/40 transition-colors gap-4"
                   >
-                    Save Order
-                  </button>
-                </div>
-
-                {allWorks.length === 0 ? (
-                  <p className="font-sans text-xs uppercase tracking-widest text-[#8A8177] py-8 text-center">
-                    No published works to arrange.
-                  </p>
-                ) : (
-                  <div className="space-y-2 pt-2">
-                    {allWorks.map((work, index) => (
-                      <div
-                        key={work.id || work.slug}
-                        draggable
-                        onDragStart={(e) => handleDragStart(e, index)}
-                        onDragOver={(e) => handleDragOver(e, index)}
-                        onDrop={(e) => handleDrop(e, index)}
-                        className="flex items-center justify-between p-3.5 rounded-lg border border-[#8A8177]/20 bg-[#080A06] hover:border-[#D5B06C]/50 transition-all cursor-grab active:cursor-grabbing shadow-sm"
-                      >
-                        <div className="flex items-center gap-3">
-                          <span className="text-[#8A8177] text-xs font-mono select-none">⠿</span>
-                          <span className="font-serif text-sm text-[#FEEFFF] truncate max-w-[320px]">
-                            {index + 1}. {work.title || 'Untitled Work'}
-                          </span>
-                          <span className="text-[10px] uppercase font-sans tracking-wider px-2 py-0.5 rounded bg-[#D5B06C]/10 text-[#D5B06C]">
-                            {work.category}
-                          </span>
-                        </div>
-                        <span className="text-xs font-sans text-[#8A8177]/50 uppercase tracking-widest select-none pr-2">
-                          Drag to Reorder
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-serif text-lg text-[#FEEFFF]">
+                          {work.title || 'Untitled Work'}
+                        </h4>
+                        <span
+                          className={`text-[9px] font-sans uppercase tracking-wider px-2 py-0.5 rounded ${
+                            work.status === 'published'
+                              ? 'bg-[#D5B06C]/20 text-[#D5B06C] border border-[#D5B06C]/40'
+                              : 'bg-[#8A8177]/20 text-[#8A8177]'
+                          }`}
+                        >
+                          {work.status}
                         </span>
                       </div>
-                    ))}
+                      <p className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mt-1">
+                        {work.category} • By {work.author || 'Anonymous'} • {work.read_time_minutes} min read
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleLoadWork(work)}
+                        className="px-4 py-1.5 rounded border border-[#D5B06C]/40 text-[#D5B06C] font-sans text-xs uppercase tracking-widest hover:bg-[#D5B06C] hover:text-[#080A06] transition-colors cursor-pointer"
+                      >
+                        Edit Work
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => promptDeleteWork(work)}
+                        className="px-3 py-1.5 rounded border border-red-500/30 text-red-400 font-sans text-xs uppercase tracking-widest hover:bg-red-500/20 transition-colors cursor-pointer"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
-                )}
-              </div>
-            )}
-
-            {activeTab === 'about-editor' && (
-              <div className="space-y-6 bg-[#0F1216]/40 border border-[#8A8177]/10 p-6 rounded-xl min-h-[350px]">
-                <div className="border-b border-[#8A8177]/20 pb-3">
-                  <h3 className="font-serif text-xl text-[#FEEFFF]">Edit "About the Author" Section</h3>
-                  <p className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mt-1">
-                    Modify the bio text displayed on the About page
-                  </p>
-                </div>
-
-                <form onSubmit={handleSaveAboutBio} className="space-y-4">
-                  <div>
-                    <label className="block font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mb-2">
-                      About Page Content
-                    </label>
-                    <textarea
-                      rows={8}
-                      value={aboutBio}
-                      onChange={(e) => setAboutBio(e.target.value)}
-                      className="w-full bg-[#080A06] border border-[#8A8177]/30 text-[#FEEFFF] font-serif text-base p-4 rounded-lg focus:outline-none focus:border-[#D5B06C] leading-relaxed"
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="px-6 py-2.5 rounded bg-[#D5B06C] text-[#080A06] font-sans text-xs font-semibold uppercase tracking-widest hover:bg-[#FEEFFF] transition-colors cursor-pointer"
-                  >
-                    Save About Bio
-                  </button>
-                </form>
-              </div>
-            )}
-
-            {activeTab === 'analytics' && (
-              <div className="space-y-6 bg-[#0F1216]/40 border border-[#8A8177]/10 p-6 rounded-xl min-h-[350px]">
-                <div className="border-b border-[#8A8177]/20 pb-3">
-                  <h3 className="font-serif text-xl text-[#FEEFFF]">Curator Insights & Analytics</h3>
-                  <p className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mt-1">
-                    Private Performance Overview for Inscriptions
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="p-4 bg-[#080A06]/80 border border-[#8A8177]/20 rounded-lg text-center space-y-1">
-                    <span className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177]">Total Inscriptions</span>
-                    <p className="font-serif text-3xl text-[#D5B06C]">{analytics.totalWorks}</p>
-                  </div>
-
-                  <div className="p-4 bg-[#080A06]/80 border border-[#8A8177]/20 rounded-lg text-center space-y-1">
-                    <span className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177]">Total Resonances</span>
-                    <p className="font-serif text-3xl text-[#D5B06C]">{analytics.totalResonances}</p>
-                  </div>
-
-                  <div className="p-4 bg-[#080A06]/80 border border-[#8A8177]/20 rounded-lg text-center space-y-1">
-                    <span className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177]">Total Reflections</span>
-                    <p className="font-serif text-3xl text-[#D5B06C]">{totalCommentsCount}</p>
-                  </div>
-
-                  <div className="p-4 bg-[#080A06]/80 border border-[#8A8177]/20 rounded-lg text-center space-y-1">
-                    <span className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177]">Avg Words / Work</span>
-                    <p className="font-serif text-3xl text-[#D5B06C]">{analytics.avgWords}</p>
-                  </div>
-                </div>
+                ))}
               </div>
             )}
           </div>
-        </div>
+        )}
+
+        {/* 3. CATEGORIZED CONSTELLATION ARRANGER VIEW */}
+        {activeView === 'arrange' && (
+          <div className="space-y-6 bg-[#0F1216]/40 border border-[#8A8177]/10 p-6 rounded-xl min-h-[400px]">
+            {/* Header & Sub-Category Selector */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#8A8177]/20 pb-4 gap-4">
+              <div>
+                <h3 className="font-serif text-xl text-[#FEEFFF]">Arrange Constellation Cards</h3>
+                <p className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mt-1">
+                  Drag cards to reorder how they appear in public archives.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setArrangerCategory('poem')}
+                    className={`px-4 py-1.5 rounded text-xs font-sans uppercase tracking-widest transition-all cursor-pointer ${
+                      arrangerCategory === 'poem'
+                        ? 'border border-[#D5B06C] text-[#D5B06C] bg-[#D5B06C]/10'
+                        : 'border border-[#8A8177]/20 text-[#8A8177]'
+                    }`}
+                  >
+                    Poems Constellation
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setArrangerCategory('story')}
+                    className={`px-4 py-1.5 rounded text-xs font-sans uppercase tracking-widest transition-all cursor-pointer ${
+                      arrangerCategory === 'story'
+                        ? 'border border-[#D5B06C] text-[#D5B06C] bg-[#D5B06C]/10'
+                        : 'border border-[#8A8177]/20 text-[#8A8177]'
+                    }`}
+                  >
+                    Stories Constellation
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleSaveOrder}
+                  className="px-5 py-2 rounded bg-[#D5B06C] text-[#080A06] font-sans text-xs font-semibold uppercase tracking-widest hover:bg-[#FEEFFF] transition-colors cursor-pointer shadow-md whitespace-nowrap"
+                >
+                  Save Constellation Order
+                </button>
+              </div>
+            </div>
+
+            {/* Drag and Drop Card List */}
+            {currentArrangerWorks.length === 0 ? (
+              <p className="font-sans text-xs uppercase tracking-widest text-[#8A8177] py-12 text-center">
+                No published works in the {arrangerCategory} category to arrange.
+              </p>
+            ) : (
+              <div className="space-y-2 pt-2">
+                {currentArrangerWorks.map((work, index) => (
+                  <div
+                    key={work.id || work.slug}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, index)}
+                    onDragOver={(e) => handleDragOver(e, index)}
+                    onDrop={(e) => handleDrop(e, index)}
+                    className="flex items-center justify-between p-3.5 rounded-lg border border-[#8A8177]/20 bg-[#080A06] hover:border-[#D5B06C]/50 transition-all cursor-grab active:cursor-grabbing shadow-sm"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-[#8A8177] text-xs font-mono select-none">⠿</span>
+                      <span className="font-serif text-sm text-[#FEEFFF] truncate max-w-[320px]">
+                        {index + 1}. {work.title || 'Untitled Work'}
+                      </span>
+                      <span className="text-[10px] uppercase font-sans tracking-wider px-2 py-0.5 rounded bg-[#D5B06C]/10 text-[#D5B06C]">
+                        {work.category}
+                      </span>
+                    </div>
+                    <span className="text-xs font-sans text-[#8A8177]/50 uppercase tracking-widest select-none pr-2">
+                      Drag to Reorder
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 4. ABOUT BIO EDITOR VIEW */}
+        {activeView === 'about' && (
+          <div className="space-y-6 bg-[#0F1216]/40 border border-[#8A8177]/10 p-6 rounded-xl min-h-[400px]">
+            <div className="border-b border-[#8A8177]/20 pb-3">
+              <h3 className="font-serif text-xl text-[#FEEFFF]">Edit "About the Author" Section</h3>
+              <p className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mt-1">
+                Modify the public biography text displayed on the About page.
+              </p>
+            </div>
+
+            <form onSubmit={handleSaveAboutBio} className="space-y-4">
+              <div>
+                <label className="block font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mb-2">
+                  About Page Content
+                </label>
+                <textarea
+                  rows={10}
+                  value={aboutBio}
+                  onChange={(e) => setAboutBio(e.target.value)}
+                  className="w-full bg-[#080A06] border border-[#8A8177]/30 text-[#FEEFFF] font-serif text-base p-4 rounded-lg focus:outline-none focus:border-[#D5B06C] leading-relaxed"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="px-6 py-2.5 rounded bg-[#D5B06C] text-[#080A06] font-sans text-xs font-semibold uppercase tracking-widest hover:bg-[#FEEFFF] transition-colors cursor-pointer"
+              >
+                Save About Bio
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* 5. CURATOR ANALYTICS VIEW */}
+        {activeView === 'analytics' && (
+          <div className="space-y-6 bg-[#0F1216]/40 border border-[#8A8177]/10 p-6 rounded-xl min-h-[400px]">
+            <div className="border-b border-[#8A8177]/20 pb-3">
+              <h3 className="font-serif text-xl text-[#FEEFFF]">Curator Insights & Analytics</h3>
+              <p className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mt-1">
+                Private Performance Overview for Published Works
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              <div className="p-4 bg-[#080A06]/80 border border-[#8A8177]/20 rounded-lg text-center space-y-1">
+                <span className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177]">Total Inscriptions</span>
+                <p className="font-serif text-3xl text-[#D5B06C]">{analytics.totalWorks}</p>
+              </div>
+
+              <div className="p-4 bg-[#080A06]/80 border border-[#8A8177]/20 rounded-lg text-center space-y-1">
+                <span className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177]">Total Poems</span>
+                <p className="font-serif text-3xl text-[#D5B06C]">{analytics.totalPoems}</p>
+              </div>
+
+              <div className="p-4 bg-[#080A06]/80 border border-[#8A8177]/20 rounded-lg text-center space-y-1">
+                <span className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177]">Total Stories</span>
+                <p className="font-serif text-3xl text-[#D5B06C]">{analytics.totalStories}</p>
+              </div>
+
+              <div className="p-4 bg-[#080A06]/80 border border-[#8A8177]/20 rounded-lg text-center space-y-1">
+                <span className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177]">Drafts Stored</span>
+                <p className="font-serif text-3xl text-[#D5B06C]">{analytics.totalDrafts}</p>
+              </div>
+
+              <div className="p-4 bg-[#080A06]/80 border border-[#8A8177]/20 rounded-lg text-center space-y-1">
+                <span className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177]">Total Resonances</span>
+                <p className="font-serif text-3xl text-[#D5B06C]">{analytics.totalResonances}</p>
+              </div>
+
+              <div className="p-4 bg-[#080A06]/80 border border-[#8A8177]/20 rounded-lg text-center space-y-1">
+                <span className="font-sans text-[10px] uppercase tracking-widest text-[#8A8177]">Avg Words / Work</span>
+                <p className="font-serif text-3xl text-[#D5B06C]">{analytics.avgWords}</p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Image Crop & Alignment Modal */}
@@ -812,7 +1018,7 @@ export const AuthorPortal = () => {
                   onClick={handleApplyCrop}
                   className="px-6 py-2 rounded bg-[#D5B06C] text-[#080A06] font-sans text-xs font-semibold uppercase tracking-widest hover:bg-[#FEEFFF] transition-colors cursor-pointer"
                 >
-                  Apply & Attach
+                  Apply and Attach
                 </button>
               </div>
             </motion.div>

@@ -25,15 +25,15 @@ export default function AtmosphericBackground() {
     };
     window.addEventListener('mousemove', handleMouseMove);
 
-    // Generate floating particles (stardust / embers)
-    const particleCount = Math.floor((width * height) / 18000);
+    // Generate floating micro pinprick stardust particles
+    const particleCount = Math.floor((width * height) / 22000);
     const particles = Array.from({ length: particleCount }, () => ({
       x: Math.random() * width,
       y: Math.random() * height,
-      size: Math.random() * 1.5 + 0.5,
-      speedX: (Math.random() - 0.5) * 0.2,
-      speedY: (Math.random() - 0.5) * 0.2 - 0.05, // Slight upward drift
-      opacity: Math.random() * 0.5 + 0.1,
+      size: Math.random() * 0.8 + 0.3,
+      speedX: (Math.random() - 0.5) * 0.15,
+      speedY: (Math.random() - 0.5) * 0.15 - 0.03,
+      opacity: Math.random() * 0.35 + 0.1,
     }));
 
     const render = () => {

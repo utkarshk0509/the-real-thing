@@ -77,8 +77,8 @@ export const AuthorPortal = () => {
       const deltaX = (dx / 250) * 100;
       const deltaY = (dy / 120) * 100;
 
-      const newX = Math.max(-200, Math.min(300, cropPosStartRef.current.x - deltaX));
-      const newY = Math.max(-200, Math.min(300, cropPosStartRef.current.y - deltaY));
+      const newX = Math.max(-100, Math.min(200, cropPosStartRef.current.x + deltaX));
+      const newY = Math.max(-100, Math.min(200, cropPosStartRef.current.y + deltaY));
 
       setCropPosX(Math.round(newX));
       setCropPosY(Math.round(newY));
@@ -92,8 +92,8 @@ export const AuthorPortal = () => {
       const deltaX = (dx / 250) * 100;
       const deltaY = (dy / 120) * 100;
 
-      const newX = Math.max(-200, Math.min(300, cropPosStartRef.current.x - deltaX));
-      const newY = Math.max(-200, Math.min(300, cropPosStartRef.current.y - deltaY));
+      const newX = Math.max(-100, Math.min(200, cropPosStartRef.current.x + deltaX));
+      const newY = Math.max(-100, Math.min(200, cropPosStartRef.current.y + deltaY));
 
       setCropPosX(Math.round(newX));
       setCropPosY(Math.round(newY));
@@ -1037,8 +1037,8 @@ export const AuthorPortal = () => {
                       alt="Interactive crop"
                       className="w-full h-full object-cover pointer-events-none transition-transform duration-75"
                       style={{
-                        transform: `scale(${cropScale})`,
-                        objectPosition: `${cropPosX}% ${cropPosY}%`
+                        transform: `scale(${cropScale}) translate(${cropPosX - 50}%, ${cropPosY - 50}%)`,
+                        transformOrigin: 'center center'
                       }}
                     />
                   )}

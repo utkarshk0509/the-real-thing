@@ -20,6 +20,9 @@ export const GlowingCard = ({
     });
   };
 
+  const posX = cropPosX ?? 50;
+  const posY = cropPosY ?? 50;
+
   return (
     <div
       onClick={onClick}
@@ -45,8 +48,8 @@ export const GlowingCard = ({
             alt="" 
             className="w-full h-full object-cover grayscale contrast-115 group-hover:grayscale-0 transition-all duration-300 ease-out" 
             style={{
-              transform: `scale(${cropScale})`,
-              objectPosition: `${cropPosX}% ${cropPosY}%`
+              transform: `scale(${cropScale}) translate(${posX - 50}%, ${posY - 50}%)`,
+              transformOrigin: 'center center'
             }}
           />
           {/* Smooth gradient blending mask into the card background */}

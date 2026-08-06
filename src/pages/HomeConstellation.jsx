@@ -491,23 +491,23 @@ export const HomeConstellation = () => {
               className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#050608]/90 backdrop-blur-2xl"
               onClick={() => setIsOracleOpen(false)}
             >
-              {/* Outer Glowing Starlight Container Border */}
+              {/* Outer Subtle Starlight Container Border */}
               <motion.div
-                initial={{ scale: 0.9, opacity: 0, y: 30 }}
+                initial={{ scale: 0.92, opacity: 0, y: 25 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.9, opacity: 0, y: 30 }}
+                exit={{ scale: 0.92, opacity: 0, y: 25 }}
                 transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
                 onClick={(e) => e.stopPropagation()}
-                className="relative max-w-xl w-full p-[1.5px] rounded-3xl bg-gradient-to-b from-[#D5B06C] via-[#8A8177]/40 to-[#D5B06C] shadow-[0_0_90px_rgba(213,176,108,0.35)] overflow-hidden"
+                className="relative max-w-xl w-full p-[1px] rounded-3xl bg-gradient-to-b from-[#D5B06C]/70 via-[#8A8177]/25 to-[#D5B06C]/70 shadow-[0_0_40px_rgba(213,176,108,0.18)] overflow-hidden"
               >
                 {/* Inner Obsidian Luxury Body */}
                 <div className="relative w-full bg-gradient-to-b from-[#141822] via-[#0F1216] to-[#080A06] rounded-[23px] p-8 md:p-11 text-center space-y-7 overflow-hidden">
                   
                   {/* Slow Rotating Astronomical Astrolabe Compass SVG in Background */}
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-15">
                     <motion.svg
                       animate={{ rotate: 360 }}
-                      transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
+                      transition={{ duration: 75, repeat: Infinity, ease: 'linear' }}
                       viewBox="0 0 300 300"
                       className="w-[340px] h-[340px] text-[#D5B06C]"
                     >
@@ -525,13 +525,13 @@ export const HomeConstellation = () => {
                   </div>
 
                   {/* Ambient Starlight Glow Center Pulse */}
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(213,176,108,0.18)_0%,transparent_65%)] pointer-events-none" />
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(213,176,108,0.12)_0%,transparent_65%)] pointer-events-none" />
 
                   {/* Corner Celestial Filigree Accents */}
-                  <div className="absolute top-3.5 left-3.5 w-4 h-4 border-t-2 border-l-2 border-[#D5B06C] shadow-[0_0_8px_#D5B06C]" />
-                  <div className="absolute top-3.5 right-3.5 w-4 h-4 border-t-2 border-r-2 border-[#D5B06C] shadow-[0_0_8px_#D5B06C]" />
-                  <div className="absolute bottom-3.5 left-3.5 w-4 h-4 border-b-2 border-l-2 border-[#D5B06C] shadow-[0_0_8px_#D5B06C]" />
-                  <div className="absolute bottom-3.5 right-3.5 w-4 h-4 border-b-2 border-r-2 border-[#D5B06C] shadow-[0_0_8px_#D5B06C]" />
+                  <div className="absolute top-3.5 left-3.5 w-3.5 h-3.5 border-t border-l border-[#D5B06C]/70" />
+                  <div className="absolute top-3.5 right-3.5 w-3.5 h-3.5 border-t border-r border-[#D5B06C]/70" />
+                  <div className="absolute bottom-3.5 left-3.5 w-3.5 h-3.5 border-b border-l border-[#D5B06C]/70" />
+                  <div className="absolute bottom-3.5 right-3.5 w-3.5 h-3.5 border-b border-r border-[#D5B06C]/70" />
 
                   {/* Top Close Button */}
                   <button
@@ -544,17 +544,17 @@ export const HomeConstellation = () => {
                   {/* Header Tagline & Gold Emblem */}
                   <div className="relative z-20 space-y-3">
                     <div className="flex items-center justify-center gap-2.5">
-                      <span className="h-px w-8 bg-gradient-to-r from-transparent to-[#D5B06C]" />
-                      <div className="p-1.5 rounded-full bg-[#D5B06C]/15 border border-[#D5B06C]/60 text-[#D5B06C] shadow-[0_0_12px_rgba(213,176,108,0.4)]">
-                        <Sparkles className="w-4 h-4 animate-pulse" />
+                      <span className="h-px w-8 bg-gradient-to-r from-transparent to-[#D5B06C]/60" />
+                      <div className="p-1.5 rounded-full bg-[#D5B06C]/10 border border-[#D5B06C]/40 text-[#D5B06C]">
+                        <Sparkles className="w-3.5 h-3.5" />
                       </div>
                       <span className="font-sans text-[10px] uppercase tracking-[0.4em] text-[#D5B06C] font-semibold">
-                        ◈ CELESTIAL ORACLE INCRIPTION ◈
+                        CELESTIAL ORACLE INSCRIPTION
                       </span>
-                      <span className="h-px w-8 bg-gradient-to-l from-transparent to-[#D5B06C]" />
+                      <span className="h-px w-8 bg-gradient-to-l from-transparent to-[#D5B06C]/60" />
                     </div>
 
-                    <h3 className="font-serif text-2xl md:text-4xl text-[#FEEFFF] font-normal tracking-wide drop-shadow-lg">
+                    <h3 className="font-serif text-2xl md:text-4xl text-[#FEEFFF] font-normal tracking-wide drop-shadow-md">
                       {oracleWork.title}
                     </h3>
 
@@ -572,21 +572,21 @@ export const HomeConstellation = () => {
                   </div>
 
                   {/* Animated Gold Shimmer Divider */}
-                  <div className="relative z-20 h-px w-40 bg-gradient-to-r from-transparent via-[#D5B06C] to-transparent mx-auto shadow-[0_0_10px_#D5B06C]" />
+                  <div className="relative z-20 h-px w-36 bg-gradient-to-r from-transparent via-[#D5B06C]/70 to-transparent mx-auto" />
 
                   {/* Poetic Stanza Quote Card */}
                   <motion.div
                     key={oracleWork.snippet}
-                    initial={{ opacity: 0, scale: 0.96, y: 12 }}
+                    initial={{ opacity: 0, scale: 0.96, y: 10 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     transition={{ duration: 0.35, ease: 'easeOut' }}
-                    className="relative z-20 p-6 md:p-8 rounded-2xl bg-black/60 border border-[#D5B06C]/35 backdrop-blur-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] space-y-3"
+                    className="relative z-20 p-6 md:p-8 rounded-2xl bg-black/50 border border-[#D5B06C]/25 backdrop-blur-xl space-y-3"
                   >
-                    <span className="font-serif text-4xl text-[#D5B06C]/50 block leading-none select-none font-bold">“</span>
+                    <span className="font-serif text-3xl text-[#D5B06C]/40 block leading-none select-none font-bold">“</span>
                     <blockquote className="font-serif text-lg md:text-2xl text-[#FEEFFF] italic leading-relaxed font-light px-3 tracking-wide">
                       {oracleWork.snippet}
                     </blockquote>
-                    <span className="font-serif text-4xl text-[#D5B06C]/50 block leading-none select-none text-right font-bold">”</span>
+                    <span className="font-serif text-3xl text-[#D5B06C]/40 block leading-none select-none text-right font-bold">”</span>
                   </motion.div>
 
                   {/* Action Buttons */}
@@ -598,17 +598,17 @@ export const HomeConstellation = () => {
                           navigate(`/read/${oracleWork.slug}`);
                         }
                       }}
-                      className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-gradient-to-r from-[#D5B06C] via-[#FEEFFF] to-[#D5B06C] text-[#080A06] font-sans text-xs font-bold uppercase tracking-[0.2em] hover:scale-105 transition-all shadow-[0_0_30px_rgba(213,176,108,0.5)] cursor-pointer"
+                      className="w-full sm:w-auto px-8 py-3 rounded-full bg-[#D5B06C] text-[#080A06] font-sans text-xs font-semibold uppercase tracking-[0.25em] border border-[#F5E8D0]/30 hover:bg-[#C9A35F] transition-colors duration-300 cursor-pointer shadow-sm"
                     >
                       Read Full Inscription →
                     </button>
 
                     <button
                       onClick={handleOpenOracle}
-                      className="w-full sm:w-auto px-6 py-3.5 rounded-full border border-[#D5B06C]/60 bg-[#0F1216]/90 text-[#D5B06C] hover:text-[#FEEFFF] hover:border-[#D5B06C] font-sans text-xs uppercase tracking-[0.2em] transition-all cursor-pointer flex items-center justify-center gap-2 backdrop-blur-md hover:bg-[#D5B06C]/15 shadow-md"
+                      className="w-full sm:w-auto px-6 py-3 rounded-full border border-[#D5B06C]/40 bg-[#0F1216]/90 text-[#D5B06C] hover:text-[#FEEFFF] hover:border-[#D5B06C] hover:bg-[#D5B06C]/10 font-sans text-xs uppercase tracking-[0.25em] transition-all duration-300 cursor-pointer flex items-center justify-center gap-2 backdrop-blur-md"
                     >
                       <Sparkles className="w-3.5 h-3.5" />
-                      <span>Another Stanza ✨</span>
+                      <span>Another Stanza</span>
                     </button>
                   </div>
                 </div>

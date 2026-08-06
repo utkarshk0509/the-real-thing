@@ -1,98 +1,139 @@
-# 🌌 The Real Thing — Literary Sanctuary & Interactive Poetry Platform
+# The Real Thing
 
-> *"An open-access literary sanctuary designed for poetry, prose, and quiet contemplation."*
+A single-page web application for publishing, reading, and interacting with literary works (poems and stories). Built with React, Vite, Tailwind CSS, Framer Motion, and Supabase.
 
-**The Real Thing** is a modern, high-performance web application crafted for poetry and narrative prose. Blending dark cosmic starlight aesthetics, 3D interactive bookshelf physics, real-time reader whispers, and full curator management, it transforms reading into an immersive, living experience.
+## Architecture & System Design
 
----
+The application follows a client-heavy architecture with real-time state synchronization via Supabase PostgreSQL subscriptions and local persistence fallbacks.
 
-## ✨ Key Features
-
-- **🌌 Astronomical Constellation Navigation**: Navigate an interactive 2D star cluster where each celestial star acts as a gateway to poems and narrative stories.
-- **📚 3D Interactive Bookshelf**: Flip open 3D standing books with leather hardcover bindings, silk bookmark ribbons, and realistic 3D perspective tilts.
-- **☁️ Supabase Cloud Sync & Realtime**: 
-  - **Live Reader Whispers**: Unauthenticated readers in Incognito or mobile tabs can send quiet impressions directly to the author's portal.
-  - **Zero-Flicker Live Likes**: Gilded Heart resonances update in real-time across all open devices without page reloads.
-- **🎯 High-Water Mark Progress Badges**: Automatically tracks and saves highest reading percentage achieved per poem (`100% Completed`, `45% Read`).
-- **🔮 Oracle Inscription Generator**: Discover random poetic stanzas through a luxury astrolabe compass modal.
-- **✍️ Curator Author Portal**: Full administrative suite allowing authors to publish inscriptions, rearrange constellations, manage reader whispers, and customize the About Sanctuary page.
-- **🎨 Reading Customizer**: Instant theme switching (*Midnight*, *Sepia*, *Nebula*), custom font sizing, and typography modes.
-- **✨ Custom Celestial Cursor & Stardust Trail**: Interactive cursor physics isolated exclusively for desktop viewports (`≥ 768px`) with automatic touch protection on mobile.
+### Tech Stack
+- **Frontend Framework**: React 19 with React Router v7 (`react-router-dom`)
+- **Build Tool**: Vite 8
+- **Styling**: Tailwind CSS v4
+- **State Management & Animation**: Framer Motion
+- **Icons**: Lucide React
+- **Backend & Persistence**: Supabase (PostgreSQL, Supabase Auth, Storage, Realtime WebSockets)
+- **Image Optimization**: Client-side Canvas WebP Compression
 
 ---
 
-## 🛠️ Technology Stack
+## Project Structure
 
-- **Frontend Core**: React 19, Vite, React Router DOM v7
-- **Styling**: Tailwind CSS v4, Lucide Icons, Glassmorphic Vanilla CSS
-- **Animations & Motion**: Framer Motion
-- **Backend & Database**: Supabase (PostgreSQL, Realtime WebSockets, Row Level Security, RPC functions)
-- **Deployment**: Vercel / Netlify / Cloudflare Pages ready
+```
+the-real-thing/
+├── public/
+├── src/
+│   ├── assets/              # Static media assets
+│   ├── components/          # Reusable UI components
+│   │   ├── About/           # Sanctuary about section components
+│   │   ├── Engagement/      # Likes, comments, reactions
+│   │   ├── Hub/             # Bookshelf and grid components
+│   │   └── Shared/          # Backgrounds, navigation, audio player, modal
+│   ├── config/              # Constants and layout configuration
+│   ├── hooks/               # Custom React hooks (useAuth, useReader, useWorks, useComments)
+│   ├── lib/                 # Supabase client initialization
+│   ├── pages/               # Top-level view routes (Landing, HomeConstellation, Hub, ReaderView, AuthorPortal)
+│   ├── services/            # API abstraction layer (workService, siteService, readerProgressService, etc.)
+│   ├── styles/              # Global CSS & Tailwind configuration
+│   └── utils/               # Helper utilities (imageCompressor)
+├── .env.example             # Template for required environment variables
+├── README.md                # Project documentation
+├── supabase_schema.sql      # Database initialization script
+└── vite.config.js           # Vite build settings
+```
 
 ---
 
-## 🚀 Quick Start & Local Development
+## Technical Features
 
-### 1. Prerequisites
-- **Node.js**: `v18.0.0` or higher
-- **npm** or **yarn**
+### 1. Interactive SVG Constellation Engine
+- Coordinate grid rendered inside an SVG canvas (`viewBox="0 0 600 360"`).
+- Mouse movement mapped to motion values (`useMotionValue`, `useSpring`) to produce mouse parallax.
+- Nodes calculate interactive state on hover, triggering stroke dashoffset animation along SVG edge paths.
 
-### 2. Installation
-```bash
-# Clone repository
-git clone https://github.com/utkarshk0509/the-real-thing.git
+### 2. Live Reader State & Real-Time Sync
+- **Optimistic State Updates**: Like counts update instantaneously in UI and send atomic SQL RPC calls (`increment_work_likes`) to Supabase.
+- **WebSocket Subscriptions**: Listens to Supabase `postgres_changes` on the `works` table. On change, local state updates in-place without triggering skeleton loading screens.
+- **Scroll High-Water Mark Tracking**: Monitors `window.scrollY` against `document.documentElement.scrollHeight`. Highest percentage achieved per work slug is saved to `localStorage` and mapped to progress badges.
 
-# Enter project directory
-cd the-real-thing
+### 3. Client-Side Image Compression & Alignment Tool
+- Canvas-based image compressor converts uploaded raster images (JPEG/PNG) to WebP format before uploading to Supabase Storage.
+- Dual-mode image positioning allows independent setting of crop scale, X offset, and Y offset for both Grid view and 3D Bookshelf view.
 
-# Install dependencies
-npm install
-```
+### 4. Reading Customizer & Browser Selection API
+- Theme state (`midnight`, `sepia`, `nebula`) dynamically toggles CSS container background classes and background nebula canvas palettes.
+- Quote extraction captures user selections via `window.getSelection()` within a 10–300 character constraint and computes absolute screen coordinates for contextual tooltips.
 
-### 3. Environment Variables
-Copy `.env.example` to create your local `.env` configuration:
+---
 
-```bash
-cp .env.example .env
-```
+## Database Schema & Configuration
 
-Fill in your Supabase credentials in `.env`:
-```env
-VITE_SUPABASE_URL=https://your-project-id.supabase.co
-VITE_SUPABASE_ANON_KEY=your-supabase-anon-key-here
-VITE_CURATOR_EMAIL=curator@example.com
-```
+The application requires PostgreSQL tables on Supabase. Execute `supabase_schema.sql` in the Supabase SQL Editor to set up:
 
-### 4. Supabase Database Schema
-Run `supabase_schema.sql` inside your **Supabase Dashboard → SQL Editor** to create all tables (`works`, `comments`, `site_settings`, `reader_whispers`), RLS security policies, and real-time publications.
+- `works`: Core content table containing title, slug, body, author, category (`poem` | `story`), like counts, image URLs, crop parameters, and publication status.
+- `comments`: Reader comments linked via `work_id`.
+- `site_settings`: Global configuration table for author bio, manifesto text, and spotlight selections.
+- `reader_whispers`: Messages submitted to the author portal.
 
-To enable live real-time broadcasts:
+### Enabling Realtime Subscriptions
+To receive real-time table broadcasts, enable PostgreSQL replication for the `works`, `site_settings`, and `reader_whispers` tables in Supabase:
+
 ```sql
 ALTER PUBLICATION supabase_realtime ADD TABLE works;
 ALTER PUBLICATION supabase_realtime ADD TABLE site_settings;
 ALTER PUBLICATION supabase_realtime ADD TABLE reader_whispers;
 ```
 
-### 5. Run Local Development Server
+---
+
+## Local Setup & Installation
+
+### 1. Prerequisites
+- Node.js v18 or higher
+- npm or yarn
+
+### 2. Repository Clone & Dependency Installation
+```bash
+git clone https://github.com/utkarshk0509/the-real-thing.git
+cd the-real-thing
+npm install
+```
+
+### 3. Environment Variables
+Create a `.env` file in the root directory based on `.env.example`:
+
+```env
+VITE_SUPABASE_URL=https://your-project-id.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+VITE_CURATOR_EMAIL=your-curator-email@example.com
+VITE_AUTHOR_PASSCODE=1234
+```
+
+### 4. Development Server
+Run the local development server:
+
 ```bash
 npm run dev
 ```
-Open your browser at `http://localhost:5173`.
+
+The application will be accessible at `http://localhost:5173`.
 
 ---
 
-## 📦 Production Build
+## Build & Production Verification
+
+To compile the application for production deployment:
 
 ```bash
-# Build optimized production bundle
 npm run build
+```
 
-# Preview production build locally
+To preview the built production bundle locally:
+
+```bash
 npm run preview
 ```
 
----
+## License
 
-## 📜 License
-
-Created with ❤️ by Utkarsh. All rights reserved.
+MIT License or Private Project. All content rights reserved by author.

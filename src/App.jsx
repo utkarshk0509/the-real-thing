@@ -2,6 +2,10 @@ import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 
+import { CustomCelestialCursor } from './components/Shared/CustomCelestialCursor';
+import { MagicStardustTrail } from './components/Shared/MagicStardustTrail';
+import { CelestialAudioPlayer } from './components/Shared/CelestialAudioPlayer';
+
 // Lazy load pages for lightning-fast initial load
 const Landing = lazy(() => import('./pages/Landing'));
 const HomeConstellation = lazy(() => import('./pages/HomeConstellation'));
@@ -32,6 +36,9 @@ function AnimatedRoutes() {
 function App() {
   return (
     <BrowserRouter>
+      <CustomCelestialCursor />
+      <MagicStardustTrail />
+      <CelestialAudioPlayer />
       <AnimatedRoutes />
     </BrowserRouter>
   );

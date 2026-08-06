@@ -14,10 +14,10 @@ const NODES = [
   {
     id: 'poems',
     label: 'Poems',
+    starTitle: 'STELLA LYRICIS',
     glyph: '✦',
     description: 'Lyrical verses & rhythmic expressions',
     route: '/poems',
-    // position as % of the SVG viewBox (600 × 500)
     cx: 155, cy: 120,
     color: '#D5B06C',
     glowColor: 'rgba(213,176,108,0.6)',
@@ -26,6 +26,7 @@ const NODES = [
   {
     id: 'stories',
     label: 'Stories',
+    starTitle: 'STELLA NARRATIVA',
     glyph: '◈',
     description: 'Narrative prose & deep chronicles',
     route: '/stories',
@@ -37,6 +38,7 @@ const NODES = [
   {
     id: 'about',
     label: 'About Author',
+    starTitle: 'ALPHA ORIGIN',
     glyph: '⊹',
     description: 'The heart behind the constellation',
     route: '/about',
@@ -91,46 +93,46 @@ function StarNode({ node, isHovered, isExploding, onEnter, onLeave, onClick, cou
       onMouseLeave={onLeave}
       onClick={onClick}
     >
-      {/* Generous invisible hit area — triggers hover when cursor gets near orbit */}
-      <circle cx={cx} cy={cy} r={65} fill="transparent" stroke="none" />
+      {/* Snug responsive hit area */}
+      <circle cx={cx} cy={cy} r={48} fill="transparent" stroke="none" />
 
-      {/* Outer glow pulse ring — always present, breathes */}
+      {/* Outer glow pulse ring — hugs the orbit closely */}
       {!isExploding && (
         <motion.circle
-          cx={cx} cy={cy} r={isHovered ? 44 : 26}
+          cx={cx} cy={cy} r={isHovered ? 32 : 24}
           fill="none"
           stroke={color}
-          strokeWidth={isHovered ? 1.5 : 0.6}
-          strokeOpacity={isHovered ? 0.6 : 0.2}
+          strokeWidth={isHovered ? 1.2 : 0.6}
+          strokeOpacity={isHovered ? 0.6 : 0.25}
           animate={{
-            r: isHovered ? [42, 46, 42] : [24, 28, 24],
-            strokeOpacity: isHovered ? [0.6, 0.85, 0.6] : [0.15, 0.3, 0.15],
+            r: isHovered ? [30, 34, 30] : [23, 25, 23],
+            strokeOpacity: isHovered ? [0.6, 0.85, 0.6] : [0.2, 0.35, 0.2],
           }}
           transition={{ duration: isHovered ? 1.2 : 2.5, repeat: Infinity, ease: 'easeInOut' }}
         />
       )}
 
-      {/* Orbit ring — rotates smoothly on hover */}
+      {/* Snug Orbit ring — rotates smoothly around star core */}
       {!isExploding && (
         <motion.g
           animate={{ rotate: isHovered ? 360 : 0 }}
-          transition={{ duration: 4.5, repeat: isHovered ? Infinity : 0, ease: 'linear' }}
+          transition={{ duration: 3.5, repeat: isHovered ? Infinity : 0, ease: 'linear' }}
           style={{ transformOrigin: `${cx}px ${cy}px` }}
         >
           <circle
-            cx={cx} cy={cy} r={36}
+            cx={cx} cy={cy} r={isHovered ? 26 : 22}
             fill="none"
             stroke={orbitColor}
-            strokeWidth={isHovered ? 1.8 : 0.9}
-            strokeDasharray="4 6"
-            strokeOpacity={isHovered ? 1 : 0.4}
+            strokeWidth={isHovered ? 1.6 : 1}
+            strokeDasharray="3 4"
+            strokeOpacity={isHovered ? 1 : 0.5}
           />
           {/* Orbit satellite dot */}
           <motion.circle
-            cx={cx} cy={cy - 36} r={isHovered ? 3.8 : 2.2}
+            cx={cx} cy={cy - (isHovered ? 26 : 22)} r={isHovered ? 3.2 : 2}
             fill={color}
-            opacity={isHovered ? 1 : 0.6}
-            style={{ filter: `drop-shadow(0 0 6px ${color})` }}
+            opacity={isHovered ? 1 : 0.7}
+            style={{ filter: `drop-shadow(0 0 5px ${color})` }}
           />
         </motion.g>
       )}
@@ -161,7 +163,7 @@ function StarNode({ node, isHovered, isExploding, onEnter, onLeave, onClick, cou
       {isHovered && !isExploding && (
         <>
           <motion.line
-            x1={cx - 60} y1={cy} x2={cx + 60} y2={cy}
+            x1={cx - 45} y1={cy} x2={cx + 45} y2={cy}
             stroke={color}
             strokeWidth="0.6"
             strokeOpacity="0.45"
@@ -170,7 +172,7 @@ function StarNode({ node, isHovered, isExploding, onEnter, onLeave, onClick, cou
             transition={{ duration: 0.25 }}
           />
           <motion.line
-            x1={cx} y1={cy - 60} x2={cx} y2={cy + 60}
+            x1={cx} y1={cy - 45} x2={cx} y2={cy + 45}
             stroke={color}
             strokeWidth="0.6"
             strokeOpacity="0.45"
@@ -184,15 +186,15 @@ function StarNode({ node, isHovered, isExploding, onEnter, onLeave, onClick, cou
       {/* Star core */}
       <motion.circle
         cx={cx} cy={cy}
-        r={isExploding ? 30 : isHovered ? 11 : 6}
+        r={isExploding ? 30 : isHovered ? 9 : 5.5}
         fill={color}
-        style={{ filter: `drop-shadow(0 0 ${isHovered ? 22 : 10}px ${glowColor})` }}
+        style={{ filter: `drop-shadow(0 0 ${isHovered ? 20 : 9}px ${glowColor})` }}
         animate={
           isExploding
             ? { r: [10, 35, 90], opacity: [1, 0.9, 0] }
             : isHovered
-            ? { r: [10, 12.5, 10], opacity: [0.95, 1, 0.95] }
-            : { r: [5, 6.5, 5], opacity: [0.6, 0.9, 0.6] }
+            ? { r: [8.5, 10, 8.5], opacity: [0.95, 1, 0.95] }
+            : { r: [5, 6, 5], opacity: [0.6, 0.9, 0.6] }
         }
         transition={{
           duration: isExploding ? 0.7 : isHovered ? 0.8 : 2 + Math.random(),
@@ -207,7 +209,7 @@ function StarNode({ node, isHovered, isExploding, onEnter, onLeave, onClick, cou
           x={cx} y={cy + 1}
           textAnchor="middle"
           dominantBaseline="middle"
-          fontSize="9"
+          fontSize="8"
           fill="#080A06"
           fontWeight="bold"
           initial={{ opacity: 0 }} animate={{ opacity: 1 }}
@@ -219,20 +221,36 @@ function StarNode({ node, isHovered, isExploding, onEnter, onLeave, onClick, cou
 
       {/* Label below star — clear readable size */}
       {!isExploding && (
-        <motion.text
-          x={cx} y={cy + 52}
-          textAnchor="middle"
-          fontSize={isHovered ? 15 : 13}
-          fill={isHovered ? color : '#FEEFFF'}
-          fontFamily="Georgia, serif"
-          fontWeight={isHovered ? '600' : '500'}
-          letterSpacing="2.5"
-          style={{ filter: isHovered ? `drop-shadow(0 0 12px ${glowColor})` : 'drop-shadow(0 1px 4px rgba(0,0,0,0.8))' }}
-          animate={{ opacity: isHovered ? 1 : 0.85 }}
-          transition={{ duration: 0.25 }}
-        >
-          {label.toUpperCase()}
-        </motion.text>
+        <g>
+          <motion.text
+            x={cx} y={cy + 42}
+            textAnchor="middle"
+            fontSize={isHovered ? 14 : 12.5}
+            fill={isHovered ? color : '#FEEFFF'}
+            fontFamily="Georgia, serif"
+            fontWeight={isHovered ? '600' : '500'}
+            letterSpacing="2.5"
+            style={{ filter: isHovered ? `drop-shadow(0 0 12px ${glowColor})` : 'drop-shadow(0 1px 4px rgba(0,0,0,0.8))' }}
+            animate={{ opacity: isHovered ? 1 : 0.85 }}
+            transition={{ duration: 0.25 }}
+          >
+            {label.toUpperCase()}
+          </motion.text>
+
+          {/* Astronomical Star Code Name */}
+          <text
+            x={cx} y={cy + 54}
+            textAnchor="middle"
+            fontSize="7.5"
+            fontWeight="500"
+            fill={isHovered ? color : '#8A8177'}
+            fontFamily="sans-serif"
+            letterSpacing="2"
+            opacity={isHovered ? 0.9 : 0.5}
+          >
+            {node.starTitle}
+          </text>
+        </g>
       )}
 
       {/* Count badge below label */}
@@ -260,7 +278,6 @@ export const HomeConstellation = () => {
   const [explodingNode, setExplodingNode] = useState(null);
   const [counts, setCounts] = useState({ poems: 0, stories: 0 });
   const [lastReadWork, setLastReadWork] = useState(null);
-  const [tooltipNode, setTooltipNode] = useState(null);
 
   // Smooth cursor-driven parallax for the SVG frame
   const mouseX = useMotionValue(0);
@@ -369,10 +386,10 @@ export const HomeConstellation = () => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, filter: 'blur(8px)' }}
-      animate={{ opacity: 1, filter: 'blur(0px)' }}
-      exit={{ opacity: 0, filter: 'blur(8px)' }}
-      transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+      initial={{ opacity: 0, filter: 'blur(6px)', scale: 0.98 }}
+      animate={{ opacity: 1, filter: 'blur(0px)', scale: 1 }}
+      exit={{ opacity: 0, filter: 'blur(6px)' }}
+      transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
       className="relative h-screen w-full bg-[#050608] text-[#FEEFFF] overflow-hidden select-none"
     >
       {/* Cosmic nebula — gold/violet palette for the hub */}
@@ -537,7 +554,51 @@ export const HomeConstellation = () => {
             className="w-full max-h-[42vh]"
             style={{ overflow: 'visible' }}
           >
-            {/* ── Constellation edges ── */}
+            {/* ── Astronomical Astrolabe Coordinates Grid ── */}
+            <g className="opacity-30 pointer-events-none">
+              {/* Concentric Coordinate Rings */}
+              <circle cx="300" cy="180" r="165" fill="none" stroke="#D5B06C" strokeWidth="0.5" strokeDasharray="3 5" opacity="0.4" />
+              <circle cx="300" cy="180" r="110" fill="none" stroke="#D5B06C" strokeWidth="0.4" strokeDasharray="2 4" opacity="0.3" />
+              <circle cx="300" cy="180" r="55" fill="none" stroke="#D5B06C" strokeWidth="0.4" strokeDasharray="1 3" opacity="0.25" />
+
+              {/* Declination / Right Ascension Axes */}
+              <line x1="300" y1="15" x2="300" y2="345" stroke="#D5B06C" strokeWidth="0.4" strokeDasharray="2 4" opacity="0.3" />
+              <line x1="35" y1="180" x2="565" y2="180" stroke="#D5B06C" strokeWidth="0.4" strokeDasharray="2 4" opacity="0.3" />
+
+              {/* Cardinal Celestial Ticks */}
+              <text x="300" y="10" textAnchor="middle" fontSize="6.5" fill="#8A8177" letterSpacing="1.5">N 000°</text>
+              <text x="580" y="182" textAnchor="start" fontSize="6.5" fill="#8A8177" letterSpacing="1.5">E 090°</text>
+              <text x="300" y="356" textAnchor="middle" fontSize="6.5" fill="#8A8177" letterSpacing="1.5">S 180°</text>
+              <text x="20" y="182" textAnchor="end" fontSize="6.5" fill="#8A8177" letterSpacing="1.5">W 270°</text>
+            </g>
+
+            {/* ── Minor Constellation Framework Lines & Stars ── */}
+            <g className="pointer-events-none opacity-40">
+              {/* Secondary Constellation Connecting Lines */}
+              <line x1="155" y1="120" x2="95" y2="65" stroke="#D5B06C" strokeWidth="0.5" strokeDasharray="2 3" />
+              <line x1="155" y1="120" x2="235" y2="45" stroke="#D5B06C" strokeWidth="0.5" strokeDasharray="2 3" />
+              <line x1="445" y1="140" x2="515" y2="75" stroke="#7CB9E8" strokeWidth="0.5" strokeDasharray="2 3" />
+              <line x1="445" y1="140" x2="375" y2="55" stroke="#7CB9E8" strokeWidth="0.5" strokeDasharray="2 3" />
+              <line x1="300" y1="270" x2="185" y2="315" stroke="#C9A9FF" strokeWidth="0.5" strokeDasharray="2 3" />
+              <line x1="300" y1="270" x2="415" y2="305" stroke="#C9A9FF" strokeWidth="0.5" strokeDasharray="2 3" />
+
+              {/* Minor Stars */}
+              {[
+                { x: 95, y: 65, color: '#D5B06C' },
+                { x: 235, y: 45, color: '#D5B06C' },
+                { x: 515, y: 75, color: '#7CB9E8' },
+                { x: 375, y: 55, color: '#7CB9E8' },
+                { x: 185, y: 315, color: '#C9A9FF' },
+                { x: 415, y: 305, color: '#C9A9FF' },
+              ].map((star, idx) => (
+                <g key={idx}>
+                  <circle cx={star.x} cy={star.y} r="2.2" fill={star.color} opacity="0.8" />
+                  <circle cx={star.x} cy={star.y} r="4.5" fill="none" stroke={star.color} strokeWidth="0.4" opacity="0.5" />
+                </g>
+              ))}
+            </g>
+
+            {/* ── Major Constellation edges ── */}
             {EDGES.map(([aId, bId]) => {
               const a = NODES.find((n) => n.id === aId);
               const b = NODES.find((n) => n.id === bId);
@@ -561,75 +622,12 @@ export const HomeConstellation = () => {
                 isHovered={hoveredNode === node.id}
                 isExploding={explodingNode === node.id}
                 count={getCount(node.id)}
-                onEnter={() => { setHoveredNode(node.id); setTooltipNode(node.id); }}
-                onLeave={() => { setHoveredNode(null); setTooltipNode(null); }}
+                onEnter={() => setHoveredNode(node.id)}
+                onLeave={() => setHoveredNode(null)}
                 onClick={() => handleNodeClick(node)}
               />
             ))}
           </svg>
-
-          {/* ── Floating tooltip card ── */}
-          <AnimatePresence>
-            {tooltipNode && !explodingNode && (() => {
-              const n = NODES.find((x) => x.id === tooltipNode);
-              if (!n) return null;
-              // Position card relative to node's % position in SVG
-              const svgW = 600; const svgH = 480;
-              const leftPct = (n.cx / svgW) * 100;
-              const topPct = (n.cy / svgH) * 100;
-              const alignRight = leftPct > 60;
-              const alignBottom = topPct > 65;
-              return (
-                <motion.div
-                  key={n.id}
-                  initial={{ opacity: 0, scale: 0.88, y: 6 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.88, y: 6 }}
-                  transition={{ duration: 0.2, ease: 'easeOut' }}
-                  className="absolute z-40 pointer-events-none"
-                  style={{
-                    left: alignRight ? 'auto' : `${leftPct}%`,
-                    right: alignRight ? `${100 - leftPct}%` : 'auto',
-                    top: alignBottom ? 'auto' : `${topPct + 12}%`,
-                    bottom: alignBottom ? `${100 - topPct + 2}%` : 'auto',
-                    minWidth: '180px',
-                  }}
-                >
-                  <div
-                    className="backdrop-blur-md rounded-xl p-4 border shadow-2xl"
-                    style={{
-                      background: 'rgba(8,10,6,0.88)',
-                      borderColor: n.color + '55',
-                      boxShadow: `0 0 30px ${n.glowColor}`,
-                    }}
-                  >
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <span className="text-xl" style={{ color: n.color }}>{n.glyph}</span>
-                      <span
-                        className="font-serif text-base tracking-wider font-semibold"
-                        style={{ color: n.color }}
-                      >
-                        {n.label}
-                      </span>
-                    </div>
-                    <p className="font-sans text-xs text-[#8A8177] leading-relaxed">
-                      {n.description}
-                    </p>
-                    <div
-                      className="mt-2 font-sans text-[10px] uppercase tracking-widest font-medium"
-                      style={{ color: n.color }}
-                    >
-                      {getCount(n.id)}
-                    </div>
-                    <div className="mt-2 flex items-center gap-1.5 font-sans text-[10px] uppercase tracking-widest text-[#8A8177]">
-                      <span className="w-1.5 h-1.5 rounded-full animate-pulse inline-block" style={{ background: n.color }} />
-                      Click star to enter
-                    </div>
-                  </div>
-                </motion.div>
-              );
-            })()}
-          </AnimatePresence>
         </motion.div>
 
         {/* ── Bottom legend ─────────────────────────── */}

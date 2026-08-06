@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { motion, useMotionValue, useSpring } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { motion, useMotionValue, useSpring, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { MoveDown, Sparkles, Compass } from 'lucide-react';
 
@@ -20,6 +20,8 @@ export default function Landing() {
   const heroY = useSpring(mouseY, { stiffness: 65, damping: 30 });
   const mountainsX = useSpring(mouseX, { stiffness: 20, damping: 20 });
 
+  const [isEntering, setIsEntering] = useState(false);
+
   useEffect(() => {
     const handleMouseMove = (e) => {
       const cx = window.innerWidth / 2;
@@ -31,6 +33,14 @@ export default function Landing() {
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, [mouseX, mouseY]);
+
+  const handleEnterSanctuary = () => {
+    if (isEntering) return;
+    setIsEntering(true);
+    setTimeout(() => {
+      navigate('/hub');
+    }, 550);
+  };
 
   return (
     <motion.div
@@ -104,8 +114,16 @@ export default function Landing() {
         style={{ x: heroX, y: heroY }}
         className="relative z-20 flex flex-col items-center text-center space-y-6 max-w-2xl px-4"
         initial={{ y: 25, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 1, delay: 0.2 }}
+        animate={{
+          y: isEntering ? -30 : 0,
+          opacity: isEntering ? 0 : 1,
+          scale: isEntering ? 0.96 : 1,
+          filter: isEntering ? 'blur(6px)' : 'blur(0px)',
+        }}
+        transition={{
+          duration: isEntering ? 0.45 : 1.2,
+          ease: [0.16, 1, 0.3, 1],
+        }}
       >
         {/* Celestial Subtitle Badge */}
         <motion.div
@@ -138,24 +156,27 @@ export default function Landing() {
           className="h-px w-40 md:w-60 bg-gradient-to-r from-transparent via-[#D5B06C] to-transparent opacity-85"
         />
 
-        {/* Poetic Tagline */}
-        <motion.p
+        {/* Atmospheric Welcoming Threshold Inscription */}
+        <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, ease: 'easeOut', delay: 0.45 }}
-          className="font-serif text-base md:text-xl text-[#FEEFFF]/90 font-light leading-relaxed italic max-w-lg tracking-wide text-shadow-sm"
+          className="space-y-2 max-w-lg"
         >
-          “Not every story asks to be remembered.
-          <br className="hidden sm:block" />
-          Some only ask to be felt.”
-        </motion.p>
+          <p className="font-sans text-[10px] uppercase tracking-[0.4em] text-[#D5B06C] font-semibold opacity-90">
+            You have stepped beyond the veil
+          </p>
+          <p className="font-serif text-base md:text-xl text-[#FEEFFF]/90 font-light leading-relaxed italic text-shadow-sm">
+            “Into a realm where words become living stars.”
+          </p>
+        </motion.div>
 
         {/* Action Gateway Button */}
         <motion.div
           whileHover={{ scale: 1.07 }}
           whileTap={{ scale: 0.93 }}
           className="relative cursor-pointer group pt-4"
-          onClick={() => navigate('/hub')}
+          onClick={handleEnterSanctuary}
         >
           {/* Outer Pulsing Glow */}
           <div className="absolute inset-0 rounded-full bg-[#D5B06C]/30 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />

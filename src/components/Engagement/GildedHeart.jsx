@@ -96,21 +96,21 @@ export const GildedHeart = ({ workId, initialCount = 0, onToggleLike }) => {
         onClick={handleToggle}
         disabled={isPending}
         aria-label="Gilded Resonance"
-        className={`group relative flex items-center justify-center w-12 h-12 rounded-full border transition-all duration-300 cursor-pointer disabled:cursor-wait ${
+        className={`group relative flex items-center justify-center w-14 h-14 md:w-16 md:h-16 rounded-full border-2 transition-all duration-300 cursor-pointer disabled:cursor-wait shadow-lg ${
           hasLiked
-            ? 'border-[#D5B06C] bg-[#D5B06C]/15 shadow-[0_0_20px_rgba(213,176,108,0.35)]'
-            : 'border-[#8A8177]/30 bg-[#0F1216] hover:border-[#D5B06C] hover:bg-[#D5B06C]/5'
+            ? 'border-[#D5B06C] bg-[#D5B06C]/20 shadow-[0_0_25px_rgba(213,176,108,0.4)] scale-105'
+            : 'border-[#8A8177]/40 bg-[#0F1216]/90 hover:border-[#D5B06C] hover:bg-[#D5B06C]/10 hover:shadow-[0_0_15px_rgba(213,176,108,0.2)]'
         }`}
       >
         <motion.svg
           whileTap={{ scale: 0.85 }}
-          animate={hasLiked ? { scale: [1, 1.3, 1] } : { scale: 1 }}
+          animate={hasLiked ? { scale: [1, 1.35, 1] } : { scale: 1 }}
           transition={{ type: 'spring', stiffness: 400, damping: 15 }}
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
-          className={`w-5 h-5 transition-colors duration-300 ${
+          className={`w-6 h-6 md:w-7 md:h-7 transition-colors duration-300 ${
             hasLiked
-              ? 'fill-[#D5B06C] stroke-[#D5B06C]'
+              ? 'fill-[#D5B06C] stroke-[#D5B06C] drop-shadow-[0_0_8px_rgba(213,176,108,0.6)]'
               : 'fill-transparent stroke-[#8A8177] group-hover:stroke-[#D5B06C]'
           }`}
           strokeWidth="1.5"
@@ -130,14 +130,14 @@ export const GildedHeart = ({ workId, initialCount = 0, onToggleLike }) => {
                 setParticles((prev) => prev.filter((sp) => sp.id !== p.id))
               }
               transition={{ duration: 0.8, ease: 'easeOut' }}
-              className="absolute w-1.5 h-1.5 rounded-full bg-[#D5B06C] pointer-events-none shadow-[0_0_8px_#D5B06C]"
+              className="absolute w-2 h-2 rounded-full bg-[#D5B06C] pointer-events-none shadow-[0_0_10px_#D5B06C]"
             />
           ))}
         </AnimatePresence>
       </button>
 
-      <span className="font-sans text-xs tracking-widest uppercase font-medium text-[#8A8177]">
-        <span className={hasLiked ? 'text-[#D5B06C]' : ''}>{displayCount}</span> Resonances
+      <span className="font-sans text-xs md:text-sm tracking-widest uppercase font-medium text-[#8A8177]">
+        <span className={`font-semibold ${hasLiked ? 'text-[#D5B06C]' : 'text-[#FEEFFF]'}`}>{displayCount}</span> {displayCount === 1 ? 'Resonance' : 'Resonances'}
       </span>
     </div>
   );

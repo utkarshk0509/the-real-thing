@@ -524,23 +524,26 @@ export const ReaderView = () => {
                   <div className="absolute top-0 bottom-0 right-0 w-8 bg-gradient-to-l from-black/60 to-transparent pointer-events-none z-10" />
 
                   {/* Left Page Header */}
-                  <div className="space-y-4 text-center border-b border-[#D5B06C]/30 pb-6">
+                  <div className="space-y-4 text-center border-b border-[#D5B06C]/30 pb-6 flex flex-col items-center">
                     <span className="font-sans text-[9px] uppercase tracking-[0.3em] text-[#D5B06C] font-semibold">
                       Sanctuary Archive • {work.category}
                     </span>
-                    <div className="flex items-center justify-center gap-3">
+
+                    <h1 className="font-serif text-3xl md:text-4xl text-[#FEEFFF] font-normal leading-snug text-center">
+                      {work.title}
+                    </h1>
+
+                    <p className="font-sans text-xs uppercase tracking-[0.2em] text-[#8A8177]">
+                      By {work.author}
+                    </p>
+
+                    <div className="pt-2 flex justify-center">
                       <GildedHeart
                         workId={work.slug || work.id}
                         initialCount={work.gilded_likes_count || 0}
                         onToggleLike={handleToggleLike}
                       />
-                      <h1 className="font-serif text-3xl md:text-4xl text-[#FEEFFF] font-normal leading-snug">
-                        {work.title}
-                      </h1>
                     </div>
-                    <p className="font-sans text-xs uppercase tracking-[0.2em] text-[#8A8177]">
-                      By {work.author}
-                    </p>
                   </div>
 
                   <div className="text-center font-serif italic text-xs text-[#8A8177] space-y-2 py-8">
@@ -561,23 +564,26 @@ export const ReaderView = () => {
                   <div className="absolute top-0 bottom-0 left-0 w-8 bg-gradient-to-r from-black/60 to-transparent pointer-events-none z-10" />
 
                   {/* Mobile Header */}
-                  <header className="block md:hidden text-center mb-8 space-y-3 border-b border-[#D5B06C]/30 pb-4">
+                  <header className="block md:hidden text-center mb-8 space-y-3 border-b border-[#D5B06C]/30 pb-4 flex flex-col items-center">
                     <span className="font-sans text-[8px] uppercase tracking-[0.25em] text-[#D5B06C]">
                       {work.category}
                     </span>
-                    <div className="flex items-center justify-center gap-2.5">
+
+                    <h1 className="font-serif text-2xl text-[#FEEFFF] font-normal leading-tight text-center">
+                      {work.title}
+                    </h1>
+
+                    <p className="font-sans text-xs uppercase tracking-[0.2em] text-[#8A8177]">
+                      By {work.author}
+                    </p>
+
+                    <div className="pt-2 flex justify-center">
                       <GildedHeart
                         workId={work.slug || work.id}
                         initialCount={work.gilded_likes_count || 0}
                         onToggleLike={handleToggleLike}
                       />
-                      <h1 className="font-serif text-2xl text-[#FEEFFF] font-normal leading-tight">
-                        {work.title}
-                      </h1>
                     </div>
-                    <p className="font-sans text-xs uppercase tracking-[0.2em] text-[#8A8177]">
-                      By {work.author}
-                    </p>
                   </header>
 
                   {/* Text Body with Bookmarks */}
@@ -645,20 +651,22 @@ export const ReaderView = () => {
         ) : (
           /* Grid View Minimalist Container */
           <div className={`${activeTheme.cardBg} border ${activeTheme.border} p-6 md:p-12 rounded-2xl shadow-xl transition-colors duration-500`}>
-            <header className="text-center mb-14 space-y-3 pt-2">
-              <div className="flex items-center justify-center gap-3">
+            <header className="text-center mb-14 space-y-4 pt-2 flex flex-col items-center">
+              <h1 className="font-serif text-3xl md:text-5xl text-[#FEEFFF] font-normal leading-tight capitalize text-center">
+                {work.title}
+              </h1>
+
+              <p className={`font-sans text-xs uppercase tracking-[0.2em] ${activeTheme.accent}`}>
+                By {work.author}
+              </p>
+
+              <div className="pt-2 flex justify-center">
                 <GildedHeart
                   workId={work.slug || work.id}
                   initialCount={work.gilded_likes_count || 0}
                   onToggleLike={handleToggleLike}
                 />
-                <h1 className="font-serif text-3xl md:text-5xl text-[#FEEFFF] font-normal leading-tight capitalize">
-                  {work.title}
-                </h1>
               </div>
-              <p className={`font-sans text-xs uppercase tracking-[0.2em] ${activeTheme.accent}`}>
-                By {work.author}
-              </p>
             </header>
 
             {/* Text Body with Bookmarks */}

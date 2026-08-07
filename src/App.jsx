@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 import { CustomCelestialCursor } from './components/Shared/CustomCelestialCursor';
 import { MagicStardustTrail } from './components/Shared/MagicStardustTrail';
-import { CelestialAudioPlayer } from './components/Shared/CelestialAudioPlayer';
 
 const Landing = lazy(() => import('./pages/Landing'));
 const HomeConstellation = lazy(() => import('./pages/HomeConstellation'));
@@ -50,7 +49,6 @@ function App() {
     <BrowserRouter>
       <CustomCelestialCursor />
       <MagicStardustTrail />
-      <CelestialAudioPlayer />
       <AnimatedRoutes />
     </BrowserRouter>
   );

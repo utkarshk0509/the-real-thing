@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { CURATOR_EMAIL, CACHE_KEYS } from '../config/constants';
+import readerProgressService from './readerProgressService';
 
 export const authService = {
   async signInWithGoogle() {
@@ -17,19 +18,27 @@ export const authService = {
       await supabase.auth.signOut();
     }
     sessionStorage.removeItem(CACHE_KEYS.AUTHOR_AUTH);
+    readerProgressService.setUserScope(null);
   },
 
   async getSession() {
     if (!supabase) return null;
     const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user?.id) {
+      readerProgressService.setUserScope(session.user.id);
+    }
     return session;
   },
 
   onAuthStateChange(callback) {
     if (!supabase) return { unsubscribe: () => {} };
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user?.email === CURATOR_EMAIL) {
+      const u = session?.user ?? null;
+      readerProgressService.setUserScope(u?.id ?? null);
+      if (u?.email === CURATOR_EMAIL) {
         sessionStorage.setItem(CACHE_KEYS.AUTHOR_AUTH, 'true');
+      } else {
+        sessionStorage.removeItem(CACHE_KEYS.AUTHOR_AUTH);
       }
       callback(event, session);
     });

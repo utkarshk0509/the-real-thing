@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import readerProgressService from '../../services/readerProgressService';
 
 export const GildedHeart = ({ workId, initialCount = 0, onToggleLike }) => {
   const effectiveId = workId || 'default';
-  const likedKey = `real_thing_liked_${effectiveId}`;
+  const userIdScope = readerProgressService.getCurrentUserScope() || 'guest';
+  const likedKey = `real_thing_u_${userIdScope}_liked_${effectiveId}`;
 
   const [hasLiked, setHasLiked] = useState(() => {
     try { return localStorage.getItem(likedKey) === 'true'; } catch { return false; }

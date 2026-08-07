@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import authService from '../services/authService';
+import readerProgressService from '../services/readerProgressService';
 
 export const useAuth = () => {
   const [user, setUser] = useState(null);
@@ -11,6 +12,7 @@ export const useAuth = () => {
       const u = session?.user ?? null;
       setUser(u);
       setIsCurator(authService.isCurator(u));
+      readerProgressService.setUserScope(u?.id ?? null);
       if (u) {
         authService.fetchUserData(u.id).then(setUserData);
       }
@@ -20,6 +22,7 @@ export const useAuth = () => {
       const u = session?.user ?? null;
       setUser(u);
       setIsCurator(authService.isCurator(u));
+      readerProgressService.setUserScope(u?.id ?? null);
       if (u) {
         authService.fetchUserData(u.id).then(setUserData);
       } else {

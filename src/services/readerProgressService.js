@@ -1,22 +1,37 @@
+let currentUserId = null;
+
+const getScopedKey = (baseKey) => {
+  if (currentUserId) {
+    return `real_thing_u_${currentUserId}_${baseKey}`;
+  }
+  return `real_thing_guest_${baseKey}`;
+};
+
 const KEYS = {
-  LAST_READ: 'real_thing_last_read',
-  LAST_READ_POEM: 'real_thing_last_read_poem',
-  LAST_READ_STORY: 'real_thing_last_read_story',
-  LIBRARY_STATUS: 'real_thing_library_status',
-  PARAGRAPH_BOOKMARKS: 'real_thing_paragraph_bookmarks',
-  FAVORITE_QUOTES: 'real_thing_favorite_quotes',
-  READER_STATS: 'real_thing_reader_stats',
-  EMOJI_REACTIONS: 'real_thing_emoji_reactions',
-  CURATOR_DRAFT: 'real_thing_curator_draft',
-  VIEW_PREFERENCE: 'real_thing_view_preference',
-  READER_SETTINGS: 'real_thing_reader_settings',
-  ALL_PROGRESS: 'real_thing_all_progress',
+  LAST_READ: 'last_read',
+  LAST_READ_POEM: 'last_read_poem',
+  LAST_READ_STORY: 'last_read_story',
+  LIBRARY_STATUS: 'library_status',
+  PARAGRAPH_BOOKMARKS: 'paragraph_bookmarks',
+  FAVORITE_QUOTES: 'favorite_quotes',
+  READER_STATS: 'reader_stats',
+  EMOJI_REACTIONS: 'emoji_reactions',
+  CURATOR_DRAFT: 'curator_draft',
+  VIEW_PREFERENCE: 'view_preference',
+  READER_SETTINGS: 'reader_settings',
+  ALL_PROGRESS: 'all_progress',
 };
 
 export const readerProgressService = {
+  setUserScope: (userId) => {
+    currentUserId = userId || null;
+  },
+
+  getCurrentUserScope: () => currentUserId,
+
   getViewPreference: () => {
     try {
-      return localStorage.getItem(KEYS.VIEW_PREFERENCE) || 'grid';
+      return localStorage.getItem(getScopedKey(KEYS.VIEW_PREFERENCE)) || 'grid';
     } catch (e) {
       return 'grid';
     }
@@ -24,13 +39,13 @@ export const readerProgressService = {
 
   saveViewPreference: (mode) => {
     try {
-      localStorage.setItem(KEYS.VIEW_PREFERENCE, mode);
+      localStorage.setItem(getScopedKey(KEYS.VIEW_PREFERENCE), mode);
     } catch (e) {}
   },
 
   getAllProgress: () => {
     try {
-      const data = localStorage.getItem(KEYS.ALL_PROGRESS);
+      const data = localStorage.getItem(getScopedKey(KEYS.ALL_PROGRESS));
       return data ? JSON.parse(data) : {};
     } catch (e) {
       return {};
@@ -52,7 +67,7 @@ export const readerProgressService = {
       if (category === 'poem') key = KEYS.LAST_READ_POEM;
       if (category === 'story') key = KEYS.LAST_READ_STORY;
 
-      const data = localStorage.getItem(key);
+      const data = localStorage.getItem(getScopedKey(key));
       return data ? JSON.parse(data) : null;
     } catch (e) {
       return null;
@@ -71,7 +86,7 @@ export const readerProgressService = {
         const currentWorkMax = allProgress[workData.slug] || 0;
         const updatedMax = Math.max(currentWorkMax, newPercentage);
         allProgress[workData.slug] = updatedMax;
-        localStorage.setItem(KEYS.ALL_PROGRESS, JSON.stringify(allProgress));
+        localStorage.setItem(getScopedKey(KEYS.ALL_PROGRESS), JSON.stringify(allProgress));
       }
 
       const existingOverall = readerProgressService.getLastRead();
@@ -103,8 +118,8 @@ export const readerProgressService = {
         scrollPercentage: maxCategoryPercentage,
       };
 
-      localStorage.setItem(KEYS.LAST_READ, JSON.stringify(payload));
-      localStorage.setItem(categoryKey, JSON.stringify(categoryPayload));
+      localStorage.setItem(getScopedKey(KEYS.LAST_READ), JSON.stringify(payload));
+      localStorage.setItem(getScopedKey(categoryKey), JSON.stringify(categoryPayload));
       readerProgressService.updateStreak();
     } catch (e) {
       console.warn('Progress save fallback:', e);
@@ -113,7 +128,7 @@ export const readerProgressService = {
 
   getLibraryStatuses: () => {
     try {
-      const data = localStorage.getItem(KEYS.LIBRARY_STATUS);
+      const data = localStorage.getItem(getScopedKey(KEYS.LIBRARY_STATUS));
       return data ? JSON.parse(data) : {};
     } catch (e) {
       return {};
@@ -128,7 +143,7 @@ export const readerProgressService = {
       } else {
         current[slug] = status;
       }
-      localStorage.setItem(KEYS.LIBRARY_STATUS, JSON.stringify(current));
+      localStorage.setItem(getScopedKey(KEYS.LIBRARY_STATUS), JSON.stringify(current));
 
       if (status === 'Completed') {
         readerProgressService.incrementFinishedCount();
@@ -141,7 +156,7 @@ export const readerProgressService = {
 
   getParagraphBookmarks: () => {
     try {
-      const data = localStorage.getItem(KEYS.PARAGRAPH_BOOKMARKS);
+      const data = localStorage.getItem(getScopedKey(KEYS.PARAGRAPH_BOOKMARKS));
       return data ? JSON.parse(data) : {};
     } catch (e) {
       return {};
@@ -156,7 +171,7 @@ export const readerProgressService = {
       } else {
         current[slug] = paragraphIndex;
       }
-      localStorage.setItem(KEYS.PARAGRAPH_BOOKMARKS, JSON.stringify(current));
+      localStorage.setItem(getScopedKey(KEYS.PARAGRAPH_BOOKMARKS), JSON.stringify(current));
       return current;
     } catch (e) {
       return {};
@@ -165,7 +180,7 @@ export const readerProgressService = {
 
   getFavoriteQuotes: () => {
     try {
-      const data = localStorage.getItem(KEYS.FAVORITE_QUOTES);
+      const data = localStorage.getItem(getScopedKey(KEYS.FAVORITE_QUOTES));
       return data ? JSON.parse(data) : [];
     } catch (e) {
       return [];
@@ -187,7 +202,7 @@ export const readerProgressService = {
       if (quotes.some((q) => q.quote === newQuote.quote)) return quotes;
 
       const updated = [newQuote, ...quotes];
-      localStorage.setItem(KEYS.FAVORITE_QUOTES, JSON.stringify(updated));
+      localStorage.setItem(getScopedKey(KEYS.FAVORITE_QUOTES), JSON.stringify(updated));
       return updated;
     } catch (e) {
       return [];
@@ -198,7 +213,7 @@ export const readerProgressService = {
     try {
       const quotes = readerProgressService.getFavoriteQuotes();
       const updated = quotes.filter((q) => q.id !== quoteId);
-      localStorage.setItem(KEYS.FAVORITE_QUOTES, JSON.stringify(updated));
+      localStorage.setItem(getScopedKey(KEYS.FAVORITE_QUOTES), JSON.stringify(updated));
       return updated;
     } catch (e) {
       return [];
@@ -207,7 +222,7 @@ export const readerProgressService = {
 
   getReaderStats: () => {
     try {
-      const data = localStorage.getItem(KEYS.READER_STATS);
+      const data = localStorage.getItem(getScopedKey(KEYS.READER_STATS));
       return data
         ? JSON.parse(data)
         : { worksFinished: 0, commentsCount: 0, streakDays: 1, lastActiveDate: new Date().toDateString() };
@@ -220,7 +235,7 @@ export const readerProgressService = {
     try {
       const stats = readerProgressService.getReaderStats();
       stats.worksFinished = (stats.worksFinished || 0) + 1;
-      localStorage.setItem(KEYS.READER_STATS, JSON.stringify(stats));
+      localStorage.setItem(getScopedKey(KEYS.READER_STATS), JSON.stringify(stats));
     } catch (e) {}
   },
 
@@ -228,7 +243,7 @@ export const readerProgressService = {
     try {
       const stats = readerProgressService.getReaderStats();
       stats.commentsCount = (stats.commentsCount || 0) + 1;
-      localStorage.setItem(KEYS.READER_STATS, JSON.stringify(stats));
+      localStorage.setItem(getScopedKey(KEYS.READER_STATS), JSON.stringify(stats));
     } catch (e) {}
   },
 
@@ -245,13 +260,13 @@ export const readerProgressService = {
         stats.streakDays = 1;
       }
       stats.lastActiveDate = today;
-      localStorage.setItem(KEYS.READER_STATS, JSON.stringify(stats));
+      localStorage.setItem(getScopedKey(KEYS.READER_STATS), JSON.stringify(stats));
     } catch (e) {}
   },
 
   getEmojiReactions: (workIdOrSlug) => {
     try {
-      const data = localStorage.getItem(KEYS.EMOJI_REACTIONS);
+      const data = localStorage.getItem(getScopedKey(KEYS.EMOJI_REACTIONS));
       const all = data ? JSON.parse(data) : {};
       return all[workIdOrSlug] || {};
     } catch (e) {
@@ -261,10 +276,10 @@ export const readerProgressService = {
 
   toggleEmojiReaction: (workIdOrSlug, emoji) => {
     try {
-      const data = localStorage.getItem(KEYS.EMOJI_REACTIONS);
+      const data = localStorage.getItem(getScopedKey(KEYS.EMOJI_REACTIONS));
       const all = data ? JSON.parse(data) : {};
       const workReactions = all[workIdOrSlug] || {};
-      const userClicksKey = `user_reacted_${workIdOrSlug}_${emoji}`;
+      const userClicksKey = getScopedKey(`reacted_${workIdOrSlug}_${emoji}`);
 
       const hasReacted = localStorage.getItem(userClicksKey) === 'true';
 
@@ -278,7 +293,7 @@ export const readerProgressService = {
       }
 
       all[workIdOrSlug] = workReactions;
-      localStorage.setItem(KEYS.EMOJI_REACTIONS, JSON.stringify(all));
+      localStorage.setItem(getScopedKey(KEYS.EMOJI_REACTIONS), JSON.stringify(all));
       return { reactions: workReactions, hasReacted: !hasReacted };
     } catch (e) {
       return { reactions: {}, hasReacted: false };
@@ -287,7 +302,7 @@ export const readerProgressService = {
 
   hasUserReacted: (workIdOrSlug, emoji) => {
     try {
-      return localStorage.getItem(`user_reacted_${workIdOrSlug}_${emoji}`) === 'true';
+      return localStorage.getItem(getScopedKey(`reacted_${workIdOrSlug}_${emoji}`)) === 'true';
     } catch (e) {
       return false;
     }
@@ -295,7 +310,7 @@ export const readerProgressService = {
 
   getCuratorDraft: () => {
     try {
-      const data = localStorage.getItem(KEYS.CURATOR_DRAFT);
+      const data = localStorage.getItem(getScopedKey(KEYS.CURATOR_DRAFT));
       return data ? JSON.parse(data) : null;
     } catch (e) {
       return null;
@@ -304,19 +319,19 @@ export const readerProgressService = {
 
   saveCuratorDraft: (draftData) => {
     try {
-      localStorage.setItem(KEYS.CURATOR_DRAFT, JSON.stringify({ ...draftData, updatedAt: Date.now() }));
+      localStorage.setItem(getScopedKey(KEYS.CURATOR_DRAFT), JSON.stringify({ ...draftData, updatedAt: Date.now() }));
     } catch (e) {}
   },
 
   clearCuratorDraft: () => {
     try {
-      localStorage.removeItem(KEYS.CURATOR_DRAFT);
+      localStorage.removeItem(getScopedKey(KEYS.CURATOR_DRAFT));
     } catch (e) {}
   },
 
   getReaderSettings: () => {
     try {
-      const data = localStorage.getItem(KEYS.READER_SETTINGS);
+      const data = localStorage.getItem(getScopedKey(KEYS.READER_SETTINGS));
       return data
         ? JSON.parse(data)
         : { theme: 'midnight', fontSize: 'md', fontFamily: 'serif' };
@@ -327,7 +342,7 @@ export const readerProgressService = {
 
   saveReaderSettings: (settings) => {
     try {
-      localStorage.setItem(KEYS.READER_SETTINGS, JSON.stringify(settings));
+      localStorage.setItem(getScopedKey(KEYS.READER_SETTINGS), JSON.stringify(settings));
     } catch (e) {}
   },
 };

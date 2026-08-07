@@ -21,8 +21,8 @@ export const GlowingCard = ({
 
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
-    const rotateX = ((y - centerY) / centerY) * -5;
-    const rotateY = ((x - centerX) / centerX) * 5;
+    const rotateX = ((y - centerY) / centerY) * -9;
+    const rotateY = ((x - centerX) / centerX) * 9;
 
     setTilt({ rotateX, rotateY });
   };
@@ -36,42 +36,44 @@ export const GlowingCard = ({
   const posY = cropPosY ?? 50;
 
   return (
-    <div
-      style={{ perspective: 1000 }}
-      className="h-full"
-    >
+    <div style={{ perspective: 1200 }} className="h-full">
       <div
         onClick={onClick}
         onMouseMove={handleMouseMove}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={handleMouseLeave}
         style={{
+          transformStyle: 'preserve-3d',
           transform: isHovered
-            ? `rotateX(${tilt.rotateX}deg) rotateY(${tilt.rotateY}deg) translateZ(8px)`
-            : 'rotateX(0deg) rotateY(0deg) translateZ(0px)',
-          transition: isHovered ? 'transform 0.15s ease-out' : 'transform 0.5s ease-out',
+            ? `rotateX(${tilt.rotateX}deg) rotateY(${tilt.rotateY}deg) scale3d(1.025, 1.025, 1.025)`
+            : 'rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)',
+          transition: isHovered ? 'transform 0.12s cubic-bezier(0.16, 1, 0.3, 1)' : 'transform 0.5s ease-out',
         }}
-        className={`group relative overflow-hidden rounded-xl border border-[#8A8177]/20 bg-[#0F1216] p-6 transition-all duration-300 hover:border-[#D5B06C]/50 cursor-pointer shadow-xl ${className}`}
+        className={`group relative overflow-hidden rounded-2xl border border-[#8A8177]/25 bg-[#0F1216] p-6 transition-all duration-300 hover:border-[#D5B06C]/60 cursor-pointer shadow-xl ${className}`}
       >
         <div
-          className="pointer-events-none absolute -inset-px transition-opacity duration-300 z-10"
+          className="pointer-events-none absolute -inset-px transition-opacity duration-300 z-10 rounded-2xl"
           style={{
             opacity: isHovered ? 1 : 0,
-            background: `radial-gradient(450px circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(213, 176, 108, 0.14), transparent 45%)`,
+            background: `radial-gradient(500px circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(213, 176, 108, 0.18), transparent 45%)`,
           }}
         />
 
         <div
-          className="pointer-events-none absolute inset-0 z-20 transition-opacity duration-500 opacity-0 group-hover:opacity-100"
+          className="pointer-events-none absolute inset-0 z-20 transition-opacity duration-500 opacity-0 group-hover:opacity-100 rounded-2xl"
           style={{
-            background: `linear-gradient(115deg, transparent 20%, rgba(213, 176, 108, 0.25) 47%, rgba(254, 239, 255, 0.45) 50%, rgba(124, 185, 232, 0.25) 53%, transparent 80%)`,
-            transform: isHovered ? 'translateX(100%)' : 'translateX(-100%)',
+            transform: 'translateZ(18px)',
+            background: `linear-gradient(125deg, transparent 15%, rgba(213, 176, 108, 0.28) 46%, rgba(254, 239, 255, 0.5) 50%, rgba(124, 185, 232, 0.28) 54%, transparent 85%)`,
+            transform: isHovered ? 'translateX(100%) translateZ(18px)' : 'translateX(-100%) translateZ(18px)',
             transition: 'transform 0.85s cubic-bezier(0.16, 1, 0.3, 1)',
           }}
         />
 
         {image && (
-          <div className="absolute right-0 top-0 bottom-0 w-2/5 overflow-hidden pointer-events-none opacity-60 group-hover:opacity-90 transition-opacity duration-500">
+          <div
+            style={{ transform: 'translateZ(0px)' }}
+            className="absolute right-0 top-0 bottom-0 w-2/5 overflow-hidden pointer-events-none opacity-60 group-hover:opacity-90 transition-opacity duration-500 rounded-r-2xl"
+          >
             <img 
               src={image} 
               alt="" 
@@ -85,7 +87,10 @@ export const GlowingCard = ({
           </div>
         )}
 
-        <div className="relative z-10 h-full flex flex-col justify-between">
+        <div
+          style={{ transform: 'translateZ(32px)', transformStyle: 'preserve-3d' }}
+          className="relative z-30 h-full flex flex-col justify-between"
+        >
           {children}
         </div>
       </div>

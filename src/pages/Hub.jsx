@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart } from 'lucide-react';
+import { Heart, Compass } from 'lucide-react';
 import Navigation from '../components/Shared/Navigation';
 import CosmicNebulaBackground from '../components/Shared/CosmicNebulaBackground';
 import { GlowingCard } from '../components/Shared/GlowingCard';
 import BookshelfView from '../components/Hub/BookshelfView';
 import AboutAuthorSanctuary from '../components/About/AboutAuthorSanctuary';
+import DailyOracleCard from '../components/Engagement/DailyOracleCard';
 import useWorks from '../hooks/useWorks';
 import siteService from '../services/siteService';
 import readerProgressService from '../services/readerProgressService';
@@ -20,6 +21,7 @@ export const Hub = ({ filter }) => {
   const [lastRead, setLastRead] = useState(null);
   const [allProgress, setAllProgress] = useState({});
   const [viewMode, setViewMode] = useState(() => readerProgressService.getViewPreference());
+  const [isDailyOracleOpen, setIsDailyOracleOpen] = useState(false);
 
   const handleViewModeChange = (mode) => {
     setViewMode(mode);
@@ -106,29 +108,40 @@ export const Hub = ({ filter }) => {
           </button>
 
           {!isAboutOnly && (
-            <div className="flex items-center gap-2 bg-[#0F1216]/60 border border-[#8A8177]/20 rounded-lg p-1 backdrop-blur-sm self-start sm:self-auto">
+            <div className="flex items-center gap-2 flex-wrap">
               <button
                 type="button"
-                onClick={() => handleViewModeChange('grid')}
-                className={`px-3 py-1 rounded text-[10px] font-sans uppercase tracking-widest transition-all cursor-pointer ${
-                  viewMode === 'grid'
-                    ? 'bg-[#D5B06C]/20 border border-[#D5B06C]/50 text-[#D5B06C]'
-                    : 'text-[#8A8177] hover:text-[#FEEFFF]'
-                }`}
+                onClick={() => setIsDailyOracleOpen(true)}
+                className="px-3 py-1 rounded text-[10px] font-sans uppercase tracking-widest transition-all cursor-pointer border border-[#D5B06C]/40 text-[#D5B06C] bg-[#D5B06C]/10 hover:bg-[#D5B06C]/20 flex items-center gap-1.5 backdrop-blur-sm"
               >
-                Grid View
+                <Compass className="w-3 h-3" />
+                <span>Daily Oracle</span>
               </button>
-              <button
-                type="button"
-                onClick={() => handleViewModeChange('bookshelf')}
-                className={`px-3 py-1 rounded text-[10px] font-sans uppercase tracking-widest transition-all cursor-pointer ${
-                  viewMode === 'bookshelf'
-                    ? 'bg-[#D5B06C]/20 border border-[#D5B06C]/50 text-[#D5B06C]'
-                    : 'text-[#8A8177] hover:text-[#FEEFFF]'
-                }`}
-              >
-                Animated Bookshelf
-              </button>
+
+              <div className="flex items-center gap-2 bg-[#0F1216]/60 border border-[#8A8177]/20 rounded-lg p-1 backdrop-blur-sm">
+                <button
+                  type="button"
+                  onClick={() => handleViewModeChange('grid')}
+                  className={`px-3 py-1 rounded text-[10px] font-sans uppercase tracking-widest transition-all cursor-pointer ${
+                    viewMode === 'grid'
+                      ? 'bg-[#D5B06C]/20 border border-[#D5B06C]/50 text-[#D5B06C]'
+                      : 'text-[#8A8177] hover:text-[#FEEFFF]'
+                  }`}
+                >
+                  Grid View
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleViewModeChange('bookshelf')}
+                  className={`px-3 py-1 rounded text-[10px] font-sans uppercase tracking-widest transition-all cursor-pointer ${
+                    viewMode === 'bookshelf'
+                      ? 'bg-[#D5B06C]/20 border border-[#D5B06C]/50 text-[#D5B06C]'
+                      : 'text-[#8A8177] hover:text-[#FEEFFF]'
+                  }`}
+                >
+                  Animated Bookshelf
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -316,6 +329,12 @@ export const Hub = ({ filter }) => {
           </AnimatePresence>
         )}
       </main>
+
+      <DailyOracleCard
+        works={works}
+        isOpen={isDailyOracleOpen}
+        onClose={() => setIsDailyOracleOpen(false)}
+      />
     </motion.div>
   );
 };

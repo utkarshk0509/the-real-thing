@@ -180,8 +180,8 @@ function StarNode({ node, isHovered, isExploding, onEnter, onLeave, onClick, cou
           isExploding
             ? { r: [10, 35, 90], opacity: [1, 0.9, 0] }
             : isHovered
-            ? { r: [8.5, 10, 8.5], opacity: [0.95, 1, 0.95] }
-            : { r: [5, 6, 5], opacity: [0.6, 0.9, 0.6] }
+              ? { r: [8.5, 10, 8.5], opacity: [0.95, 1, 0.95] }
+              : { r: [5, 6, 5], opacity: [0.6, 0.9, 0.6] }
         }
         transition={{
           duration: isExploding ? 0.7 : isHovered ? 0.8 : 2 + Math.random(),

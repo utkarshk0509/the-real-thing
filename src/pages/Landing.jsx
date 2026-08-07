@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, useMotionValue, useSpring, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { MoveDown, Sparkles, Compass } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
 import moonImg from '../assets/moon.png';
 import mountainsImg from '../assets/mountains.png';
@@ -13,11 +13,16 @@ export default function Landing() {
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
 
-  const moonX = useSpring(mouseX, { stiffness: 40, damping: 25 });
-  const moonY = useSpring(mouseY, { stiffness: 40, damping: 25 });
-  const heroX = useSpring(mouseX, { stiffness: 65, damping: 30 });
-  const heroY = useSpring(mouseY, { stiffness: 65, damping: 30 });
-  const mountainsX = useSpring(mouseX, { stiffness: 20, damping: 20 });
+  const moonX = useSpring(mouseX, { stiffness: 22, damping: 25 });
+  const moonY = useSpring(mouseY, { stiffness: 22, damping: 25 });
+  const fogX = useSpring(mouseX, { stiffness: 35, damping: 30 });
+  const fogY = useSpring(mouseY, { stiffness: 35, damping: 30 });
+  const heroX = useSpring(mouseX, { stiffness: 55, damping: 30 });
+  const heroY = useSpring(mouseY, { stiffness: 55, damping: 30 });
+  const mountainsX = useSpring(mouseX, { stiffness: 18, damping: 22 });
+
+  const foregroundBokehX = useSpring(mouseX, { stiffness: 85, damping: 35 });
+  const foregroundBokehY = useSpring(mouseY, { stiffness: 85, damping: 35 });
 
   const [isEntering, setIsEntering] = useState(false);
 
@@ -25,8 +30,8 @@ export default function Landing() {
     const handleMouseMove = (e) => {
       const cx = window.innerWidth / 2;
       const cy = window.innerHeight / 2;
-      mouseX.set(((e.clientX - cx) / cx) * 20);
-      mouseY.set(((e.clientY - cy) / cy) * 15);
+      mouseX.set(((e.clientX - cx) / cx) * 28);
+      mouseY.set(((e.clientY - cy) / cy) * 20);
     };
 
     window.addEventListener('mousemove', handleMouseMove);
@@ -55,7 +60,7 @@ export default function Landing() {
         initial={{ opacity: 0, y: -15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1, delay: 0.4 }}
-        className="absolute top-8 md:top-10 w-full flex justify-center items-center gap-6 md:gap-10 text-[#8A8177] font-sans text-[11px] uppercase tracking-[0.35em] z-30 px-4"
+        className="absolute top-8 md:top-10 w-full flex justify-center items-center gap-6 md:gap-10 text-[#8A8177] font-sans text-[11px] uppercase tracking-[0.35em] z-50 px-4"
       >
         <span
           onClick={() => navigate('/hub')}
@@ -88,31 +93,47 @@ export default function Landing() {
 
       <motion.div
         style={{ x: moonX, y: moonY }}
-        className="absolute top-[5%] right-[5%] md:top-[7%] md:right-[10%] w-[200px] md:w-[320px] pointer-events-none z-10"
+        className="absolute top-[4%] right-[4%] md:top-[6%] md:right-[9%] w-[220px] md:w-[360px] pointer-events-none z-10"
       >
         <motion.div
-          animate={{ opacity: [0.75, 0.95, 0.75], scale: [0.98, 1.02, 0.98] }}
-          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+          animate={{ opacity: [0.75, 0.98, 0.75], scale: [0.97, 1.03, 0.97] }}
+          transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
           className="relative"
         >
-          <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgba(213,176,108,0.25)_0%,transparent_70%)] blur-2xl pointer-events-none" />
+          <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgba(213,176,108,0.35)_0%,rgba(124,185,232,0.1)_45%,transparent_75%)] blur-3xl pointer-events-none" />
           <img
             src={moonImg}
             alt="Sanctuary Moon"
-            className="w-full object-contain mix-blend-screen drop-shadow-[0_0_45px_rgba(213,176,108,0.4)]"
+            className="w-full object-contain mix-blend-screen drop-shadow-[0_0_55px_rgba(213,176,108,0.5)]"
           />
         </motion.div>
       </motion.div>
 
       <motion.div
+        style={{ x: fogX, y: fogY }}
+        className="absolute inset-0 pointer-events-none z-10 overflow-hidden"
+      >
+        <motion.div
+          animate={{ x: [-120, 120, -120], opacity: [0.12, 0.28, 0.12] }}
+          transition={{ duration: 24, repeat: Infinity, ease: 'easeInOut' }}
+          className="absolute bottom-0 left-[-20%] w-[140%] h-[220px] bg-[radial-gradient(ellipse_at_center,rgba(213,176,108,0.08)_0%,rgba(15,18,22,0.4)_50%,transparent_80%)] blur-3xl [mask-image:radial-gradient(circle_at_center,transparent_35%,black_80%)]"
+        />
+        <motion.div
+          animate={{ x: [100, -100, 100], opacity: [0.1, 0.22, 0.1] }}
+          transition={{ duration: 30, repeat: Infinity, ease: 'easeInOut' }}
+          className="absolute bottom-0 right-[-15%] w-[130%] h-[200px] bg-[radial-gradient(ellipse_at_center,rgba(124,185,232,0.06)_0%,rgba(10,12,16,0.4)_55%,transparent_80%)] blur-3xl [mask-image:radial-gradient(circle_at_center,transparent_35%,black_80%)]"
+        />
+      </motion.div>
+
+      <motion.div
         style={{ x: heroX, y: heroY }}
-        className="relative z-20 flex flex-col items-center text-center space-y-6 max-w-2xl px-4"
+        className="relative z-50 flex flex-col items-center text-center space-y-6 max-w-2xl px-4"
         initial={{ y: 25, opacity: 0 }}
         animate={{
-          y: isEntering ? -30 : 0,
+          y: isEntering ? -35 : 0,
           opacity: isEntering ? 0 : 1,
-          scale: isEntering ? 0.96 : 1,
-          filter: isEntering ? 'blur(6px)' : 'blur(0px)',
+          scale: isEntering ? 0.95 : 1,
+          filter: isEntering ? 'blur(8px)' : 'blur(0px)',
         }}
         transition={{
           duration: isEntering ? 0.45 : 1.2,
@@ -135,7 +156,7 @@ export default function Landing() {
           initial={{ filter: 'blur(12px)', opacity: 0 }}
           animate={{ filter: 'blur(0px)', opacity: 1 }}
           transition={{ duration: 1.3, ease: 'easeOut', delay: 0.2 }}
-          className="font-serif text-5xl md:text-7xl lg:text-8xl font-normal text-[#FEEFFF] tracking-widest leading-none drop-shadow-[0_0_55px_rgba(213,176,108,0.3)]"
+          className="font-serif text-5xl md:text-7xl lg:text-8xl font-normal text-[#FEEFFF] tracking-widest leading-none drop-shadow-[0_0_60px_rgba(213,176,108,0.35)]"
         >
           The Real Thing
         </motion.h1>
@@ -162,27 +183,23 @@ export default function Landing() {
         </motion.div>
 
         <motion.div
-          whileHover={{ scale: 1.06 }}
-          whileTap={{ scale: 0.94 }}
-          className="relative cursor-pointer group pt-4"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="relative z-50 cursor-pointer group pt-4"
           onClick={handleEnterSanctuary}
         >
-          <div className="absolute inset-0 rounded-full bg-[#D5B06C]/25 blur-xl group-hover:blur-2xl group-hover:bg-[#D5B06C]/50 opacity-60 group-hover:opacity-100 transition-all duration-500 pointer-events-none" />
+          <div className="absolute inset-0 rounded-full bg-[#D5B06C]/25 blur-lg opacity-40 group-hover:opacity-80 transition-opacity duration-300 pointer-events-none" />
 
-          <div className="relative flex flex-col items-center gap-2.5">
-            <div className="relative overflow-hidden flex items-center gap-3.5 px-9 py-3.5 rounded-full border border-[#D5B06C]/60 bg-[#0F1216]/90 backdrop-blur-xl group-hover:border-[#D5B06C] group-hover:bg-[#161B24]/90 shadow-[0_0_30px_rgba(213,176,108,0.3)] group-hover:shadow-[0_0_60px_rgba(213,176,108,0.7)] transition-all duration-500">
-              <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-[#D5B06C]/20 to-transparent transition-transform duration-1000 ease-out pointer-events-none" />
-
-              <Compass className="w-4 h-4 text-[#D5B06C] group-hover:rotate-180 transition-transform duration-700" />
-              <span className="font-serif text-xs uppercase tracking-[0.35em] text-[#FEEFFF] group-hover:text-[#D5B06C] font-medium transition-colors drop-shadow-sm">
+          <div className="relative flex flex-col items-center gap-3">
+            <div className="relative overflow-hidden flex items-center justify-center px-10 py-3.5 rounded-full bg-[#D5B06C] text-[#080A06] border border-[#FEEFFF]/80 shadow-[0_0_20px_rgba(213,176,108,0.35)] group-hover:shadow-[0_0_35px_rgba(213,176,108,0.65)] group-hover:bg-[#FEEFFF] transition-all duration-300">
+              <span className="font-serif text-xs md:text-sm uppercase tracking-[0.4em] text-[#080A06] font-bold transition-colors">
                 Enter Sanctuary
               </span>
-              <MoveDown className="w-4 h-4 text-[#D5B06C] animate-bounce group-hover:text-[#FEEFFF] transition-colors" />
             </div>
 
-            <div className="flex items-center gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
-              <span className="w-1 h-1 rounded-full bg-[#D5B06C] animate-pulse inline-block" />
-              <span className="font-sans text-[9px] uppercase tracking-[0.25em] text-[#8A8177] group-hover:text-[#D5B06C] transition-colors">
+            <div className="flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#D5B06C] animate-pulse" />
+              <span className="font-sans text-[9.5px] uppercase tracking-[0.25em] text-[#D5B06C] font-medium opacity-90">
                 Click to open constellation map
               </span>
             </div>
@@ -195,13 +212,51 @@ export default function Landing() {
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 0.85, y: 0 }}
         transition={{ duration: 1.6, delay: 0.3, ease: 'easeOut' }}
-        className="absolute bottom-0 left-0 w-full h-[36vh] md:h-[42vh] z-10 pointer-events-none"
+        className="absolute bottom-0 left-0 w-full h-[28vh] md:h-[32vh] z-10 pointer-events-none"
       >
         <img
           src={mountainsImg}
           alt="Sanctuary Mountains"
-          className="w-full h-full object-cover object-bottom [mask-image:linear-gradient(to_bottom,transparent_0%,black_25%)] opacity-90 filter drop-shadow-[0_-10px_20px_rgba(0,0,0,0.8)]"
+          className="w-full h-full object-cover object-bottom [mask-image:linear-gradient(to_bottom,transparent_0%,black_35%)] opacity-80 filter drop-shadow-[0_-10px_20px_rgba(0,0,0,0.8)]"
         />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#050608] via-transparent to-transparent opacity-90" />
+      </motion.div>
+
+      <motion.div
+        style={{ x: foregroundBokehX, y: foregroundBokehY }}
+        className="absolute inset-0 pointer-events-none z-30 overflow-hidden"
+      >
+        {Array.from({ length: 14 }).map((_, i) => {
+          const top = (i * 7 + 12) % 90;
+          const left = (i * 13 + 5) % 95;
+          const size = 1.5 + (i % 3) * 1.2;
+          const duration = 5 + (i % 4) * 2;
+          const delay = (i % 5) * 0.8;
+
+          return (
+            <motion.div
+              key={i}
+              style={{
+                top: `${top}%`,
+                left: `${left}%`,
+                width: `${size}px`,
+                height: `${size}px`,
+              }}
+              animate={{
+                y: [-15, 15, -15],
+                opacity: [0.15, 0.75, 0.15],
+                scale: [0.8, 1.3, 0.8],
+              }}
+              transition={{
+                duration,
+                delay,
+                repeat: Infinity,
+                ease: 'easeInOut',
+              }}
+              className="absolute rounded-full bg-[#D5B06C] shadow-[0_0_10px_#D5B06C]"
+            />
+          );
+        })}
       </motion.div>
     </motion.div>
   );

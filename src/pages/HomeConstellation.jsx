@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, useMotionValue, useSpring } from 'framer-motion';
-import { Sparkles, Compass } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import Navigation from '../components/Shared/Navigation';
 import CosmicNebulaBackground from '../components/Shared/CosmicNebulaBackground';
-import DailyOracleCard from '../components/Engagement/DailyOracleCard';
 import workService from '../services/workService';
 import cacheService from '../services/cacheService';
 import readerProgressService from '../services/readerProgressService';
@@ -281,7 +280,6 @@ export const HomeConstellation = () => {
   const [allWorks, setAllWorks] = useState([]);
   const [oracleWork, setOracleWork] = useState(null);
   const [isOracleOpen, setIsOracleOpen] = useState(false);
-  const [isDailyOracleOpen, setIsDailyOracleOpen] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -449,17 +447,6 @@ export const HomeConstellation = () => {
           >
             <Sparkles className="w-3 h-3" />
             <span>Discover a Stanza</span>
-          </motion.button>
-
-          <motion.button
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7 }}
-            onClick={() => setIsDailyOracleOpen(true)}
-            className="px-4 py-1.5 rounded-full border border-[#D5B06C]/40 bg-[#D5B06C]/10 text-[#D5B06C] font-sans text-[9px] uppercase tracking-[0.25em] hover:bg-[#D5B06C]/20 hover:border-[#D5B06C] transition-all backdrop-blur-sm flex items-center gap-2 cursor-pointer shadow-[0_0_15px_rgba(213,176,108,0.15)]"
-          >
-            <Compass className="w-3 h-3" />
-            <span>Daily Oracle Card</span>
           </motion.button>
         </div>
 
@@ -684,12 +671,6 @@ export const HomeConstellation = () => {
           ))}
         </motion.div>
       </main>
-
-      <DailyOracleCard
-        works={allWorks}
-        isOpen={isDailyOracleOpen}
-        onClose={() => setIsDailyOracleOpen(false)}
-      />
     </motion.div>
   );
 };

@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, Compass } from 'lucide-react';
+import { Heart } from 'lucide-react';
 import Navigation from '../components/Shared/Navigation';
 import CosmicNebulaBackground from '../components/Shared/CosmicNebulaBackground';
 import { GlowingCard } from '../components/Shared/GlowingCard';
 import BookshelfView from '../components/Hub/BookshelfView';
 import AboutAuthorSanctuary from '../components/About/AboutAuthorSanctuary';
-import DailyOracleCard from '../components/Engagement/DailyOracleCard';
 import useWorks from '../hooks/useWorks';
 import siteService from '../services/siteService';
 import readerProgressService from '../services/readerProgressService';
@@ -21,7 +20,6 @@ export const Hub = ({ filter }) => {
   const [lastRead, setLastRead] = useState(null);
   const [allProgress, setAllProgress] = useState({});
   const [viewMode, setViewMode] = useState(() => readerProgressService.getViewPreference());
-  const [isDailyOracleOpen, setIsDailyOracleOpen] = useState(false);
 
   const handleViewModeChange = (mode) => {
     setViewMode(mode);
@@ -69,7 +67,7 @@ export const Hub = ({ filter }) => {
   };
 
   const CardSkeleton = () => (
-    <div className="h-[110px] rounded-xl border border-[#8A8177]/10 bg-[#0F1216]/50 p-6 flex flex-col justify-between animate-pulse">
+    <div className="min-h-[125px] h-full rounded-xl border border-[#8A8177]/10 bg-[#0F1216]/50 p-6 flex flex-col justify-between animate-pulse">
       <div className="space-y-2">
         <div className="h-4 bg-[#8A8177]/20 rounded w-1/2"></div>
         <div className="h-3 bg-[#8A8177]/10 rounded w-1/4"></div>
@@ -108,40 +106,29 @@ export const Hub = ({ filter }) => {
           </button>
 
           {!isAboutOnly && (
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 bg-[#0F1216]/60 border border-[#8A8177]/20 rounded-lg p-1 backdrop-blur-sm self-start sm:self-auto">
               <button
                 type="button"
-                onClick={() => setIsDailyOracleOpen(true)}
-                className="px-3 py-1 rounded text-[10px] font-sans uppercase tracking-widest transition-all cursor-pointer border border-[#D5B06C]/40 text-[#D5B06C] bg-[#D5B06C]/10 hover:bg-[#D5B06C]/20 flex items-center gap-1.5 backdrop-blur-sm"
+                onClick={() => handleViewModeChange('grid')}
+                className={`px-3 py-1 rounded text-[10px] font-sans uppercase tracking-widest transition-all cursor-pointer ${
+                  viewMode === 'grid'
+                    ? 'bg-[#D5B06C]/20 border border-[#D5B06C]/50 text-[#D5B06C]'
+                    : 'text-[#8A8177] hover:text-[#FEEFFF]'
+                }`}
               >
-                <Compass className="w-3 h-3" />
-                <span>Daily Oracle</span>
+                Grid View
               </button>
-
-              <div className="flex items-center gap-2 bg-[#0F1216]/60 border border-[#8A8177]/20 rounded-lg p-1 backdrop-blur-sm">
-                <button
-                  type="button"
-                  onClick={() => handleViewModeChange('grid')}
-                  className={`px-3 py-1 rounded text-[10px] font-sans uppercase tracking-widest transition-all cursor-pointer ${
-                    viewMode === 'grid'
-                      ? 'bg-[#D5B06C]/20 border border-[#D5B06C]/50 text-[#D5B06C]'
-                      : 'text-[#8A8177] hover:text-[#FEEFFF]'
-                  }`}
-                >
-                  Grid View
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleViewModeChange('bookshelf')}
-                  className={`px-3 py-1 rounded text-[10px] font-sans uppercase tracking-widest transition-all cursor-pointer ${
-                    viewMode === 'bookshelf'
-                      ? 'bg-[#D5B06C]/20 border border-[#D5B06C]/50 text-[#D5B06C]'
-                      : 'text-[#8A8177] hover:text-[#FEEFFF]'
-                  }`}
-                >
-                  Animated Bookshelf
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => handleViewModeChange('bookshelf')}
+                className={`px-3 py-1 rounded text-[10px] font-sans uppercase tracking-widest transition-all cursor-pointer ${
+                  viewMode === 'bookshelf'
+                    ? 'bg-[#D5B06C]/20 border border-[#D5B06C]/50 text-[#D5B06C]'
+                    : 'text-[#8A8177] hover:text-[#FEEFFF]'
+                }`}
+              >
+                Animated Bookshelf
+              </button>
             </div>
           )}
         </div>
@@ -153,70 +140,63 @@ export const Hub = ({ filter }) => {
             className="p-5 rounded-2xl bg-gradient-to-r from-[#0F1216] via-[#161B22] to-[#0F1216] border border-[#D5B06C]/40 shadow-[0_0_25px_rgba(213,176,108,0.15)] flex flex-col sm:flex-row sm:items-center justify-between gap-4"
           >
             <div className="space-y-1">
-              <span className="font-sans text-[10px] uppercase tracking-[0.25em] text-[#D5B06C] font-medium">
-                Continue Reading
-              </span>
-              <h3 className="font-serif text-xl text-[#FEEFFF]">{lastRead.title}</h3>
-              <p className="font-sans text-xs text-[#8A8177]">
-                By {lastRead.author} • {lastRead.scrollPercentage || 0}% Completed
-              </p>
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-[#D5B06C] animate-pulse" />
+                <span className="font-sans text-[10px] uppercase tracking-[0.2em] text-[#D5B06C]">
+                  Continue Inscription Reading
+                </span>
+              </div>
+              <h3 className="font-serif text-lg md:text-xl text-[#FEEFFF]">
+                {lastRead.title}
+              </h3>
             </div>
-
             <button
               onClick={() => navigate(`/read/${lastRead.slug}`)}
-              className="px-5 py-2.5 rounded-lg bg-[#D5B06C] text-[#080A06] font-sans text-xs font-semibold uppercase tracking-widest hover:bg-[#FEEFFF] transition-all cursor-pointer whitespace-nowrap self-start sm:self-auto shadow-md"
+              className="px-5 py-2 rounded-full bg-[#D5B06C] text-[#080A06] font-sans text-xs uppercase tracking-widest font-semibold hover:bg-[#FEEFFF] transition-colors self-start sm:self-auto cursor-pointer shadow-md"
             >
-              Resume Inscription →
+              Resume Reading →
             </button>
           </motion.div>
         )}
 
-        {loading && !isAboutOnly ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <CardSkeleton />
             <CardSkeleton />
             <CardSkeleton />
-            <CardSkeleton />
-          </div>
-        ) : works.length === 0 && !isAboutOnly ? (
-          <div className="text-center py-24 space-y-4">
-            <h3 className="font-serif text-2xl text-[#8A8177]">The Sanctuary is Silent</h3>
-            <p className="font-sans text-xs uppercase tracking-widest text-[#8A8177]/60">
-              No inscriptions published yet.
-            </p>
           </div>
         ) : (
           <AnimatePresence mode="wait">
             {viewMode === 'bookshelf' && !isAboutOnly ? (
               <motion.div
-                key="bookshelf-view"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
+                key="bookshelf-mode"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                transition={{ duration: 0.35, ease: 'easeOut' }}
               >
                 <BookshelfView
                   works={isPoemsOnly ? poems : isStoriesOnly ? stories : works}
-                  onSelectWork={(w) => navigate(`/read/${w.slug}`)}
+                  onSelectWork={(work) => navigate(`/read/${work.slug}`)}
                 />
               </motion.div>
             ) : (
               <>
-                {(currentPath === '/hub' || isPoemsOnly) && (
+                {(isPoemsOnly || (!isStoriesOnly && !isAboutOnly)) && poems.length > 0 && (
                   <motion.section
                     key="poems-section"
                     variants={containerVariants}
                     initial="hidden"
                     animate="visible"
                     exit="exit"
-                    className="space-y-5"
+                    className="space-y-4"
                   >
-                    <div className="flex items-center gap-3 border-l-2 border-[#D5B06C] pl-3">
-                      <h2 className="font-sans text-sm md:text-base font-medium uppercase tracking-[0.3em] text-[#D5B06C]">
-                        All Poems
+                    {!isPoemsOnly && (
+                      <h2 className="font-serif text-xl md:text-2xl text-[#FEEFFF] border-b border-[#8A8177]/20 pb-2">
+                        Poems
                       </h2>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    )}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {poems.map((poem) => (
                         <motion.div key={poem.slug} variants={itemVariants}>
                           <GlowingCard
@@ -225,29 +205,35 @@ export const Hub = ({ filter }) => {
                             cropPosX={poem.crop_pos_x}
                             cropPosY={poem.crop_pos_y}
                             onClick={() => navigate(`/read/${poem.slug}`)}
-                            className="h-[110px]"
+                            className="min-h-[125px] h-full flex flex-col justify-between"
                           >
                             <div>
-                              <h3 className="font-serif text-lg md:text-xl text-[#FEEFFF] group-hover:text-[#D5B06C] transition-colors">
+                              <h3 className="font-serif text-lg md:text-xl text-[#FEEFFF] group-hover:text-[#D5B06C] transition-colors leading-tight line-clamp-2">
                                 {poem.title}
                               </h3>
                               <p className="font-sans text-xs text-[#D5B06C]/80 mt-1">
                                 By {poem.author}
                               </p>
                             </div>
-                            <div className="flex items-center justify-between font-sans text-[10px] uppercase tracking-widest text-[#8A8177]">
-                              <div className="flex items-center gap-2">
-                                <span>{poem.read_time_minutes} min <span className="mx-1 text-[#D5B06C]">•</span> {new Date(poem.published_at || Date.now()).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</span>
-                                <span className="inline-flex items-center gap-1 bg-[#D5B06C]/10 border border-[#D5B06C]/30 px-2 py-0.5 rounded-full text-[#D5B06C] font-sans text-[9px] font-medium lowercase tracking-normal">
-                                  <Heart className="w-2.5 h-2.5 fill-[#D5B06C]" />
-                                  <span>{poem.gilded_likes_count || poem.gildedLikesCount || 0}</span>
-                                </span>
+
+                            <div className="flex items-center justify-between font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mt-3 pt-1 border-t border-[#8A8177]/10">
+                              <div>
+                                {poem.read_time_minutes} min <span className="mx-1 text-[#D5B06C]">•</span> {new Date(poem.published_at || Date.now()).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
                               </div>
-                              {allProgress[poem.slug] > 0 && (
-                                <span className="inline-flex items-center gap-1 bg-[#D5B06C]/10 border border-[#D5B06C]/40 px-2 py-0.5 rounded-full text-[#D5B06C] font-sans text-[9px] uppercase tracking-widest font-semibold shadow-[0_0_10px_rgba(213,176,108,0.2)]">
-                                  <span>{allProgress[poem.slug] >= 90 ? '100% Completed' : `${allProgress[poem.slug]}% Read`}</span>
-                                </span>
-                              )}
+
+                              <div className="flex items-center gap-3">
+                                {allProgress[poem.slug] > 0 && (
+                                  <span className="text-[#D5B06C] font-semibold border border-[#D5B06C]/30 px-1.5 py-0.5 rounded bg-[#D5B06C]/10">
+                                    {allProgress[poem.slug]}%
+                                  </span>
+                                )}
+                                {(poem.gilded_likes_count || 0) > 0 && (
+                                  <span className="flex items-center gap-1 text-[#D5B06C] font-mono font-semibold">
+                                    <Heart className="w-3 h-3 fill-[#D5B06C] text-[#D5B06C]" />
+                                    <span>{poem.gilded_likes_count}</span>
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </GlowingCard>
                         </motion.div>
@@ -256,22 +242,21 @@ export const Hub = ({ filter }) => {
                   </motion.section>
                 )}
 
-                {(currentPath === '/hub' || isStoriesOnly) && (
+                {(isStoriesOnly || (!isPoemsOnly && !isAboutOnly)) && stories.length > 0 && (
                   <motion.section
                     key="stories-section"
                     variants={containerVariants}
                     initial="hidden"
                     animate="visible"
                     exit="exit"
-                    className="space-y-5"
+                    className="space-y-4 pt-4"
                   >
-                    <div className="flex items-center gap-3 border-l-2 border-[#D5B06C] pl-3">
-                      <h2 className="font-sans text-sm md:text-base font-medium uppercase tracking-[0.3em] text-[#D5B06C]">
+                    {!isStoriesOnly && (
+                      <h2 className="font-serif text-xl md:text-2xl text-[#FEEFFF] border-b border-[#8A8177]/20 pb-2">
                         Stories
                       </h2>
-                    </div>
-
-                    <div className="space-y-6">
+                    )}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {stories.map((story) => (
                         <motion.div key={story.slug} variants={itemVariants}>
                           <GlowingCard
@@ -280,28 +265,32 @@ export const Hub = ({ filter }) => {
                             cropPosX={story.crop_pos_x}
                             cropPosY={story.crop_pos_y}
                             onClick={() => navigate(`/read/${story.slug}`)}
-                            className="h-[110px]"
+                            className="min-h-[125px] h-full flex flex-col justify-between"
                           >
-                            <div className="flex flex-col justify-between h-full">
+                            <div>
+                              <h3 className="font-serif text-lg md:text-xl text-[#FEEFFF] group-hover:text-[#7CB9E8] transition-colors leading-tight line-clamp-2">
+                                {story.title}
+                              </h3>
+                              <p className="font-sans text-xs text-[#7CB9E8]/80 mt-1">
+                                By {story.author}
+                              </p>
+                            </div>
+
+                            <div className="flex items-center justify-between font-sans text-[10px] uppercase tracking-widest text-[#8A8177] mt-3 pt-1 border-t border-[#8A8177]/10">
                               <div>
-                                <h3 className="font-serif text-xl md:text-2xl text-[#FEEFFF] group-hover:text-[#D5B06C] transition-colors">
-                                  {story.title}
-                                </h3>
-                                <p className="font-sans text-xs text-[#D5B06C]/80 mt-1">
-                                  By {story.author}
-                                </p>
+                                {story.read_time_minutes} min <span className="mx-1 text-[#7CB9E8]">•</span> {new Date(story.published_at || Date.now()).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
                               </div>
-                              <div className="flex items-center justify-between font-sans text-[10px] uppercase tracking-widest text-[#8A8177]">
-                                <div className="flex items-center gap-2">
-                                  <span>{story.read_time_minutes} min read</span>
-                                  <span className="inline-flex items-center gap-1 bg-[#D5B06C]/10 border border-[#D5B06C]/30 px-2 py-0.5 rounded-full text-[#D5B06C] font-sans text-[9px] font-medium lowercase tracking-normal">
-                                    <Heart className="w-2.5 h-2.5 fill-[#D5B06C]" />
-                                    <span>{story.gilded_likes_count || story.gildedLikesCount || 0}</span>
-                                  </span>
-                                </div>
+
+                              <div className="flex items-center gap-3">
                                 {allProgress[story.slug] > 0 && (
-                                  <span className="inline-flex items-center gap-1 bg-[#7CB9E8]/10 border border-[#7CB9E8]/40 px-2 py-0.5 rounded-full text-[#7CB9E8] font-sans text-[9px] uppercase tracking-widest font-semibold shadow-[0_0_10px_rgba(124,185,232,0.2)]">
-                                    <span>{allProgress[story.slug] >= 90 ? '100% Completed' : `${allProgress[story.slug]}% Read`}</span>
+                                  <span className="text-[#7CB9E8] font-semibold border border-[#7CB9E8]/30 px-1.5 py-0.5 rounded bg-[#7CB9E8]/10">
+                                    {allProgress[story.slug]}%
+                                  </span>
+                                )}
+                                {(story.gilded_likes_count || 0) > 0 && (
+                                  <span className="flex items-center gap-1 text-[#D5B06C] font-mono font-semibold">
+                                    <Heart className="w-3 h-3 fill-[#D5B06C] text-[#D5B06C]" />
+                                    <span>{story.gilded_likes_count}</span>
                                   </span>
                                 )}
                               </div>
@@ -329,12 +318,6 @@ export const Hub = ({ filter }) => {
           </AnimatePresence>
         )}
       </main>
-
-      <DailyOracleCard
-        works={works}
-        isOpen={isDailyOracleOpen}
-        onClose={() => setIsDailyOracleOpen(false)}
-      />
     </motion.div>
   );
 };

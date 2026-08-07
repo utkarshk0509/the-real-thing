@@ -162,25 +162,30 @@ export default function Landing() {
         </motion.div>
 
         <motion.div
-          whileHover={{ scale: 1.07 }}
-          whileTap={{ scale: 0.93 }}
+          whileHover={{ scale: 1.06 }}
+          whileTap={{ scale: 0.94 }}
           className="relative cursor-pointer group pt-4"
           onClick={handleEnterSanctuary}
         >
-          <div className="absolute inset-0 rounded-full bg-[#D5B06C]/30 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+          <div className="absolute inset-0 rounded-full bg-[#D5B06C]/25 blur-xl group-hover:blur-2xl group-hover:bg-[#D5B06C]/50 opacity-60 group-hover:opacity-100 transition-all duration-500 pointer-events-none" />
 
-          <div className="relative flex flex-col items-center gap-2">
-            <div className="flex items-center gap-3 px-8 py-3.5 rounded-full border border-[#D5B06C]/60 bg-[#0F1216]/85 backdrop-blur-md group-hover:border-[#D5B06C] group-hover:bg-[#D5B06C]/20 shadow-[0_0_30px_rgba(213,176,108,0.25)] group-hover:shadow-[0_0_50px_rgba(213,176,108,0.55)] transition-all duration-300">
-              <Compass className="w-4 h-4 text-[#D5B06C] group-hover:rotate-90 transition-transform duration-700" />
-              <span className="font-sans text-xs uppercase tracking-[0.35em] text-[#FEEFFF] group-hover:text-[#D5B06C] font-semibold transition-colors">
+          <div className="relative flex flex-col items-center gap-2.5">
+            <div className="relative overflow-hidden flex items-center gap-3.5 px-9 py-3.5 rounded-full border border-[#D5B06C]/60 bg-[#0F1216]/90 backdrop-blur-xl group-hover:border-[#D5B06C] group-hover:bg-[#161B24]/90 shadow-[0_0_30px_rgba(213,176,108,0.3)] group-hover:shadow-[0_0_60px_rgba(213,176,108,0.7)] transition-all duration-500">
+              <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-[#D5B06C]/20 to-transparent transition-transform duration-1000 ease-out pointer-events-none" />
+
+              <Compass className="w-4 h-4 text-[#D5B06C] group-hover:rotate-180 transition-transform duration-700" />
+              <span className="font-serif text-xs uppercase tracking-[0.35em] text-[#FEEFFF] group-hover:text-[#D5B06C] font-medium transition-colors drop-shadow-sm">
                 Enter Sanctuary
               </span>
-              <MoveDown className="w-4 h-4 text-[#D5B06C] animate-bounce" />
+              <MoveDown className="w-4 h-4 text-[#D5B06C] animate-bounce group-hover:text-[#FEEFFF] transition-colors" />
             </div>
 
-            <span className="font-sans text-[9.5px] uppercase tracking-[0.25em] text-[#8A8177] group-hover:text-[#D5B06C] transition-colors font-medium">
-              Click to open constellation map
-            </span>
+            <div className="flex items-center gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
+              <span className="w-1 h-1 rounded-full bg-[#D5B06C] animate-pulse inline-block" />
+              <span className="font-sans text-[9px] uppercase tracking-[0.25em] text-[#8A8177] group-hover:text-[#D5B06C] transition-colors">
+                Click to open constellation map
+              </span>
+            </div>
           </div>
         </motion.div>
       </motion.div>

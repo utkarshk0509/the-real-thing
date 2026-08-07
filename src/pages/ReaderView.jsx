@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sliders, Palette, Type, Check } from 'lucide-react';
+import { Sliders, Palette, Type, Check, Eye } from 'lucide-react';
 import CosmicNebulaBackground from '../components/Shared/CosmicNebulaBackground';
 import Navigation from '../components/Shared/Navigation';
 import AnonymousComments from '../components/Engagement/AnonymousComments';
@@ -26,10 +26,16 @@ export const ReaderView = () => {
   const [scrollProgressPercent, setScrollProgressPercent] = useState(0);
   const [maxProgressPercent, setMaxProgressPercent] = useState(0);
 
-  const [readerSettings, setReaderSettings] = useState(() =>
-    readerProgressService.getReaderSettings()
-  );
+  const [readerSettings, setReaderSettings] = useState(() => {
+    const saved = readerProgressService.getReaderSettings();
+    return {
+      focusSpotlight: true,
+      ...saved,
+    };
+  });
+
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [activeParagraphIndex, setActiveParagraphIndex] = useState(0);
 
   const [selectedText, setSelectedText] = useState('');
   const [quoteTooltipPos, setQuoteTooltipPos] = useState(null);
@@ -38,6 +44,7 @@ export const ReaderView = () => {
   const [paragraphBookmarks, setParagraphBookmarks] = useState({});
 
   const bookmarkedRef = useRef(null);
+  const paragraphRefs = useRef([]);
 
   const categoryRoute = work?.category === 'story' ? '/stories' : '/poems';
   const categoryLabel = work?.category === 'story' ? 'Stories' : 'Poems';
@@ -150,6 +157,36 @@ export const ReaderView = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [work, paragraphBookmarks]);
 
+  useEffect(() => {
+    if (!readerSettings.focusSpotlight || paragraphRefs.current.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const index = Number(entry.target.getAttribute('data-pindex'));
+            if (!isNaN(index)) {
+              setActiveParagraphIndex(index);
+            }
+          }
+        });
+      },
+      {
+        root: null,
+        rootMargin: '-30% 0px -40% 0px',
+        threshold: 0.2,
+      }
+    );
+
+    paragraphRefs.current.forEach((el) => {
+      if (el) observer.observe(el);
+    });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [work, readerSettings.focusSpotlight]);
+
   const handleTextSelection = () => {
     const selection = window.getSelection();
     const text = selection.toString().trim();
@@ -188,23 +225,41 @@ export const ReaderView = () => {
     setParagraphBookmarks(updated);
   };
 
+  const handleUpdateSetting = (key, value) => {
+    const updated = { ...readerSettings, [key]: value };
+    setReaderSettings(updated);
+    readerProgressService.saveReaderSettings(updated);
+  };
+
   const renderParagraphs = (bodyText) => {
     if (!bodyText) return null;
     const paragraphs = bodyText.split('\n\n').filter((p) => p.trim() !== '');
 
     return paragraphs.map((p, idx) => {
       const isBookmarked = paragraphBookmarks[work.slug] === idx;
+      const isActiveSpotlight = readerSettings.focusSpotlight && activeParagraphIndex === idx;
+      const isDimmedSpotlight = readerSettings.focusSpotlight && activeParagraphIndex !== idx;
 
       return (
         <div
           key={idx}
-          ref={isBookmarked ? bookmarkedRef : null}
-          className="relative group py-2 px-1 rounded transition-colors hover:bg-white/[0.02]"
+          data-pindex={idx}
+          ref={(el) => {
+            paragraphRefs.current[idx] = el;
+            if (isBookmarked) bookmarkedRef.current = el;
+          }}
+          className={`relative group py-3 px-2 rounded-lg transition-all duration-500 ease-out ${
+            isActiveSpotlight
+              ? 'opacity-100 text-[#FEEFFF] border-l-2 border-[#D5B06C] pl-4 -ml-4 bg-[#D5B06C]/[0.03] shadow-[0_0_20px_rgba(213,176,108,0.15)]'
+              : isDimmedSpotlight
+              ? 'opacity-40 grayscale-[0.3] hover:opacity-85 hover:grayscale-0'
+              : 'hover:bg-white/[0.02]'
+          }`}
         >
           <button
             onClick={() => handleParagraphBookmark(idx)}
             title={isBookmarked ? 'Remove Bookmark' : 'Bookmark Paragraph'}
-            className={`absolute -left-5 md:-left-7 top-2 text-xs md:text-sm transition-opacity cursor-pointer ${
+            className={`absolute -left-5 md:-left-7 top-3 text-xs md:text-sm transition-opacity cursor-pointer ${
               isBookmarked
                 ? 'opacity-100 text-[#D5B06C] scale-110'
                 : 'opacity-0 group-hover:opacity-60 text-[#8A8177]'
@@ -212,7 +267,7 @@ export const ReaderView = () => {
           >
             •
           </button>
-          <p className="whitespace-pre-wrap">{p}</p>
+          <p className="whitespace-pre-wrap leading-relaxed">{p}</p>
         </div>
       );
     });
@@ -250,12 +305,6 @@ export const ReaderView = () => {
       </div>
     );
   }
-
-  const handleUpdateSetting = (key, value) => {
-    const updated = { ...readerSettings, [key]: value };
-    setReaderSettings(updated);
-    readerProgressService.saveReaderSettings(updated);
-  };
 
   const THEMES = {
     midnight: {
@@ -362,17 +411,32 @@ export const ReaderView = () => {
             <span>Return to {categoryLabel}</span>
           </button>
 
-          <button
-            onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-            className={`flex items-center gap-1.5 font-sans text-[10px] sm:text-xs uppercase tracking-[0.2em] px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg border transition-all cursor-pointer backdrop-blur-md shadow-sm ${
-              isSettingsOpen
-                ? `${activeTheme.border} ${activeTheme.cardBg} ${activeTheme.accent}`
-                : 'border-[#8A8177]/20 bg-[#0F1216]/80 text-[#8A8177] hover:text-[#D5B06C]'
-            }`}
-          >
-            <Sliders className="w-3.5 h-3.5" />
-            <span>Theme & Font</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handleUpdateSetting('focusSpotlight', !readerSettings.focusSpotlight)}
+              className={`flex items-center gap-1.5 font-sans text-[10px] sm:text-xs uppercase tracking-[0.2em] px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg border transition-all cursor-pointer backdrop-blur-md shadow-sm ${
+                readerSettings.focusSpotlight
+                  ? 'border-[#D5B06C]/60 bg-[#D5B06C]/10 text-[#D5B06C] shadow-[0_0_15px_rgba(213,176,108,0.2)]'
+                  : 'border-[#8A8177]/20 bg-[#0F1216]/80 text-[#8A8177] hover:text-[#FEEFFF]'
+              }`}
+              title="Focus Spotlight dims background stanzas to focus on the active paragraph"
+            >
+              <Eye className="w-3.5 h-3.5" />
+              <span>Focus Spotlight: {readerSettings.focusSpotlight ? 'ON' : 'OFF'}</span>
+            </button>
+
+            <button
+              onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+              className={`flex items-center gap-1.5 font-sans text-[10px] sm:text-xs uppercase tracking-[0.2em] px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg border transition-all cursor-pointer backdrop-blur-md shadow-sm ${
+                isSettingsOpen
+                  ? `${activeTheme.border} ${activeTheme.cardBg} ${activeTheme.accent}`
+                  : 'border-[#8A8177]/20 bg-[#0F1216]/80 text-[#8A8177] hover:text-[#D5B06C]'
+              }`}
+            >
+              <Sliders className="w-3.5 h-3.5" />
+              <span>Theme & Font</span>
+            </button>
+          </div>
         </div>
 
         <AnimatePresence>

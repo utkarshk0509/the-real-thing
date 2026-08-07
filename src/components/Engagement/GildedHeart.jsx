@@ -47,14 +47,20 @@ export const GildedHeart = ({ workId, initialCount = 0, onToggleLike }) => {
     try { localStorage.setItem(likedKey, nextLiked ? 'true' : 'false'); } catch {}
 
     if (nextLiked) {
-      setParticles(
-        Array.from({ length: 6 }, (_, i) => ({
+      const newParticles = Array.from({ length: 24 }, (_, i) => {
+        const angle = (i / 24) * Math.PI * 2 + (Math.random() * 0.4 - 0.2);
+        const distance = 35 + Math.random() * 65;
+        const types = ['♥', '✦', '•', '✧'];
+        return {
           id: Date.now() + i,
-          x: (Math.random() - 0.5) * 60,
-          y: -Math.random() * 50 - 20,
-          scale: Math.random() * 0.6 + 0.4,
-        }))
-      );
+          x: Math.cos(angle) * distance,
+          y: Math.sin(angle) * distance - 30,
+          scale: Math.random() * 0.8 + 0.5,
+          char: types[i % types.length],
+          color: i % 2 === 0 ? '#D5B06C' : '#FEEFFF',
+        };
+      });
+      setParticles(newParticles);
     }
 
     try {
@@ -79,19 +85,19 @@ export const GildedHeart = ({ workId, initialCount = 0, onToggleLike }) => {
         aria-label="Gilded Resonance"
         className={`group relative flex items-center justify-center w-14 h-14 md:w-16 md:h-16 rounded-full border-2 transition-all duration-300 cursor-pointer disabled:cursor-wait shadow-lg ${
           hasLiked
-            ? 'border-[#D5B06C] bg-[#D5B06C]/20 shadow-[0_0_25px_rgba(213,176,108,0.4)] scale-105'
-            : 'border-[#8A8177]/40 bg-[#0F1216]/90 hover:border-[#D5B06C] hover:bg-[#D5B06C]/10 hover:shadow-[0_0_15px_rgba(213,176,108,0.2)]'
+            ? 'border-[#D5B06C] bg-[#D5B06C]/20 shadow-[0_0_30px_rgba(213,176,108,0.5)] scale-105'
+            : 'border-[#8A8177]/40 bg-[#0F1216]/90 hover:border-[#D5B06C] hover:bg-[#D5B06C]/10 hover:shadow-[0_0_20px_rgba(213,176,108,0.25)]'
         }`}
       >
         <motion.svg
           whileTap={{ scale: 0.85 }}
-          animate={hasLiked ? { scale: [1, 1.35, 1] } : { scale: 1 }}
+          animate={hasLiked ? { scale: [1, 1.4, 1] } : { scale: 1 }}
           transition={{ type: 'spring', stiffness: 400, damping: 15 }}
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
           className={`w-6 h-6 md:w-7 md:h-7 transition-colors duration-300 ${
             hasLiked
-              ? 'fill-[#D5B06C] stroke-[#D5B06C] drop-shadow-[0_0_8px_rgba(213,176,108,0.6)]'
+              ? 'fill-[#D5B06C] stroke-[#D5B06C] drop-shadow-[0_0_10px_rgba(213,176,108,0.8)]'
               : 'fill-transparent stroke-[#8A8177] group-hover:stroke-[#D5B06C]'
           }`}
           strokeWidth="1.5"
@@ -103,15 +109,15 @@ export const GildedHeart = ({ workId, initialCount = 0, onToggleLike }) => {
           {particles.map((p) => (
             <motion.span
               key={p.id}
-              initial={{ opacity: 1, x: 0, y: 0, scale: p.scale }}
-              animate={{ opacity: 0, x: p.x, y: p.y }}
+              initial={{ x: 0, y: 0, opacity: 1, scale: 0.2 }}
+              animate={{ x: p.x, y: p.y, opacity: 0, scale: p.scale }}
               exit={{ opacity: 0 }}
-              onAnimationComplete={() =>
-                setParticles((prev) => prev.filter((sp) => sp.id !== p.id))
-              }
-              transition={{ duration: 0.8, ease: 'easeOut' }}
-              className="absolute w-2 h-2 rounded-full bg-[#D5B06C] pointer-events-none shadow-[0_0_10px_#D5B06C]"
-            />
+              transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1] }}
+              className="absolute pointer-events-none text-xs font-serif font-bold"
+              style={{ color: p.color, textShadow: `0 0 8px ${p.color}` }}
+            >
+              {p.char}
+            </motion.span>
           ))}
         </AnimatePresence>
       </button>

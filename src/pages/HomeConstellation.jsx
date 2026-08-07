@@ -259,6 +259,24 @@ export const HomeConstellation = () => {
   const [hoveredNode, setHoveredNode] = useState(null);
   const [explodingNode, setExplodingNode] = useState(null);
   const [counts, setCounts] = useState({ poems: 0, stories: 0 });
+  const [floatTime, setFloatTime] = useState(0);
+
+  useEffect(() => {
+    if (hoveredNode !== null) return;
+    const id = setInterval(() => setFloatTime((t) => t + 0.025), 30);
+    return () => clearInterval(id);
+  }, [hoveredNode]);
+
+  const liveNodes = NODES.map((node) => {
+    const phase = node.id === 'poems' ? 0 : node.id === 'stories' ? 2.1 : 4.2;
+    const rx = node.id === 'about' ? 11 : 13;
+    const ry = node.id === 'stories' ? 10 : 12;
+    return {
+      ...node,
+      cx: node.cx + Math.sin(floatTime * 0.8 + phase) * rx,
+      cy: node.cy + Math.cos(floatTime * 0.65 + phase) * ry,
+    };
+  });
   const [lastReadWork, setLastReadWork] = useState(null);
 
   const mouseX = useMotionValue(0);
@@ -621,8 +639,8 @@ export const HomeConstellation = () => {
             </g>
 
             {EDGES.map(([aId, bId]) => {
-              const a = NODES.find((n) => n.id === aId);
-              const b = NODES.find((n) => n.id === bId);
+              const a = liveNodes.find((n) => n.id === aId);
+              const b = liveNodes.find((n) => n.id === bId);
               const active = hoveredNode === aId || hoveredNode === bId;
               return (
                 <TravelingEdge
@@ -635,7 +653,7 @@ export const HomeConstellation = () => {
               );
             })}
 
-            {NODES.map((node) => (
+            {liveNodes.map((node) => (
               <StarNode
                 key={node.id}
                 node={node}

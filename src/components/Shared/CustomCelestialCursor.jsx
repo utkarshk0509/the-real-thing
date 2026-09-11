@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 export const CustomCelestialCursor = () => {
   const [pos, setPos] = useState({ x: -100, y: -100 });
   const [isHovered, setIsHovered] = useState(false);
+  const [isTextInput, setIsTextInput] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -18,6 +19,14 @@ export const CustomCelestialCursor = () => {
       setPos({ x: e.clientX, y: e.clientY });
 
       const element = e.target && e.target.nodeType === 1 ? e.target : e.target?.parentElement;
+      const isInput = element && (
+        element.tagName === 'TEXTAREA' ||
+        element.tagName === 'INPUT' ||
+        element.isContentEditable ||
+        (typeof element.closest === 'function' && element.closest('textarea, input, [contenteditable="true"]'))
+      );
+      setIsTextInput(!!isInput);
+
       const isInteractive = element && (
         element.tagName === 'BUTTON' ||
         element.tagName === 'A' ||
@@ -25,7 +34,7 @@ export const CustomCelestialCursor = () => {
         element.getAttribute?.('role') === 'button' ||
         (typeof element.closest === 'function' && element.closest('button, a, [role="button"], .cursor-pointer'))
       );
-      setIsHovered(!!isInteractive);
+      setIsHovered(!!isInteractive && !isInput);
     };
 
     window.addEventListener('mousemove', handleMouseMove);
@@ -35,7 +44,7 @@ export const CustomCelestialCursor = () => {
     };
   }, []);
 
-  if (isMobile) return null;
+  if (isMobile || isTextInput) return null;
 
   return (
     <div className="pointer-events-none fixed inset-0 z-[9999] overflow-hidden">

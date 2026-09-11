@@ -65,6 +65,7 @@ export const AuthorPortal = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const backupFileInputRef = useRef(null);
+  const editorTextareaRef = useRef(null);
 
   useEffect(() => {
     const isAuth = sessionStorage.getItem('real_thing_author_auth');
@@ -287,9 +288,72 @@ export const AuthorPortal = () => {
     };
   }, [allWorks]);
 
-  // Poetic Toolbar Helpers
-  const handleInsertSnippet = (snippet) => {
-    setBody((prev) => prev + snippet);
+  // Poetic Toolbar Helpers with Smart Caret Positioning & Focus Preservation
+  const handleInsertSnippet = (glyphType) => {
+    const textarea = editorTextareaRef.current;
+    if (!textarea) {
+      setBody((prev) => prev + glyphType);
+      return;
+    }
+
+    const start = textarea.selectionStart ?? body.length;
+    const end = textarea.selectionEnd ?? body.length;
+    const selectedText = body.substring(start, end);
+
+    let textToInsert = '';
+    let newCursorPos = start;
+
+    switch (glyphType) {
+      case 'quotes':
+        if (selectedText.length > 0) {
+          textToInsert = `“${selectedText}”`;
+          newCursorPos = start + textToInsert.length;
+        } else {
+          textToInsert = '“”';
+          newCursorPos = start + 1; // puts cursor directly inside: “|”
+        }
+        break;
+
+      case 'emdash':
+        textToInsert = ' — ';
+        newCursorPos = start + textToInsert.length;
+        break;
+
+      case 'asterism': {
+        const needsLeading = start > 0 && body[start - 1] !== '\n';
+        const prefix = needsLeading ? '\n\n' : '';
+        textToInsert = `${prefix}✦   ✧   ✦\n\n`;
+        newCursorPos = start + textToInsert.length;
+        break;
+      }
+
+      case 'stanza':
+        textToInsert = '\n\n';
+        newCursorPos = start + textToInsert.length;
+        break;
+
+      case 'indent':
+        textToInsert = '    ';
+        newCursorPos = start + textToInsert.length;
+        break;
+
+      default:
+        textToInsert = glyphType;
+        newCursorPos = start + textToInsert.length;
+        break;
+    }
+
+    const newBody = body.substring(0, start) + textToInsert + body.substring(end);
+    setBody(newBody);
+
+    // Keep textarea focused and move cursor to the exact right point immediately
+    textarea.focus();
+    setTimeout(() => {
+      if (editorTextareaRef.current) {
+        editorTextareaRef.current.focus();
+        editorTextareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
+      }
+    }, 0);
   };
 
   // Form Reset
@@ -1206,7 +1270,8 @@ export const AuthorPortal = () => {
                     </span>
                     <button
                       type="button"
-                      onClick={() => handleInsertSnippet('\n\n✦   ✧   ✦\n\n')}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => handleInsertSnippet('asterism')}
                       className="px-3 py-1.5 rounded-lg border border-white/15 hover:border-[#D5B06C] text-[#D5B06C] text-xs font-serif hover:bg-white/5 transition-all cursor-pointer min-h-[36px]"
                       title="Insert Cosmic Asterism Divider"
                     >
@@ -1214,7 +1279,8 @@ export const AuthorPortal = () => {
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleInsertSnippet('\n\n')}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => handleInsertSnippet('stanza')}
                       className="px-3 py-1.5 rounded-lg border border-white/15 hover:border-[#D5B06C] text-[#FEEFFF] text-xs font-sans hover:bg-white/5 transition-all cursor-pointer min-h-[36px]"
                       title="Insert Stanza Break"
                     >
@@ -1222,7 +1288,8 @@ export const AuthorPortal = () => {
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleInsertSnippet(' — ')}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => handleInsertSnippet('emdash')}
                       className="px-3 py-1.5 rounded-lg border border-white/15 hover:border-[#D5B06C] text-[#FEEFFF] text-xs font-serif hover:bg-white/5 transition-all cursor-pointer min-h-[36px]"
                       title="Insert Em-Dash"
                     >
@@ -1230,7 +1297,8 @@ export const AuthorPortal = () => {
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleInsertSnippet('“ ”')}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => handleInsertSnippet('quotes')}
                       className="px-3 py-1.5 rounded-lg border border-white/15 hover:border-[#D5B06C] text-[#FEEFFF] text-xs font-serif hover:bg-white/5 transition-all cursor-pointer min-h-[36px]"
                       title="Insert Curly Quotes"
                     >
@@ -1238,7 +1306,8 @@ export const AuthorPortal = () => {
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleInsertSnippet('\n    ')}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => handleInsertSnippet('indent')}
                       className="px-3 py-1.5 rounded-lg border border-white/15 hover:border-[#D5B06C] text-[#FEEFFF] text-xs font-mono hover:bg-white/5 transition-all cursor-pointer min-h-[36px]"
                       title="Indent Stanza"
                     >
@@ -1259,6 +1328,7 @@ export const AuthorPortal = () => {
                 </div>
 
                 <textarea
+                  ref={editorTextareaRef}
                   rows={20}
                   value={body}
                   onChange={(e) => setBody(e.target.value)}

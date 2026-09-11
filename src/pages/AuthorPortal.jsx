@@ -89,6 +89,7 @@ export const AuthorPortal = () => {
   const [isDraft, setIsDraft] = useState(false);
   const [editorSubTab, setEditorSubTab] = useState('edit'); // 'edit' or 'preview'
   const [isMetadataExpanded, setIsMetadataExpanded] = useState(true);
+  const [isGlyphsPaletteOpen, setIsGlyphsPaletteOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null);
 
@@ -304,21 +305,115 @@ export const AuthorPortal = () => {
     let newCursorPos = start;
 
     switch (glyphType) {
+      // Paired Quotes & Enclosures
       case 'quotes':
         if (selectedText.length > 0) {
           textToInsert = `“${selectedText}”`;
           newCursorPos = start + textToInsert.length;
         } else {
           textToInsert = '“”';
-          newCursorPos = start + 1; // puts cursor directly inside: “|”
+          newCursorPos = start + 1; // Caret inside: “|”
         }
         break;
 
+      case 'single_quotes':
+        if (selectedText.length > 0) {
+          textToInsert = `‘${selectedText}’`;
+          newCursorPos = start + textToInsert.length;
+        } else {
+          textToInsert = '‘’';
+          newCursorPos = start + 1; // Caret inside: ‘|’
+        }
+        break;
+
+      case 'guillemets':
+        if (selectedText.length > 0) {
+          textToInsert = `« ${selectedText} »`;
+          newCursorPos = start + textToInsert.length;
+        } else {
+          textToInsert = '«  »';
+          newCursorPos = start + 2; // Caret inside: « | »
+        }
+        break;
+
+      case 'parentheses':
+        if (selectedText.length > 0) {
+          textToInsert = `(${selectedText})`;
+          newCursorPos = start + textToInsert.length;
+        } else {
+          textToInsert = '()';
+          newCursorPos = start + 1; // Caret inside: (|)
+        }
+        break;
+
+      case 'brackets':
+        if (selectedText.length > 0) {
+          textToInsert = `[${selectedText}]`;
+          newCursorPos = start + textToInsert.length;
+        } else {
+          textToInsert = '[]';
+          newCursorPos = start + 1; // Caret inside: [|]
+        }
+        break;
+
+      // Editorial Punctuation
       case 'emdash':
         textToInsert = ' — ';
         newCursorPos = start + textToInsert.length;
         break;
 
+      case 'endash':
+        textToInsert = '–';
+        newCursorPos = start + textToInsert.length;
+        break;
+
+      case 'ellipsis':
+        textToInsert = '…';
+        newCursorPos = start + textToInsert.length;
+        break;
+
+      case 'section':
+        textToInsert = '§ ';
+        newCursorPos = start + textToInsert.length;
+        break;
+
+      case 'dagger':
+        textToInsert = '† ';
+        newCursorPos = start + textToInsert.length;
+        break;
+
+      case 'doubledagger':
+        textToInsert = '‡ ';
+        newCursorPos = start + textToInsert.length;
+        break;
+
+      // Rhythm, Caesura & Spacing
+      case 'stanza':
+        textToInsert = '\n\n';
+        newCursorPos = start + textToInsert.length;
+        break;
+
+      case 'indent':
+        textToInsert = '    ';
+        newCursorPos = start + textToInsert.length;
+        break;
+
+      case 'caesura':
+        textToInsert = ' || ';
+        newCursorPos = start + textToInsert.length;
+        break;
+
+      case 'interpunct':
+        textToInsert = ' • ';
+        newCursorPos = start + textToInsert.length;
+        break;
+
+      case 'tilde':
+        textToInsert = ' ~ ';
+        newCursorPos = start + textToInsert.length;
+        break;
+
+      // Celestial Stanza Dividers
       case 'asterism': {
         const needsLeading = start > 0 && body[start - 1] !== '\n';
         const prefix = needsLeading ? '\n\n' : '';
@@ -327,13 +422,60 @@ export const AuthorPortal = () => {
         break;
       }
 
-      case 'stanza':
-        textToInsert = '\n\n';
+      case 'triple_moon': {
+        const needsLeading = start > 0 && body[start - 1] !== '\n';
+        const prefix = needsLeading ? '\n\n' : '';
+        textToInsert = `${prefix}☽   ◯   ☾\n\n`;
+        newCursorPos = start + textToInsert.length;
+        break;
+      }
+
+      case 'triple_dash': {
+        const needsLeading = start > 0 && body[start - 1] !== '\n';
+        const prefix = needsLeading ? '\n\n' : '';
+        textToInsert = `${prefix}—  —  —\n\n`;
+        newCursorPos = start + textToInsert.length;
+        break;
+      }
+
+      // Celestial Star & Astral Glyphs
+      case 'star_gold':
+        textToInsert = '✦ ';
         newCursorPos = start + textToInsert.length;
         break;
 
-      case 'indent':
-        textToInsert = '    ';
+      case 'star_silver':
+        textToInsert = '✧ ';
+        newCursorPos = start + textToInsert.length;
+        break;
+
+      case 'star_solid':
+        textToInsert = '★ ';
+        newCursorPos = start + textToInsert.length;
+        break;
+
+      case 'star_hollow':
+        textToInsert = '☆ ';
+        newCursorPos = start + textToInsert.length;
+        break;
+
+      case 'crescent_moon':
+        textToInsert = '☾ ';
+        newCursorPos = start + textToInsert.length;
+        break;
+
+      case 'waning_moon':
+        textToInsert = '☽ ';
+        newCursorPos = start + textToInsert.length;
+        break;
+
+      case 'sun':
+        textToInsert = '☼ ';
+        newCursorPos = start + textToInsert.length;
+        break;
+
+      case 'fleuron':
+        textToInsert = '❖ ';
         newCursorPos = start + textToInsert.length;
         break;
 
@@ -1263,68 +1405,354 @@ export const AuthorPortal = () => {
             {editorSubTab === 'edit' ? (
               <div className="space-y-4">
                 {/* Poetic Formatting Toolbar */}
-                <div className="flex flex-wrap items-center justify-between p-3 bg-[#0B0D11] border border-[#8A8177]/30 rounded-xl gap-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-xs font-sans uppercase tracking-wider text-[#DDD4CA] font-medium pr-1">
-                      Poetic Glyphs:
-                    </span>
-                    <button
-                      type="button"
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => handleInsertSnippet('asterism')}
-                      className="px-3 py-1.5 rounded-lg border border-white/15 hover:border-[#D5B06C] text-[#D5B06C] text-xs font-serif hover:bg-white/5 transition-all cursor-pointer min-h-[36px]"
-                      title="Insert Cosmic Asterism Divider"
-                    >
-                      ✦ ✧ ✦ Asterism
-                    </button>
-                    <button
-                      type="button"
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => handleInsertSnippet('stanza')}
-                      className="px-3 py-1.5 rounded-lg border border-white/15 hover:border-[#D5B06C] text-[#FEEFFF] text-xs font-sans hover:bg-white/5 transition-all cursor-pointer min-h-[36px]"
-                      title="Insert Stanza Break"
-                    >
-                      ¶ Stanza Break
-                    </button>
-                    <button
-                      type="button"
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => handleInsertSnippet('emdash')}
-                      className="px-3 py-1.5 rounded-lg border border-white/15 hover:border-[#D5B06C] text-[#FEEFFF] text-xs font-serif hover:bg-white/5 transition-all cursor-pointer min-h-[36px]"
-                      title="Insert Em-Dash"
-                    >
-                      — Em-Dash
-                    </button>
-                    <button
-                      type="button"
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => handleInsertSnippet('quotes')}
-                      className="px-3 py-1.5 rounded-lg border border-white/15 hover:border-[#D5B06C] text-[#FEEFFF] text-xs font-serif hover:bg-white/5 transition-all cursor-pointer min-h-[36px]"
-                      title="Insert Curly Quotes"
-                    >
-                      “ ” Quotes
-                    </button>
-                    <button
-                      type="button"
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => handleInsertSnippet('indent')}
-                      className="px-3 py-1.5 rounded-lg border border-white/15 hover:border-[#D5B06C] text-[#FEEFFF] text-xs font-mono hover:bg-white/5 transition-all cursor-pointer min-h-[36px]"
-                      title="Indent Stanza"
-                    >
-                      ⇥ Indent
-                    </button>
+                <div className="bg-[#0B0D11] border border-[#8A8177]/30 rounded-2xl overflow-hidden shadow-lg">
+                  {/* Primary Quick-Access Glyphs Row */}
+                  <div className="flex flex-wrap items-center justify-between p-3 gap-3 border-b border-white/5">
+                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                      <span className="text-xs font-sans uppercase tracking-wider text-[#DDD4CA] font-semibold pr-1">
+                        Poetic Glyphs:
+                      </span>
+                      
+                      {/* Frequent primary glyphs */}
+                      <button
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => handleInsertSnippet('asterism')}
+                        className="px-3 py-1.5 rounded-xl border border-white/15 hover:border-[#D5B06C] text-[#D5B06C] text-xs font-serif hover:bg-white/5 transition-all cursor-pointer min-h-[36px]"
+                        title="Insert Cosmic Asterism Divider (✦ ✧ ✦)"
+                      >
+                        ✦ ✧ ✦ Asterism
+                      </button>
+
+                      <button
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => handleInsertSnippet('stanza')}
+                        className="px-3 py-1.5 rounded-xl border border-white/15 hover:border-[#D5B06C] text-[#FEEFFF] text-xs font-sans hover:bg-white/5 transition-all cursor-pointer min-h-[36px]"
+                        title="Insert Double Stanza Break (¶)"
+                      >
+                        ¶ Stanza Break
+                      </button>
+
+                      <button
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => handleInsertSnippet('emdash')}
+                        className="px-3 py-1.5 rounded-xl border border-white/15 hover:border-[#D5B06C] text-[#FEEFFF] text-xs font-serif hover:bg-white/5 transition-all cursor-pointer min-h-[36px]"
+                        title="Insert Em-Dash (—)"
+                      >
+                        — Em-Dash
+                      </button>
+
+                      <button
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => handleInsertSnippet('quotes')}
+                        className="px-3 py-1.5 rounded-xl border border-white/15 hover:border-[#D5B06C] text-[#FEEFFF] text-xs font-serif hover:bg-white/5 transition-all cursor-pointer min-h-[36px]"
+                        title="Insert or Wrap in Curly Quotes (“ ”)"
+                      >
+                        “ ” Quotes
+                      </button>
+
+                      <button
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => handleInsertSnippet('single_quotes')}
+                        className="px-3 py-1.5 rounded-xl border border-white/15 hover:border-[#D5B06C] text-[#FEEFFF] text-xs font-serif hover:bg-white/5 transition-all cursor-pointer min-h-[36px]"
+                        title="Insert or Wrap in Single Curly Quotes (‘ ’)"
+                      >
+                        ‘ ’ Single
+                      </button>
+
+                      <button
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => handleInsertSnippet('ellipsis')}
+                        className="px-3 py-1.5 rounded-lg border border-white/15 hover:border-[#D5B06C] text-[#FEEFFF] text-xs font-serif hover:bg-white/5 transition-all cursor-pointer min-h-[36px]"
+                        title="Insert Typographic Ellipsis (…)"
+                      >
+                        …
+                      </button>
+
+                      <button
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => handleInsertSnippet('indent')}
+                        className="px-3 py-1.5 rounded-xl border border-white/15 hover:border-[#D5B06C] text-[#FEEFFF] text-xs font-mono hover:bg-white/5 transition-all cursor-pointer min-h-[36px]"
+                        title="Insert 4-Space Caesura Indent (⇥)"
+                      >
+                        ⇥ Indent
+                      </button>
+
+                      <button
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => handleInsertSnippet('caesura')}
+                        className="px-3 py-1.5 rounded-xl border border-white/15 hover:border-[#D5B06C] text-[#FEEFFF] text-xs font-mono hover:bg-white/5 transition-all cursor-pointer min-h-[36px]"
+                        title="Insert Classical Double Caesura (||)"
+                      >
+                        || Caesura
+                      </button>
+
+                      {/* Expand / Collapse Full Palette Toggle */}
+                      <button
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => setIsGlyphsPaletteOpen(!isGlyphsPaletteOpen)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-sans uppercase tracking-wider transition-all cursor-pointer min-h-[36px] font-bold flex items-center gap-1.5 ${
+                          isGlyphsPaletteOpen
+                            ? 'bg-[#D5B06C] text-[#080A06] shadow-[0_0_10px_rgba(213,176,108,0.4)]'
+                            : 'bg-white/10 text-[#D5B06C] hover:bg-white/15 border border-[#D5B06C]/40'
+                        }`}
+                      >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>{isGlyphsPaletteOpen ? 'Close Vault ▲' : 'More Glyphs ✦'}</span>
+                      </button>
+                    </div>
+
+                    {/* Live Metrics HUD */}
+                    <div className="flex items-center gap-3 px-4 py-2 bg-[#080A06] rounded-xl border border-white/10 text-xs font-sans text-[#B0A89F] shrink-0">
+                      <span><strong className="text-[#D5B06C] font-semibold">{metrics.words}</strong> words</span>
+                      <span>•</span>
+                      <span><strong className="text-[#D5B06C] font-semibold">{metrics.lines}</strong> lines</span>
+                      <span>•</span>
+                      <span><strong className="text-[#D5B06C] font-semibold">{metrics.stanzas}</strong> stanzas</span>
+                      <span>•</span>
+                      <span className="text-[#FEEFFF]">~{metrics.readTime} min read</span>
+                    </div>
                   </div>
 
-                  {/* Live Metrics HUD */}
-                  <div className="flex items-center gap-3 px-4 py-2 bg-[#080A06] rounded-xl border border-white/10 text-xs font-sans text-[#B0A89F]">
-                    <span><strong className="text-[#D5B06C] font-semibold">{metrics.words}</strong> words</span>
-                    <span>•</span>
-                    <span><strong className="text-[#D5B06C] font-semibold">{metrics.lines}</strong> lines</span>
-                    <span>•</span>
-                    <span><strong className="text-[#D5B06C] font-semibold">{metrics.stanzas}</strong> stanzas</span>
-                    <span>•</span>
-                    <span className="text-[#FEEFFF]">~{metrics.readTime} min read</span>
-                  </div>
+                  {/* Expanded Categorized Poetic Glyphs Studio */}
+                  <AnimatePresence>
+                    {isGlyphsPaletteOpen && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="p-4 bg-[#080A06]/90 border-t border-white/10 space-y-4"
+                      >
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          
+                          {/* Category 1: Celestial Ornaments & Dividers */}
+                          <div className="p-3.5 rounded-xl bg-[#0F1216] border border-[#D5B06C]/30 space-y-2.5">
+                            <span className="text-[11px] font-sans uppercase tracking-wider text-[#D5B06C] font-bold block">
+                              ✦ Celestial Ornaments
+                            </span>
+                            <div className="flex flex-wrap gap-1.5">
+                              <button
+                                type="button"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => handleInsertSnippet('triple_moon')}
+                                className="px-2.5 py-1 rounded-lg border border-white/10 hover:border-[#D5B06C] text-xs text-[#D5B06C] hover:bg-white/5 cursor-pointer font-serif"
+                                title="Triple Moon Phase Divider (☽ ◯ ☾)"
+                              >
+                                ☽ ◯ ☾ Moon
+                              </button>
+                              <button
+                                type="button"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => handleInsertSnippet('triple_dash')}
+                                className="px-2.5 py-1 rounded-lg border border-white/10 hover:border-[#D5B06C] text-xs text-[#DDD4CA] hover:bg-white/5 cursor-pointer"
+                                title="Triple Em-Dash Stanza Divider (— — —)"
+                              >
+                                — — — Rule
+                              </button>
+                              <button
+                                type="button"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => handleInsertSnippet('star_gold')}
+                                className="px-2.5 py-1 rounded-lg border border-white/10 hover:border-[#D5B06C] text-xs text-[#D5B06C] hover:bg-white/5 cursor-pointer"
+                                title="Gold Sparkle (✦)"
+                              >
+                                ✦ Star
+                              </button>
+                              <button
+                                type="button"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => handleInsertSnippet('star_silver')}
+                                className="px-2.5 py-1 rounded-lg border border-white/10 hover:border-[#D5B06C] text-xs text-[#DDD4CA] hover:bg-white/5 cursor-pointer"
+                                title="Silver Glimmer (✧)"
+                              >
+                                ✧ Glimmer
+                              </button>
+                              <button
+                                type="button"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => handleInsertSnippet('star_solid')}
+                                className="px-2.5 py-1 rounded-lg border border-white/10 hover:border-[#D5B06C] text-xs text-[#DDD4CA] hover:bg-white/5 cursor-pointer"
+                                title="Classic Star (★)"
+                              >
+                                ★ Solid
+                              </button>
+                              <button
+                                type="button"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => handleInsertSnippet('star_hollow')}
+                                className="px-2.5 py-1 rounded-lg border border-white/10 hover:border-[#D5B06C] text-xs text-[#DDD4CA] hover:bg-white/5 cursor-pointer"
+                                title="Hollow Star (☆)"
+                              >
+                                ☆ Hollow
+                              </button>
+                              <button
+                                type="button"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => handleInsertSnippet('crescent_moon')}
+                                className="px-2.5 py-1 rounded-lg border border-white/10 hover:border-[#D5B06C] text-xs text-[#7CB9E8] hover:bg-white/5 cursor-pointer"
+                                title="Crescent Moon (☾)"
+                              >
+                                ☾ Crescent
+                              </button>
+                              <button
+                                type="button"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => handleInsertSnippet('waning_moon')}
+                                className="px-2.5 py-1 rounded-lg border border-white/10 hover:border-[#D5B06C] text-xs text-[#7CB9E8] hover:bg-white/5 cursor-pointer"
+                                title="Waning Moon (☽)"
+                              >
+                                ☽ Waning
+                              </button>
+                              <button
+                                type="button"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => handleInsertSnippet('sun')}
+                                className="px-2.5 py-1 rounded-lg border border-white/10 hover:border-[#D5B06C] text-xs text-[#E0BE81] hover:bg-white/5 cursor-pointer"
+                                title="Solar Corona (☼)"
+                              >
+                                ☼ Sun
+                              </button>
+                              <button
+                                type="button"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => handleInsertSnippet('fleuron')}
+                                className="px-2.5 py-1 rounded-lg border border-white/10 hover:border-[#D5B06C] text-xs text-[#D5B06C] hover:bg-white/5 cursor-pointer"
+                                title="Diamond Fleuron (❖)"
+                              >
+                                ❖ Fleuron
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Category 2: Editorial Marks & Continental Typography */}
+                          <div className="p-3.5 rounded-xl bg-[#0F1216] border border-[#7CB9E8]/30 space-y-2.5">
+                            <span className="text-[11px] font-sans uppercase tracking-wider text-[#7CB9E8] font-bold block">
+                              ¶ Editorial Typography
+                            </span>
+                            <div className="flex flex-wrap gap-1.5">
+                              <button
+                                type="button"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => handleInsertSnippet('guillemets')}
+                                className="px-2.5 py-1 rounded-lg border border-white/10 hover:border-[#7CB9E8] text-xs text-[#DDD4CA] hover:bg-white/5 cursor-pointer font-serif"
+                                title="French / Continental Guillemets (« »)"
+                              >
+                                « » Guillemets
+                              </button>
+                              <button
+                                type="button"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => handleInsertSnippet('endash')}
+                                className="px-2.5 py-1 rounded-lg border border-white/10 hover:border-[#7CB9E8] text-xs text-[#DDD4CA] hover:bg-white/5 cursor-pointer"
+                                title="En-Dash (–)"
+                              >
+                                – En-Dash
+                              </button>
+                              <button
+                                type="button"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => handleInsertSnippet('section')}
+                                className="px-2.5 py-1 rounded-lg border border-white/10 hover:border-[#7CB9E8] text-xs text-[#DDD4CA] hover:bg-white/5 cursor-pointer font-serif"
+                                title="Section Canto Mark (§)"
+                              >
+                                § Canto
+                              </button>
+                              <button
+                                type="button"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => handleInsertSnippet('dagger')}
+                                className="px-2.5 py-1 rounded-lg border border-white/10 hover:border-[#7CB9E8] text-xs text-[#DDD4CA] hover:bg-white/5 cursor-pointer font-serif"
+                                title="Dagger / Epitaph Footnote (†)"
+                              >
+                                † Dagger
+                              </button>
+                              <button
+                                type="button"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => handleInsertSnippet('doubledagger')}
+                                className="px-2.5 py-1 rounded-lg border border-white/10 hover:border-[#7CB9E8] text-xs text-[#DDD4CA] hover:bg-white/5 cursor-pointer font-serif"
+                                title="Double Dagger (‡)"
+                              >
+                                ‡ Double
+                              </button>
+                              <button
+                                type="button"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => handleInsertSnippet('parentheses')}
+                                className="px-2.5 py-1 rounded-lg border border-white/10 hover:border-[#7CB9E8] text-xs text-[#DDD4CA] hover:bg-white/5 cursor-pointer font-mono"
+                                title="Parentheses ( )"
+                              >
+                                ( ) Aside
+                              </button>
+                              <button
+                                type="button"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => handleInsertSnippet('brackets')}
+                                className="px-2.5 py-1 rounded-lg border border-white/10 hover:border-[#7CB9E8] text-xs text-[#DDD4CA] hover:bg-white/5 cursor-pointer font-mono"
+                                title="Square Brackets [ ]"
+                              >
+                                [ ] Brackets
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Category 3: Poetic Spacing, Rhythm & Drift */}
+                          <div className="p-3.5 rounded-xl bg-[#0F1216] border border-[#C9A9FF]/30 space-y-2.5">
+                            <span className="text-[11px] font-sans uppercase tracking-wider text-[#C9A9FF] font-bold block">
+                              || Rhythm & Caesura
+                            </span>
+                            <div className="flex flex-wrap gap-1.5">
+                              <button
+                                type="button"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => handleInsertSnippet('interpunct')}
+                                className="px-2.5 py-1 rounded-lg border border-white/10 hover:border-[#C9A9FF] text-xs text-[#DDD4CA] hover:bg-white/5 cursor-pointer font-serif"
+                                title="Interpunct Middle Dot ( • )"
+                              >
+                                • Interpunct
+                              </button>
+                              <button
+                                type="button"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => handleInsertSnippet('tilde')}
+                                className="px-2.5 py-1 rounded-lg border border-white/10 hover:border-[#C9A9FF] text-xs text-[#DDD4CA] hover:bg-white/5 cursor-pointer font-mono"
+                                title="Tilde Wave Drift ( ~ )"
+                              >
+                                ~ Wave
+                              </button>
+                              <button
+                                type="button"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => handleInsertSnippet('\n        ')}
+                                className="px-2.5 py-1 rounded-lg border border-white/10 hover:border-[#C9A9FF] text-xs text-[#DDD4CA] hover:bg-white/5 cursor-pointer font-mono"
+                                title="Deep Stanza Indent (8 spaces)"
+                              >
+                                ⇥⇥ Deep Indent
+                              </button>
+                              <button
+                                type="button"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => handleInsertSnippet('\n\n\n')}
+                                className="px-2.5 py-1 rounded-lg border border-white/10 hover:border-[#C9A9FF] text-xs text-[#DDD4CA] hover:bg-white/5 cursor-pointer"
+                                title="Triple Line Interval (Long Silence)"
+                              >
+                                ¶¶ Long Pause
+                              </button>
+                            </div>
+                          </div>
+
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
                 <textarea

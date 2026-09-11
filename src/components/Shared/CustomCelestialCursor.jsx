@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 export const CustomCelestialCursor = () => {
   const [pos, setPos] = useState({ x: -100, y: -100 });
   const [isHovered, setIsHovered] = useState(false);
+  const [isClicking, setIsClicking] = useState(false);
   const [isTextInput, setIsTextInput] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -37,10 +38,18 @@ export const CustomCelestialCursor = () => {
       setIsHovered(!!isInteractive && !isInput);
     };
 
+    const handleMouseDown = () => setIsClicking(true);
+    const handleMouseUp = () => setIsClicking(false);
+
     window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mousedown', handleMouseDown);
+    window.addEventListener('mouseup', handleMouseUp);
+
     return () => {
       window.removeEventListener('resize', checkMobile);
       window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mousedown', handleMouseDown);
+      window.removeEventListener('mouseup', handleMouseUp);
     };
   }, []);
 
@@ -48,35 +57,26 @@ export const CustomCelestialCursor = () => {
 
   return (
     <div className="pointer-events-none fixed inset-0 z-[9999] overflow-hidden">
+      {/* Smooth Trailing Starlight Halo Ring */}
       <motion.div
         animate={{
-          x: pos.x - (isHovered ? 20 : 14),
-          y: pos.y - (isHovered ? 20 : 14),
-          scale: isHovered ? 1.4 : 1,
-          borderColor: isHovered ? '#D5B06C' : 'rgba(213, 176, 108, 0.45)',
-          backgroundColor: isHovered ? 'rgba(213, 176, 108, 0.12)' : 'rgba(15, 18, 22, 0.1)',
+          x: pos.x - (isHovered ? 18 : 12),
+          y: pos.y - (isHovered ? 18 : 12),
+          scale: isClicking ? 0.75 : isHovered ? 1.4 : 1,
+          borderColor: isHovered ? '#FFE8A3' : 'rgba(213, 176, 108, 0.45)',
+          backgroundColor: isHovered 
+            ? 'rgba(213, 176, 108, 0.16)' 
+            : isClicking 
+            ? 'rgba(213, 176, 108, 0.25)' 
+            : 'rgba(213, 176, 108, 0.04)',
         }}
         transition={{
           type: 'spring',
-          damping: 28,
-          stiffness: 350,
-          mass: 0.5,
+          damping: 24,
+          stiffness: 300,
+          mass: 0.4,
         }}
-        className="fixed top-0 left-0 w-7 h-7 rounded-full border shadow-[0_0_12px_rgba(213,176,108,0.3)] backdrop-blur-[1px] pointer-events-none"
-      />
-
-      <motion.div
-        animate={{
-          x: pos.x - 3,
-          y: pos.y - 3,
-          scale: isHovered ? 1.5 : 1,
-        }}
-        transition={{
-          type: 'spring',
-          damping: 40,
-          stiffness: 800,
-        }}
-        className="fixed top-0 left-0 w-1.5 h-1.5 rounded-full bg-[#D5B06C] shadow-[0_0_8px_#D5B06C] pointer-events-none"
+        className="fixed top-0 left-0 w-8 h-8 rounded-full border shadow-[0_0_15px_rgba(213,176,108,0.35)] backdrop-blur-[0.5px] pointer-events-none"
       />
     </div>
   );

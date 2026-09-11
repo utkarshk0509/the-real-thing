@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sliders, Palette, Type, Check, Eye } from 'lucide-react';
+import { Sliders, Palette, Type, Check, Eye, Sparkles, Share2 } from 'lucide-react';
 import CosmicNebulaBackground from '../components/Shared/CosmicNebulaBackground';
 import Navigation from '../components/Shared/Navigation';
 import AnonymousComments from '../components/Engagement/AnonymousComments';
 import GildedHeart from '../components/Engagement/GildedHeart';
+import QuoteCardExporterModal from '../components/Engagement/QuoteCardExporterModal';
+import StanzaStardustReaction from '../components/Engagement/StanzaStardustReaction';
 import useReader from '../hooks/useReader';
 import useComments from '../hooks/useComments';
 import useAuth from '../hooks/useAuth';
@@ -40,6 +42,9 @@ export const ReaderView = () => {
   const [selectedText, setSelectedText] = useState('');
   const [quoteTooltipPos, setQuoteTooltipPos] = useState(null);
   const [quoteSavedNotice, setQuoteSavedNotice] = useState(false);
+  const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
+  const [quoteToExport, setQuoteToExport] = useState('');
+  const [stardustEvent, setStardustEvent] = useState({ key: 0, pIndex: null, x: 50, y: 50 });
 
   const [paragraphBookmarks, setParagraphBookmarks] = useState({});
 
@@ -189,20 +194,32 @@ export const ReaderView = () => {
 
   const handleTextSelection = () => {
     const selection = window.getSelection();
-    const text = selection.toString().trim();
-
-    if (text && text.length >= 10 && text.length <= 300) {
-      const range = selection.getRangeAt(0);
-      const rect = range.getBoundingClientRect();
-      setSelectedText(text);
-      setQuoteTooltipPos({
-        top: rect.top + window.scrollY - 45,
-        left: rect.left + rect.width / 2,
-      });
-    } else {
+    if (!selection || selection.isCollapsed) {
       setSelectedText('');
       setQuoteTooltipPos(null);
+      return;
     }
+
+    const text = selection.toString().trim();
+
+    // Support selections from short lines (3 chars) up to full multi-stanza passages (2000 chars)
+    if (text && text.length >= 3 && text.length <= 2000) {
+      if (selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          setSelectedText(text);
+          setQuoteTooltipPos({
+            top: Math.max(10, rect.top + window.scrollY - 48),
+            left: Math.max(120, Math.min(window.innerWidth - 120, rect.left + rect.width / 2)),
+          });
+          return;
+        }
+      }
+    }
+
+    setSelectedText('');
+    setQuoteTooltipPos(null);
   };
 
   const handleSaveQuote = () => {
@@ -217,6 +234,32 @@ export const ReaderView = () => {
     setQuoteTooltipPos(null);
     setQuoteSavedNotice(true);
     setTimeout(() => setQuoteSavedNotice(false), 3000);
+  };
+
+  const handleOpenQuoteCard = (customText) => {
+    const text = customText || selectedText || work?.excerpt || (work?.body ? work.body.split('\n\n')[0] : '');
+    setQuoteToExport(text);
+    setIsQuoteModalOpen(true);
+    setQuoteTooltipPos(null);
+  };
+
+  const handleTriggerStardust = (pIndex, e) => {
+    e?.stopPropagation();
+    let x = 50;
+    let y = 50;
+    if (e && e.currentTarget) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      if (e.clientX && e.clientY) {
+        x = Math.max(10, Math.min(90, ((e.clientX - rect.left) / rect.width) * 100));
+        y = Math.max(10, Math.min(90, ((e.clientY - rect.top) / rect.height) * 100));
+      }
+    }
+    setStardustEvent({
+      key: Date.now(),
+      pIndex,
+      x,
+      y,
+    });
   };
 
   const handleParagraphBookmark = (pIndex) => {
@@ -248,6 +291,7 @@ export const ReaderView = () => {
             paragraphRefs.current[idx] = el;
             if (isBookmarked) bookmarkedRef.current = el;
           }}
+          onDoubleClick={(e) => handleTriggerStardust(idx, e)}
           className={`relative group py-3 px-2 rounded-lg transition-all duration-500 ease-out ${
             isActiveSpotlight
               ? 'opacity-100 text-[#FEEFFF] border-l-2 border-[#D5B06C] pl-4 -ml-4 bg-[#D5B06C]/[0.03] shadow-[0_0_20px_rgba(213,176,108,0.15)]'
@@ -256,6 +300,14 @@ export const ReaderView = () => {
               : 'hover:bg-white/[0.02]'
           }`}
         >
+          {stardustEvent.pIndex === idx && (
+            <StanzaStardustReaction
+              triggerKey={stardustEvent.key}
+              originX={stardustEvent.x}
+              originY={stardustEvent.y}
+            />
+          )}
+
           <button
             onClick={() => handleParagraphBookmark(idx)}
             title={isBookmarked ? 'Remove Bookmark' : 'Bookmark Paragraph'}
@@ -267,6 +319,15 @@ export const ReaderView = () => {
           >
             •
           </button>
+
+          <button
+            onClick={(e) => handleTriggerStardust(idx, e)}
+            title="Drop Stardust Embers (Double click stanza)"
+            className="absolute right-2 top-3 opacity-0 group-hover:opacity-60 hover:opacity-100 text-[#D5B06C] text-xs transition-all cursor-pointer p-1"
+          >
+            ✦
+          </button>
+
           <p className="whitespace-pre-wrap leading-relaxed">{p}</p>
         </div>
       );
@@ -346,9 +407,9 @@ export const ReaderView = () => {
   };
 
   const FONT_FAMILIES = {
-    serif: 'font-serif',
-    playfair: 'font-serif font-medium tracking-wide',
-    sans: 'font-sans font-light tracking-wide',
+    serif: 'font-serif leading-relaxed',
+    playfair: 'font-playfair leading-relaxed',
+    sans: 'font-sans font-light tracking-wide leading-relaxed',
   };
 
   return (
@@ -376,13 +437,21 @@ export const ReaderView = () => {
               left: `${quoteTooltipPos.left}px`,
               transform: 'translateX(-50%)',
             }}
-            className="z-50"
+            className="z-50 flex items-center gap-1.5"
           >
             <button
               onClick={handleSaveQuote}
               className="bg-[#0F1216] border border-[#D5B06C] text-[#D5B06C] px-3.5 py-1.5 rounded-full font-sans text-[10px] uppercase tracking-widest shadow-2xl hover:bg-[#D5B06C] hover:text-[#080A06] transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap"
             >
               Save Quote
+            </button>
+            <button
+              onClick={() => handleOpenQuoteCard(selectedText)}
+              className="bg-[#D5B06C] text-[#080A06] px-3.5 py-1.5 rounded-full font-sans text-[10px] uppercase tracking-widest shadow-2xl hover:bg-[#FEEFFF] transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap font-semibold"
+              title="Share selection as celestial Quote Card"
+            >
+              <Sparkles className="w-3 h-3" />
+              <span>Share Card</span>
             </button>
           </motion.div>
         )}
@@ -412,6 +481,15 @@ export const ReaderView = () => {
           </button>
 
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => handleOpenQuoteCard()}
+              className="flex items-center gap-1.5 font-sans text-[10px] sm:text-xs uppercase tracking-[0.2em] px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg border border-[#D5B06C]/40 bg-[#0F1216]/80 text-[#D5B06C] hover:bg-[#D5B06C]/15 transition-all cursor-pointer backdrop-blur-md shadow-sm"
+              title="Generate shareable Instagram/Twitter quote card"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Quote Card</span>
+            </button>
+
             <button
               onClick={() => handleUpdateSetting('focusSpotlight', !readerSettings.focusSpotlight)}
               className={`flex items-center gap-1.5 font-sans text-[10px] sm:text-xs uppercase tracking-[0.2em] px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg border transition-all cursor-pointer backdrop-blur-md shadow-sm ${
@@ -705,6 +783,15 @@ export const ReaderView = () => {
           </div>
         )}
       </main>
+
+      <QuoteCardExporterModal
+        isOpen={isQuoteModalOpen}
+        onClose={() => setIsQuoteModalOpen(false)}
+        quoteText={quoteToExport}
+        workTitle={work?.title}
+        author={work?.author}
+        workSlug={work?.slug}
+      />
     </div>
   );
 };

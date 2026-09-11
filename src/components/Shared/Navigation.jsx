@@ -1,15 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Search, Compass, Sparkles } from 'lucide-react';
 import useAuth from '../../hooks/useAuth';
 import { CACHE_KEYS } from '../../config/constants';
 import readerProgressService from '../../services/readerProgressService';
+import CosmicSearchModal from './CosmicSearchModal';
+import CosmicSerendipityModal from '../Hub/CosmicSerendipityModal';
 
 export const Navigation = ({ readingPercent, scrollLinePercent, readingWork }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, userData, isCurator, login, logout } = useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isSerendipityNavOpen, setIsSerendipityNavOpen] = useState(false);
 
   const [drawerTab, setDrawerTab] = useState('library');
   const [libraryFilter, setLibraryFilter] = useState('Reading');
@@ -17,6 +22,17 @@ export const Navigation = ({ readingPercent, scrollLinePercent, readingWork }) =
   const [readerStats, setReaderStats] = useState({ worksFinished: 0, commentsCount: 0, streakDays: 1 });
   const [favoriteQuotes, setFavoriteQuotes] = useState([]);
   const [libraryStatuses, setLibraryStatuses] = useState({});
+
+  useEffect(() => {
+    const handleGlobalKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsSearchOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, []);
 
   useEffect(() => {
     if (isProfileOpen) {
@@ -130,6 +146,29 @@ export const Navigation = ({ readingPercent, scrollLinePercent, readingWork }) =
                 transition={{ type: 'spring', stiffness: 380, damping: 30 }}
               />
             )}
+          </button>
+
+          {/* Quick Search Button (⌘K) */}
+          <button
+            onClick={() => setIsSearchOpen(true)}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-[#8A8177]/30 bg-[#0F1216]/80 text-[#8A8177] hover:text-[#D5B06C] hover:border-[#D5B06C]/50 transition-all cursor-pointer text-[10px] font-sans uppercase tracking-wider"
+            title="Search Inscriptions (Ctrl+K / ⌘K)"
+          >
+            <Search className="w-3 h-3 text-[#D5B06C]" />
+            <span className="hidden lg:inline">Search</span>
+            <kbd className="hidden sm:inline-block px-1 py-0.5 text-[8px] bg-white/5 rounded border border-white/10 text-[#8A8177]">
+              ⌘K
+            </kbd>
+          </button>
+
+          {/* Serendipity Oracle Button */}
+          <button
+            onClick={() => setIsSerendipityNavOpen(true)}
+            className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-full border border-[#D5B06C]/30 bg-[#D5B06C]/10 text-[#D5B06C] hover:bg-[#D5B06C] hover:text-[#080A06] transition-all cursor-pointer text-[10px] font-sans uppercase tracking-wider"
+            title="Consult the Constellation Oracle"
+          >
+            <Compass className="w-3 h-3" />
+            <span className="hidden md:inline">Oracle</span>
           </button>
 
           {readingPercent !== undefined && (
@@ -373,6 +412,16 @@ export const Navigation = ({ readingPercent, scrollLinePercent, readingWork }) =
           </div>
         )}
       </AnimatePresence>
+
+      <CosmicSearchModal
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+      />
+
+      <CosmicSerendipityModal
+        isOpen={isSerendipityNavOpen}
+        onClose={() => setIsSerendipityNavOpen(false)}
+      />
     </>
   );
 };

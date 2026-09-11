@@ -1,13 +1,33 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, useMotionValue, useSpring } from 'framer-motion';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Clock, Heart, Compass, ArrowRight, BookOpen } from 'lucide-react';
 import Navigation from '../components/Shared/Navigation';
 import CosmicNebulaBackground from '../components/Shared/CosmicNebulaBackground';
+import CosmicSerendipityModal from '../components/Hub/CosmicSerendipityModal';
 import workService from '../services/workService';
 import cacheService from '../services/cacheService';
 import readerProgressService from '../services/readerProgressService';
 import { CACHE_KEYS } from '../config/constants';
+
+const MOODS = [
+  { id: 'all', label: '✦ All Constellations' },
+  { id: 'cosmic', label: '⋆ Cosmic & Wonder' },
+  { id: 'melancholy', label: '✧ Melancholic Rain' },
+  { id: 'love', label: '◈ Heart & Longing' },
+  { id: 'peace', label: '⊹ Quiet Solitude' },
+];
+
+function matchesMood(work, mood) {
+  if (!work || mood === 'all') return true;
+  const text = `${work.title || ''} ${work.excerpt || ''} ${work.body || ''}`.toLowerCase();
+  if (mood === 'cosmic') return /star|cosmos|nebula|sky|galaxy|moon|space|light|sun|starlight/.test(text);
+  if (mood === 'melancholy') return /grief|sad|ache|rain|cold|sorrow|tear|loss|shadow|alone|dark/.test(text);
+  if (mood === 'love') return /love|heart|kiss|hold|touch|lips|breath|warm|arms|together/.test(text);
+  if (mood === 'peace') return /peace|silence|quiet|still|whisper|wind|sleep|dream|breathe/.test(text);
+  return true;
+}
+
 
 const NODES = [
   {
@@ -254,6 +274,69 @@ function StarNode({ node, isHovered, isExploding, onEnter, onLeave, onClick, cou
   );
 }
 
+function WorkStar({ work, cx, cy, isHovered, isDimmed, onEnter, onLeave, onClick }) {
+  const isPoem = work.category === 'poem';
+  const color = isPoem ? '#D5B06C' : '#7CB9E8';
+  const likes = work.gilded_likes_count || 0;
+  const baseR = Math.min(5.5, 3.2 + Math.log10(likes + 1) * 1.4);
+
+  return (
+    <g
+      style={{ cursor: 'pointer', transition: 'opacity 0.35s ease' }}
+      opacity={isDimmed ? 0.2 : 1}
+      onMouseEnter={onEnter}
+      onMouseLeave={onLeave}
+      onClick={onClick}
+    >
+      {/* Enlarged hit boundary */}
+      <circle cx={cx} cy={cy} r={22} fill="transparent" />
+
+      {/* Orbit ripple on hover */}
+      {isHovered && (
+        <>
+          <motion.circle
+            cx={cx}
+            cy={cy}
+            r={baseR + 8}
+            fill="none"
+            stroke={color}
+            strokeWidth="0.8"
+            animate={{ scale: [1, 1.35, 1], opacity: [0.7, 0.2, 0.7] }}
+            transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+          />
+          <circle cx={cx} cy={cy} r={baseR + 4} fill={color} opacity="0.25" />
+        </>
+      )}
+
+      {/* Core Star Body */}
+      <circle
+        cx={cx}
+        cy={cy}
+        r={isHovered ? baseR * 1.4 : baseR}
+        fill={isHovered ? '#FEEFFF' : color}
+        style={{
+          filter: `drop-shadow(0 0 ${isHovered ? 10 : 4}px ${color})`,
+          transition: 'all 0.25s ease',
+        }}
+      />
+
+      {/* Star glyph */}
+      {isHovered && (
+        <text
+          x={cx}
+          y={cy - baseR - 4}
+          textAnchor="middle"
+          fontSize="9"
+          fill={color}
+          style={{ userSelect: 'none' }}
+        >
+          ✦
+        </text>
+      )}
+    </g>
+  );
+}
+
 export const HomeConstellation = () => {
   const navigate = useNavigate();
   const [hoveredNode, setHoveredNode] = useState(null);
@@ -298,6 +381,10 @@ export const HomeConstellation = () => {
   const [allWorks, setAllWorks] = useState([]);
   const [oracleWork, setOracleWork] = useState(null);
   const [isOracleOpen, setIsOracleOpen] = useState(false);
+  const [hoveredWorkStar, setHoveredWorkStar] = useState(null);
+  const [selectedMood, setSelectedMood] = useState('all');
+  const [warpWork, setWarpWork] = useState(null);
+  const [isSerendipityOpen, setIsSerendipityOpen] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -377,6 +464,46 @@ export const HomeConstellation = () => {
     setTimeout(() => navigate(node.route), 650);
   };
 
+  const handleWorkClick = (work) => {
+    if (warpWork || explodingNode) return;
+    setWarpWork(work);
+    setTimeout(() => {
+      navigate(`/read/${work.slug}`);
+    }, 650);
+  };
+
+  const poemNode = liveNodes.find((n) => n.id === 'poems') || { cx: 155, cy: 120 };
+  const storyNode = liveNodes.find((n) => n.id === 'stories') || { cx: 445, cy: 140 };
+
+  const publishedPoems = allWorks.filter((w) => w.category === 'poem');
+  const publishedStories = allWorks.filter((w) => w.category === 'story');
+
+  const poemStars = publishedPoems.slice(0, 14).map((w, idx) => {
+    const total = Math.min(publishedPoems.length, 14);
+    const angle = (idx / total) * Math.PI * 2 + (idx % 2 === 0 ? 0.35 : 0.75);
+    const radius = 54 + (idx % 3) * 17;
+    return {
+      work: w,
+      cx: poemNode.cx + Math.cos(angle) * radius,
+      cy: poemNode.cy + Math.sin(angle) * radius,
+      parentCx: poemNode.cx,
+      parentCy: poemNode.cy,
+    };
+  });
+
+  const storyStars = publishedStories.slice(0, 10).map((w, idx) => {
+    const total = Math.min(publishedStories.length, 10);
+    const angle = (idx / total) * Math.PI * 2 + (idx % 2 === 0 ? 0.45 : 0.9);
+    const radius = 56 + (idx % 2) * 19;
+    return {
+      work: w,
+      cx: storyNode.cx + Math.cos(angle) * radius,
+      cy: storyNode.cy + Math.sin(angle) * radius,
+      parentCx: storyNode.cx,
+      parentCy: storyNode.cy,
+    };
+  });
+
   return (
     <motion.div
       initial={{ opacity: 0, filter: 'blur(6px)', scale: 0.98 }}
@@ -438,6 +565,23 @@ export const HomeConstellation = () => {
           </motion.p>
         </div>
 
+        {/* Constellation Mood Filter Chips */}
+        <div className="flex flex-wrap items-center justify-center gap-1.5 mb-2 z-20 max-w-xl">
+          {MOODS.map((m) => (
+            <button
+              key={m.id}
+              onClick={() => setSelectedMood(m.id)}
+              className={`px-3 py-1 rounded-full text-[10px] uppercase font-sans tracking-widest transition-all cursor-pointer ${
+                selectedMood === m.id
+                  ? 'bg-[#D5B06C]/25 border border-[#D5B06C] text-[#D5B06C] shadow-[0_0_12px_rgba(213,176,108,0.3)]'
+                  : 'bg-[#0F1216]/60 border border-white/10 text-[#8A8177] hover:text-[#FEEFFF]'
+              }`}
+            >
+              {m.label}
+            </button>
+          ))}
+        </div>
+
         <div className="flex flex-wrap items-center justify-center gap-2 mb-2 z-20">
           <AnimatePresence>
             {lastReadWork && (
@@ -460,11 +604,11 @@ export const HomeConstellation = () => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.65 }}
-            onClick={handleOpenOracle}
-            className="px-4 py-1.5 rounded-full border border-[#7CB9E8]/40 bg-[#7CB9E8]/10 text-[#7CB9E8] font-sans text-[9px] uppercase tracking-[0.25em] hover:bg-[#7CB9E8]/20 hover:border-[#7CB9E8] transition-all backdrop-blur-sm flex items-center gap-2 cursor-pointer shadow-[0_0_15px_rgba(124,185,232,0.15)]"
+            onClick={() => setIsSerendipityOpen(true)}
+            className="px-4 py-1.5 rounded-full border border-[#D5B06C]/50 bg-[#D5B06C]/15 text-[#D5B06C] font-sans text-[9px] uppercase tracking-[0.25em] hover:bg-[#D5B06C] hover:text-[#080A06] transition-all backdrop-blur-sm flex items-center gap-2 cursor-pointer shadow-[0_0_15px_rgba(213,176,108,0.25)] font-semibold"
           >
-            <Sparkles className="w-3 h-3" />
-            <span>Discover a Stanza</span>
+            <Compass className="w-3.5 h-3.5 animate-spin" style={{ animationDuration: '10s' }} />
+            <span>Consult Constellation Oracle</span>
           </motion.button>
         </div>
 
@@ -653,6 +797,66 @@ export const HomeConstellation = () => {
               );
             })}
 
+            {/* Dynamic Poem Stars orbiting Stella Lyricis */}
+            {poemStars.map(({ work, cx, cy, parentCx, parentCy }) => {
+              const isHovered = hoveredWorkStar?.slug === work.slug;
+              const isDimmed = !matchesMood(work, selectedMood);
+              return (
+                <g key={`poem-${work.slug}`}>
+                  <line
+                    x1={parentCx}
+                    y1={parentCy}
+                    x2={cx}
+                    y2={cy}
+                    stroke="#D5B06C"
+                    strokeWidth="0.4"
+                    strokeOpacity={isHovered ? 0.75 : isDimmed ? 0.05 : 0.2}
+                    strokeDasharray="2 3"
+                  />
+                  <WorkStar
+                    work={work}
+                    cx={cx}
+                    cy={cy}
+                    isHovered={isHovered}
+                    isDimmed={isDimmed}
+                    onEnter={() => setHoveredWorkStar(work)}
+                    onLeave={() => setHoveredWorkStar(null)}
+                    onClick={() => handleWorkClick(work)}
+                  />
+                </g>
+              );
+            })}
+
+            {/* Dynamic Story Stars orbiting Stella Narrativa */}
+            {storyStars.map(({ work, cx, cy, parentCx, parentCy }) => {
+              const isHovered = hoveredWorkStar?.slug === work.slug;
+              const isDimmed = !matchesMood(work, selectedMood);
+              return (
+                <g key={`story-${work.slug}`}>
+                  <line
+                    x1={parentCx}
+                    y1={parentCy}
+                    x2={cx}
+                    y2={cy}
+                    stroke="#7CB9E8"
+                    strokeWidth="0.4"
+                    strokeOpacity={isHovered ? 0.75 : isDimmed ? 0.05 : 0.2}
+                    strokeDasharray="2 3"
+                  />
+                  <WorkStar
+                    work={work}
+                    cx={cx}
+                    cy={cy}
+                    isHovered={isHovered}
+                    isDimmed={isDimmed}
+                    onEnter={() => setHoveredWorkStar(work)}
+                    onLeave={() => setHoveredWorkStar(null)}
+                    onClick={() => handleWorkClick(work)}
+                  />
+                </g>
+              );
+            })}
+
             {liveNodes.map((node) => (
               <StarNode
                 key={node.id}
@@ -667,6 +871,49 @@ export const HomeConstellation = () => {
             ))}
           </svg>
         </motion.div>
+
+        {/* Hovered Work Preview Tooltip */}
+        <AnimatePresence>
+          {hoveredWorkStar && (
+            <motion.div
+              initial={{ opacity: 0, y: 15, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="absolute bottom-16 sm:bottom-20 z-30 pointer-events-none px-4"
+            >
+              <div className="bg-[#0B0D11]/95 border border-[#D5B06C]/50 rounded-2xl p-4 shadow-[0_0_35px_rgba(0,0,0,0.9)] max-w-sm text-center backdrop-blur-xl space-y-1.5">
+                <div className="flex items-center justify-center gap-2 text-[9px] uppercase font-sans tracking-[0.25em] text-[#D5B06C]">
+                  <span>{hoveredWorkStar.category === 'poem' ? '✦ Lyrical Star' : '◈ Narrative Star'}</span>
+                  <span>•</span>
+                  <span>{hoveredWorkStar.read_time_minutes || 2} min read</span>
+                  {hoveredWorkStar.gilded_likes_count > 0 && (
+                    <>
+                      <span>•</span>
+                      <span className="flex items-center gap-1 text-[#D5B06C]">
+                        <Heart className="w-2.5 h-2.5 fill-current" /> {hoveredWorkStar.gilded_likes_count}
+                      </span>
+                    </>
+                  )}
+                </div>
+                <h4 className="font-serif text-lg text-[#FEEFFF] font-normal leading-snug">
+                  {hoveredWorkStar.title}
+                </h4>
+                <p className="font-sans text-[11px] text-[#8A8177]">
+                  By {hoveredWorkStar.author || 'Anonymous'}
+                </p>
+                {hoveredWorkStar.excerpt && (
+                  <p className="font-serif italic text-xs text-[#FEEFFF]/75 line-clamp-2 pt-1 border-t border-white/5">
+                    "{hoveredWorkStar.excerpt}"
+                  </p>
+                )}
+                <span className="inline-block text-[9px] uppercase font-sans tracking-widest text-[#D5B06C] pt-1 font-semibold">
+                  Touch star to enter inscription →
+                </span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <motion.div
           initial={{ opacity: 0, y: 12 }}
@@ -689,6 +936,35 @@ export const HomeConstellation = () => {
           ))}
         </motion.div>
       </main>
+
+      {/* Hyperdrive Warp Transition */}
+      <AnimatePresence>
+        {warpWork && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-lg pointer-events-none"
+          >
+            <div className="text-center space-y-4">
+              <motion.div
+                animate={{ scale: [1, 2.8, 5], opacity: [0.9, 1, 0] }}
+                transition={{ duration: 0.65, ease: 'easeIn' }}
+                className="w-16 h-16 rounded-full bg-gradient-to-r from-[#D5B06C] via-[#FEEFFF] to-[#7CB9E8] mx-auto shadow-[0_0_60px_#D5B06C]"
+              />
+              <p className="font-serif text-2xl text-[#FEEFFF] tracking-widest">
+                Warping to "{warpWork.title}"...
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <CosmicSerendipityModal
+        isOpen={isSerendipityOpen}
+        onClose={() => setIsSerendipityOpen(false)}
+      />
     </motion.div>
   );
 };

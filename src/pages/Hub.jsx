@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart } from 'lucide-react';
+import { Heart, Sparkles, Compass } from 'lucide-react';
 import Navigation from '../components/Shared/Navigation';
 import CosmicNebulaBackground from '../components/Shared/CosmicNebulaBackground';
 import { GlowingCard } from '../components/Shared/GlowingCard';
@@ -10,6 +10,24 @@ import AboutAuthorSanctuary from '../components/About/AboutAuthorSanctuary';
 import useWorks from '../hooks/useWorks';
 import siteService from '../services/siteService';
 import readerProgressService from '../services/readerProgressService';
+
+const MOODS = [
+  { id: 'all', label: '✦ All' },
+  { id: 'cosmic', label: '⋆ Cosmic' },
+  { id: 'melancholy', label: '✧ Melancholy' },
+  { id: 'love', label: '◈ Love' },
+  { id: 'peace', label: '⊹ Solitude' },
+];
+
+function matchesMood(work, mood) {
+  if (!work || mood === 'all') return true;
+  const text = `${work.title || ''} ${work.excerpt || ''} ${work.body || ''}`.toLowerCase();
+  if (mood === 'cosmic') return /star|cosmos|nebula|sky|galaxy|moon|space|light|sun|starlight/.test(text);
+  if (mood === 'melancholy') return /grief|sad|ache|rain|cold|sorrow|tear|loss|shadow|alone|dark/.test(text);
+  if (mood === 'love') return /love|heart|kiss|hold|touch|lips|breath|warm|arms|together/.test(text);
+  if (mood === 'peace') return /peace|silence|quiet|still|whisper|wind|sleep|dream|breathe/.test(text);
+  return true;
+}
 
 export const Hub = ({ filter }) => {
   const navigate = useNavigate();
@@ -20,6 +38,7 @@ export const Hub = ({ filter }) => {
   const [lastRead, setLastRead] = useState(null);
   const [allProgress, setAllProgress] = useState({});
   const [viewMode, setViewMode] = useState(() => readerProgressService.getViewPreference());
+  const [selectedMood, setSelectedMood] = useState('all');
 
   const handleViewModeChange = (mode) => {
     setViewMode(mode);
@@ -54,6 +73,10 @@ export const Hub = ({ filter }) => {
 
   const poems = works.filter((w) => w.category === 'poem');
   const stories = works.filter((w) => w.category === 'story');
+
+  const filteredPoems = poems.filter((w) => matchesMood(w, selectedMood));
+  const filteredStories = stories.filter((w) => matchesMood(w, selectedMood));
+  const displayWorks = isPoemsOnly ? filteredPoems : isStoriesOnly ? filteredStories : works.filter((w) => matchesMood(w, selectedMood));
 
   const containerVariants = {
     hidden: { opacity: 0, y: 10 },
@@ -106,29 +129,49 @@ export const Hub = ({ filter }) => {
           </button>
 
           {!isAboutOnly && (
-            <div className="flex items-center gap-2 bg-[#0F1216]/60 border border-[#8A8177]/20 rounded-lg p-1 backdrop-blur-sm self-start sm:self-auto">
-              <button
-                type="button"
-                onClick={() => handleViewModeChange('grid')}
-                className={`px-3 py-1 rounded text-[10px] font-sans uppercase tracking-widest transition-all cursor-pointer ${
-                  viewMode === 'grid'
-                    ? 'bg-[#D5B06C]/20 border border-[#D5B06C]/50 text-[#D5B06C]'
-                    : 'text-[#8A8177] hover:text-[#FEEFFF]'
-                }`}
-              >
-                Grid View
-              </button>
-              <button
-                type="button"
-                onClick={() => handleViewModeChange('bookshelf')}
-                className={`px-3 py-1 rounded text-[10px] font-sans uppercase tracking-widest transition-all cursor-pointer ${
-                  viewMode === 'bookshelf'
-                    ? 'bg-[#D5B06C]/20 border border-[#D5B06C]/50 text-[#D5B06C]'
-                    : 'text-[#8A8177] hover:text-[#FEEFFF]'
-                }`}
-              >
-                Animated Bookshelf
-              </button>
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Mood Filter Pills */}
+              <div className="flex items-center gap-1 bg-[#0F1216]/60 border border-[#8A8177]/20 rounded-lg p-1 backdrop-blur-sm">
+                {MOODS.map((m) => (
+                  <button
+                    key={m.id}
+                    onClick={() => setSelectedMood(m.id)}
+                    className={`px-2.5 py-1 rounded text-[10px] font-sans uppercase tracking-widest transition-all cursor-pointer ${
+                      selectedMood === m.id
+                        ? 'bg-[#D5B06C]/25 border border-[#D5B06C]/60 text-[#D5B06C]'
+                        : 'text-[#8A8177] hover:text-[#FEEFFF]'
+                    }`}
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* View Switcher */}
+              <div className="flex items-center gap-1 bg-[#0F1216]/60 border border-[#8A8177]/20 rounded-lg p-1 backdrop-blur-sm self-start sm:self-auto">
+                <button
+                  type="button"
+                  onClick={() => handleViewModeChange('grid')}
+                  className={`px-3 py-1 rounded text-[10px] font-sans uppercase tracking-widest transition-all cursor-pointer ${
+                    viewMode === 'grid'
+                      ? 'bg-[#D5B06C]/20 border border-[#D5B06C]/50 text-[#D5B06C]'
+                      : 'text-[#8A8177] hover:text-[#FEEFFF]'
+                  }`}
+                >
+                  Grid View
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleViewModeChange('bookshelf')}
+                  className={`px-3 py-1 rounded text-[10px] font-sans uppercase tracking-widest transition-all cursor-pointer ${
+                    viewMode === 'bookshelf'
+                      ? 'bg-[#D5B06C]/20 border border-[#D5B06C]/50 text-[#D5B06C]'
+                      : 'text-[#8A8177] hover:text-[#FEEFFF]'
+                  }`}
+                >
+                  Animated Bookshelf
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -176,13 +219,26 @@ export const Hub = ({ filter }) => {
                 transition={{ duration: 0.35, ease: 'easeOut' }}
               >
                 <BookshelfView
-                  works={isPoemsOnly ? poems : isStoriesOnly ? stories : works}
+                  works={displayWorks}
                   onSelectWork={(work) => navigate(`/read/${work.slug}`)}
                 />
               </motion.div>
             ) : (
               <>
-                {(isPoemsOnly || (!isStoriesOnly && !isAboutOnly)) && poems.length > 0 && (
+                {filteredPoems.length === 0 && filteredStories.length === 0 && !isAboutOnly && (
+                  <div className="text-center py-16 space-y-3">
+                    <Sparkles className="w-8 h-8 text-[#D5B06C]/50 mx-auto animate-pulse" />
+                    <p className="font-serif text-lg text-[#FEEFFF]">No inscriptions found for this mood filter</p>
+                    <button
+                      onClick={() => setSelectedMood('all')}
+                      className="text-xs uppercase font-sans tracking-widest text-[#D5B06C] hover:underline cursor-pointer"
+                    >
+                      Clear Mood Filter
+                    </button>
+                  </div>
+                )}
+
+                {(isPoemsOnly || (!isStoriesOnly && !isAboutOnly)) && filteredPoems.length > 0 && (
                   <motion.section
                     key="poems-section"
                     variants={containerVariants}
@@ -197,7 +253,7 @@ export const Hub = ({ filter }) => {
                       </h2>
                     )}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {poems.map((poem) => (
+                      {filteredPoems.map((poem) => (
                         <motion.div key={poem.slug} variants={itemVariants}>
                           <GlowingCard
                             image={poem.image_url}
@@ -242,7 +298,7 @@ export const Hub = ({ filter }) => {
                   </motion.section>
                 )}
 
-                {(isStoriesOnly || (!isPoemsOnly && !isAboutOnly)) && stories.length > 0 && (
+                {(isStoriesOnly || (!isPoemsOnly && !isAboutOnly)) && filteredStories.length > 0 && (
                   <motion.section
                     key="stories-section"
                     variants={containerVariants}
@@ -257,7 +313,7 @@ export const Hub = ({ filter }) => {
                       </h2>
                     )}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {stories.map((story) => (
+                      {filteredStories.map((story) => (
                         <motion.div key={story.slug} variants={itemVariants}>
                           <GlowingCard
                             image={story.image_url}

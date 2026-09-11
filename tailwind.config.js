@@ -21,6 +21,9 @@ export default {
       fontFamily: {
         serif: ['"Cormorant Garamond"', 'serif'],
         sans: ['Inter', 'sans-serif'],
+        playfair: ['"Playfair Display"', 'Georgia', 'serif'],
+        cinzel: ['"Cinzel"', 'serif'],
+        mono: ['"Space Mono"', 'monospace'],
       },
       fontSize: {
         'landing-hero': '72px',

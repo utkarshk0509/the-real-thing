@@ -64,11 +64,11 @@ export const CustomCelestialCursor = () => {
           y: pos.y - (isHovered ? 18 : 12),
           scale: isClicking ? 0.75 : isHovered ? 1.4 : 1,
           borderColor: isHovered ? '#FFE8A3' : 'rgba(213, 176, 108, 0.45)',
-          backgroundColor: isHovered 
-            ? 'rgba(213, 176, 108, 0.16)' 
-            : isClicking 
-            ? 'rgba(213, 176, 108, 0.25)' 
-            : 'rgba(213, 176, 108, 0.04)',
+          backgroundColor: isHovered
+            ? 'rgba(213, 176, 108, 0.16)'
+            : isClicking
+              ? 'rgba(213, 176, 108, 0.25)'
+              : 'rgba(213, 176, 108, 0.04)',
         }}
         transition={{
           type: 'spring',

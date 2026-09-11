@@ -230,6 +230,68 @@ export const siteService = {
     }
 
     return updated;
+  },
+
+  async getGlobalSettings() {
+    const defaultSettings = {
+      announcementEnabled: false,
+      announcementText: '✦ New Celestial Inscriptions Added to the Sanctuary Galaxy',
+      announcementLink: '/hub',
+      celestialCursorEnabled: true,
+      stardustTrailEnabled: true,
+      defaultReaderTheme: 'midnight',
+      defaultTypography: 'serif',
+    };
+
+    if (supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('site_settings')
+          .select('value')
+          .eq('key', 'sanctuary_global_settings')
+          .maybeSingle();
+
+        if (!error && data?.value) {
+          const parsed = typeof data.value === 'string' ? JSON.parse(data.value) : data.value;
+          const merged = { ...defaultSettings, ...parsed };
+          localStorage.setItem('sanctuary_global_settings', JSON.stringify(merged));
+          return merged;
+        }
+      } catch (err) {
+        console.warn('[siteService] Remote settings fetch error:', err);
+      }
+    }
+
+    try {
+      const local = localStorage.getItem('sanctuary_global_settings');
+      if (local) return { ...defaultSettings, ...JSON.parse(local) };
+    } catch (e) {}
+
+    return defaultSettings;
+  },
+
+  async updateGlobalSettings(newSettings) {
+    try {
+      localStorage.setItem('sanctuary_global_settings', JSON.stringify(newSettings));
+    } catch (e) {}
+
+    if (supabase) {
+      try {
+        await supabase
+          .from('site_settings')
+          .upsert({
+            key: 'sanctuary_global_settings',
+            value: JSON.stringify(newSettings),
+            updated_at: new Date().toISOString()
+          });
+      } catch (err) {
+        console.warn('[siteService] Remote settings update notice:', err);
+      }
+    }
+
+    // Trigger storage event so open tabs/components react immediately
+    window.dispatchEvent(new Event('sanctuary-settings-changed'));
+    return newSettings;
   }
 };
 

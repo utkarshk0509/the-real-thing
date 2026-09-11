@@ -45,10 +45,30 @@ function AnimatedRoutes() {
 }
 
 function App() {
+  const [settings, setSettings] = React.useState(() => {
+    try {
+      const local = localStorage.getItem('sanctuary_global_settings');
+      return local ? JSON.parse(local) : { celestialCursorEnabled: true, stardustTrailEnabled: true };
+    } catch (e) {
+      return { celestialCursorEnabled: true, stardustTrailEnabled: true };
+    }
+  });
+
+  React.useEffect(() => {
+    const handleUpdate = () => {
+      try {
+        const local = localStorage.getItem('sanctuary_global_settings');
+        if (local) setSettings(JSON.parse(local));
+      } catch (e) {}
+    };
+    window.addEventListener('sanctuary-settings-changed', handleUpdate);
+    return () => window.removeEventListener('sanctuary-settings-changed', handleUpdate);
+  }, []);
+
   return (
     <BrowserRouter>
-      <CustomCelestialCursor />
-      <MagicStardustTrail />
+      {settings.celestialCursorEnabled !== false && <CustomCelestialCursor />}
+      {settings.stardustTrailEnabled !== false && <MagicStardustTrail />}
       <AnimatedRoutes />
     </BrowserRouter>
   );

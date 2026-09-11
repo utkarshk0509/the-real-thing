@@ -224,6 +224,108 @@ export const workService = {
     cacheService.set(CACHE_KEYS.HUB_WORKS, publishedOnly);
 
     return updatedWorks;
+  },
+
+  async togglePublishStatus(work) {
+    const newStatus = work.status === 'published' ? 'draft' : 'published';
+    const published_at = newStatus === 'published' ? (work.published_at || new Date().toISOString()) : null;
+
+    if (supabase && work.id) {
+      try {
+        await supabase
+          .from('works')
+          .update({ status: newStatus, published_at })
+          .eq('id', work.id);
+      } catch (err) {
+        console.warn('[workService] togglePublishStatus remote error:', err);
+      }
+    }
+
+    const currentCustom = cacheService.get(CACHE_KEYS.CUSTOM_WORKS) || [];
+    const idx = currentCustom.findIndex((w) => w.slug === work.slug || w.id === work.id);
+    if (idx >= 0) {
+      currentCustom[idx] = { ...currentCustom[idx], status: newStatus, published_at };
+      cacheService.set(CACHE_KEYS.CUSTOM_WORKS, currentCustom);
+    }
+
+    cacheService.invalidate(CACHE_KEYS.HUB_WORKS);
+    return await this.getAllWorksAdmin();
+  },
+
+  async duplicateWork(work) {
+    const randomSuffix = Math.random().toString(36).substring(2, 6);
+    const newWork = {
+      title: `${work.title} (Copy)`,
+      slug: `${work.slug}-copy-${randomSuffix}`,
+      author: work.author || 'Anonymous',
+      category: work.category || 'poem',
+      status: 'draft',
+      excerpt: work.excerpt || '',
+      body: work.body || '',
+      image_url: work.image_url || '',
+      read_time_minutes: work.read_time_minutes || 1,
+      published_at: null,
+      crop_scale: work.crop_scale || 1,
+      crop_pos_x: work.crop_pos_x || 50,
+      crop_pos_y: work.crop_pos_y || 50,
+      bookshelf_crop_scale: work.bookshelf_crop_scale || 1,
+      bookshelf_crop_pos_x: work.bookshelf_crop_pos_x || 50,
+      bookshelf_crop_pos_y: work.bookshelf_crop_pos_y || 50,
+      sort_order: (work.sort_order || 0) + 1,
+    };
+
+    return await this.upsertWork(newWork);
+  },
+
+  async batchUpdateStatus(workIds, newStatus) {
+    if (!workIds || workIds.length === 0) return await this.getAllWorksAdmin();
+
+    const published_at = newStatus === 'published' ? new Date().toISOString() : null;
+
+    if (supabase) {
+      try {
+        await supabase
+          .from('works')
+          .update({ status: newStatus, published_at })
+          .in('id', workIds);
+      } catch (err) {
+        console.warn('[workService] batchUpdateStatus remote error:', err);
+      }
+    }
+
+    const currentCustom = cacheService.get(CACHE_KEYS.CUSTOM_WORKS) || [];
+    const updated = currentCustom.map((w) => {
+      if (workIds.includes(w.id) || workIds.includes(w.slug)) {
+        return { ...w, status: newStatus, published_at };
+      }
+      return w;
+    });
+    cacheService.set(CACHE_KEYS.CUSTOM_WORKS, updated);
+
+    cacheService.invalidate(CACHE_KEYS.HUB_WORKS);
+    return await this.getAllWorksAdmin();
+  },
+
+  async batchDeleteWorks(workIds) {
+    if (!workIds || workIds.length === 0) return await this.getAllWorksAdmin();
+
+    if (supabase) {
+      try {
+        await supabase
+          .from('works')
+          .delete()
+          .in('id', workIds);
+      } catch (err) {
+        console.warn('[workService] batchDeleteWorks remote error:', err);
+      }
+    }
+
+    const currentCustom = cacheService.get(CACHE_KEYS.CUSTOM_WORKS) || [];
+    const updated = currentCustom.filter((w) => !workIds.includes(w.id) && !workIds.includes(w.slug));
+    cacheService.set(CACHE_KEYS.CUSTOM_WORKS, updated);
+
+    cacheService.invalidate(CACHE_KEYS.HUB_WORKS);
+    return await this.getAllWorksAdmin();
   }
 };
 

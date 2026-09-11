@@ -7,6 +7,7 @@ import { CACHE_KEYS } from '../../config/constants';
 import readerProgressService from '../../services/readerProgressService';
 import CosmicSearchModal from './CosmicSearchModal';
 import CosmicSerendipityModal from '../Hub/CosmicSerendipityModal';
+import siteService from '../../services/siteService';
 
 export const Navigation = ({ readingPercent, scrollLinePercent, readingWork }) => {
   const navigate = useNavigate();
@@ -22,6 +23,17 @@ export const Navigation = ({ readingPercent, scrollLinePercent, readingWork }) =
   const [readerStats, setReaderStats] = useState({ worksFinished: 0, commentsCount: 0, streakDays: 1 });
   const [favoriteQuotes, setFavoriteQuotes] = useState([]);
   const [libraryStatuses, setLibraryStatuses] = useState({});
+  const [globalSettings, setGlobalSettings] = useState(null);
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      const s = await siteService.getGlobalSettings();
+      setGlobalSettings(s);
+    };
+    fetchSettings();
+    window.addEventListener('sanctuary-settings-changed', fetchSettings);
+    return () => window.removeEventListener('sanctuary-settings-changed', fetchSettings);
+  }, []);
 
   useEffect(() => {
     const handleGlobalKeyDown = (e) => {
@@ -68,9 +80,24 @@ export const Navigation = ({ readingPercent, scrollLinePercent, readingWork }) =
 
   return (
     <>
+      {globalSettings?.announcementEnabled && globalSettings?.announcementText && (
+        <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-[#D5B06C]/10 via-[#D5B06C]/25 to-[#D5B06C]/10 backdrop-blur-md border-b border-[#D5B06C]/30 py-1.5 px-4 text-center">
+          <Link
+            to={globalSettings.announcementLink || '/hub'}
+            className="inline-flex items-center gap-2 text-[10px] sm:text-xs font-sans uppercase tracking-[0.2em] text-[#D5B06C] hover:text-[#FEEFFF] transition-colors font-medium"
+          >
+            <Sparkles className="w-3 h-3 text-[#D5B06C] animate-pulse" />
+            <span>{globalSettings.announcementText}</span>
+            <span className="text-[9px] opacity-70">→</span>
+          </Link>
+        </div>
+      )}
+
       <nav
         style={{ transform: 'none' }}
-        className="fixed top-0 left-0 right-0 z-50 bg-[#080A06]/95 backdrop-blur-xl border-b border-[#8A8177]/20 px-4 md:px-6 py-3 flex items-center justify-between shadow-2xl"
+        className={`fixed ${
+          globalSettings?.announcementEnabled && globalSettings?.announcementText ? 'top-8 sm:top-7' : 'top-0'
+        } left-0 right-0 z-50 bg-[#080A06]/95 backdrop-blur-xl border-b border-[#8A8177]/20 px-4 md:px-6 py-3 flex items-center justify-between shadow-2xl transition-all duration-300`}
       >
         <div className="flex items-center gap-3">
           <Link to="/" className="font-serif text-base md:text-xl tracking-wider text-[#FEEFFF] hover:text-[#D5B06C] transition-colors whitespace-nowrap cursor-pointer">

@@ -66,6 +66,43 @@ export const commentService = {
       console.warn('[commentService] Delete comment error:', err);
       return false;
     }
+  },
+
+  async getAllCommentsAdmin() {
+    if (!supabase) {
+      // Fallback from localStorage
+      try {
+        const local = localStorage.getItem('real_thing_cached_comments');
+        if (local) return JSON.parse(local);
+      } catch (e) {}
+      return [];
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('comments')
+        .select(`
+          id,
+          work_id,
+          author_alias,
+          content,
+          created_at,
+          is_approved,
+          works:work_id (title, slug, category)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (!error && data) {
+        try {
+          localStorage.setItem('real_thing_cached_comments', JSON.stringify(data));
+        } catch (e) {}
+        return data;
+      }
+    } catch (err) {
+      console.warn('[commentService] Fetch all admin comments error:', err);
+    }
+
+    return [];
   }
 };
 

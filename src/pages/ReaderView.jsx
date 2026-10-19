@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sliders, Palette, Type, Check, Eye, Sparkles, Share2 } from 'lucide-react';
+import { Sliders, Palette, Type, Check, Eye, Sparkles, Share2, Maximize2, Minimize2, ChevronLeft, ChevronRight } from 'lucide-react';
 import CosmicNebulaBackground from '../components/Shared/CosmicNebulaBackground';
 import Navigation from '../components/Shared/Navigation';
 import AnonymousComments from '../components/Engagement/AnonymousComments';
@@ -12,6 +12,7 @@ import useReader from '../hooks/useReader';
 import useComments from '../hooks/useComments';
 import useAuth from '../hooks/useAuth';
 import readerProgressService from '../services/readerProgressService';
+import workService from '../services/workService';
 
 export const ReaderView = () => {
   const { slug } = useParams();
@@ -27,6 +28,10 @@ export const ReaderView = () => {
 
   const [scrollProgressPercent, setScrollProgressPercent] = useState(0);
   const [maxProgressPercent, setMaxProgressPercent] = useState(0);
+
+  const [isZenMode, setIsZenMode] = useState(false);
+  const [isZenHudVisible, setIsZenHudVisible] = useState(true);
+  const [allWorks, setAllWorks] = useState([]);
 
   const [readerSettings, setReaderSettings] = useState(() => {
     const saved = readerProgressService.getReaderSettings();
@@ -53,6 +58,90 @@ export const ReaderView = () => {
 
   const categoryRoute = work?.category === 'story' ? '/stories' : '/poems';
   const categoryLabel = work?.category === 'story' ? 'Stories' : 'Poems';
+
+  useEffect(() => {
+    workService.getPublishedWorks().then((works) => {
+      if (works) setAllWorks(works);
+    });
+  }, []);
+
+  const categoryWorks = allWorks.filter((w) => w.category === work?.category);
+  const currentIndex = categoryWorks.findIndex((w) => w.slug === work?.slug);
+  const prevWork = currentIndex > 0 ? categoryWorks[currentIndex - 1] : null;
+  const nextWork = currentIndex >= 0 && currentIndex < categoryWorks.length - 1 ? categoryWorks[currentIndex + 1] : null;
+
+  const toggleZenMode = async () => {
+    const nextState = !isZenMode;
+    setIsZenMode(nextState);
+    try {
+      if (nextState) {
+        if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+          await document.documentElement.requestFullscreen().catch(() => {});
+        }
+      } else {
+        if (document.fullscreenElement && document.exitFullscreen) {
+          await document.exitFullscreen().catch(() => {});
+        }
+      }
+    } catch (e) {
+      // Fallback if browser fullscreen request is denied
+    }
+  };
+
+  useEffect(() => {
+    let idleTimer;
+
+    const handleMouseMove = () => {
+      if (isZenMode) {
+        setIsZenHudVisible(true);
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(() => {
+          setIsZenHudVisible(false);
+        }, 3500);
+      }
+    };
+
+    const handleKeyDown = (e) => {
+      const activeEl = document.activeElement;
+      const isInput = activeEl && (
+        activeEl.tagName === 'INPUT' ||
+        activeEl.tagName === 'TEXTAREA' ||
+        activeEl.isContentEditable
+      );
+      if (isInput) return;
+
+      if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        toggleZenMode();
+      } else if (e.key === 'Escape' && isZenMode) {
+        setIsZenMode(false);
+        if (document.fullscreenElement && document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+        }
+      } else if (e.key === 'ArrowRight' && nextWork) {
+        navigate(`/read/${nextWork.slug}`);
+      } else if (e.key === 'ArrowLeft' && prevWork) {
+        navigate(`/read/${prevWork.slug}`);
+      }
+    };
+
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement && isZenMode) {
+        setIsZenMode(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      clearTimeout(idleTimer);
+    };
+  }, [isZenMode, nextWork, prevWork]);
 
   const handleReturnNav = () => {
     if (isBookshelfMode) {
@@ -419,11 +508,84 @@ export const ReaderView = () => {
       className={`relative min-h-screen ${activeTheme.bg} text-[#FEEFFF] selection:bg-[#D5B06C]/30 selection:text-[#FEEFFF] transition-colors duration-500`}
     >
       <CosmicNebulaBackground variant={activeTheme.nebulaVariant} />
-      <Navigation
-        readingPercent={maxProgressPercent}
-        scrollLinePercent={scrollProgressPercent}
-        readingWork={work}
-      />
+
+      {!isZenMode && (
+        <Navigation
+          readingPercent={maxProgressPercent}
+          scrollLinePercent={scrollProgressPercent}
+          readingWork={work}
+        />
+      )}
+
+      {/* Zen Mode Minimalist Ambient Progress Line at very top of screen */}
+      {isZenMode && (
+        <div className="fixed top-0 left-0 right-0 h-[2.5px] bg-white/5 z-50">
+          <div
+            className="h-full bg-gradient-to-r from-amber-600 via-[#D5B06C] to-amber-300 transition-all duration-150 shadow-[0_0_10px_#D5B06C]"
+            style={{ width: `${scrollProgressPercent}%` }}
+          />
+        </div>
+      )}
+
+      {/* Floating Zen Mode HUD */}
+      <AnimatePresence>
+        {isZenMode && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: isZenHudVisible ? 1 : 0.25, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+            onMouseEnter={() => setIsZenHudVisible(true)}
+            className="fixed top-5 right-5 z-50 flex items-center gap-2 bg-[#080A06]/90 backdrop-blur-2xl border border-[#D5B06C]/30 px-3.5 py-1.5 rounded-full shadow-2xl transition-opacity duration-300"
+          >
+            <div className="flex items-center gap-2 pr-2.5 border-r border-white/10">
+              <Sparkles className="w-3.5 h-3.5 text-[#D5B06C] animate-pulse" />
+              <span className="font-sans text-[10px] uppercase tracking-[0.25em] text-[#D5B06C] font-semibold">
+                Zen Mode
+              </span>
+            </div>
+
+            {/* Quick Font Size Switch */}
+            <div className="flex items-center gap-1 pr-2.5 border-r border-white/10">
+              <button
+                onClick={() => {
+                  const sizes = ['sm', 'md', 'lg', 'xl'];
+                  const curr = sizes.indexOf(readerSettings.fontSize || 'md');
+                  if (curr > 0) handleUpdateSetting('fontSize', sizes[curr - 1]);
+                }}
+                className="px-1.5 py-0.5 rounded text-[10px] font-sans text-[#8A8177] hover:text-[#FEEFFF] transition-colors"
+                title="Decrease font size"
+              >
+                A-
+              </button>
+              <button
+                onClick={() => {
+                  const sizes = ['sm', 'md', 'lg', 'xl'];
+                  const curr = sizes.indexOf(readerSettings.fontSize || 'md');
+                  if (curr < sizes.length - 1) handleUpdateSetting('fontSize', sizes[curr + 1]);
+                }}
+                className="px-1.5 py-0.5 rounded text-[12px] font-sans text-[#8A8177] hover:text-[#FEEFFF] transition-colors font-medium"
+                title="Increase font size"
+              >
+                A+
+              </button>
+            </div>
+
+            {/* Exit Zen Button */}
+            <button
+              onClick={toggleZenMode}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#D5B06C]/15 border border-[#D5B06C]/40 text-[#D5B06C] hover:bg-[#D5B06C] hover:text-[#080A06] font-sans text-[10px] uppercase tracking-wider transition-all cursor-pointer font-medium"
+              title="Exit Zen Mode (Esc or F)"
+            >
+              <Minimize2 className="w-3 h-3" />
+              <span>Exit</span>
+              <kbd className="hidden sm:inline-block px-1 py-0.2 text-[8px] bg-black/40 rounded border border-white/10">
+                Esc
+              </kbd>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {quoteTooltipPos && (
@@ -470,52 +632,72 @@ export const ReaderView = () => {
         )}
       </AnimatePresence>
 
-      <main className={`relative z-10 mx-auto px-4 md:px-6 pt-28 sm:pt-36 pb-24 ${isBookshelfMode ? 'max-w-5xl' : 'max-w-3xl'}`}>
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-2.5">
-          <button
-            onClick={handleReturnNav}
-            className="group flex items-center gap-2 font-sans text-[10px] sm:text-xs uppercase tracking-[0.2em] text-[#8A8177] hover:text-[#D5B06C] transition-colors cursor-pointer bg-[#0F1216]/80 border border-[#8A8177]/20 hover:border-[#D5B06C]/40 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg backdrop-blur-md shadow-sm"
-          >
-            <span className="group-hover:-translate-x-1 transition-transform">←</span>
-            <span>Return to {categoryLabel}</span>
-          </button>
-
-          <div className="flex items-center gap-2">
+      <main className={`relative z-10 mx-auto px-4 md:px-6 pb-24 ${
+        isZenMode
+          ? 'pt-16 sm:pt-20 max-w-2xl'
+          : isBookshelfMode
+          ? 'pt-28 sm:pt-36 max-w-5xl'
+          : 'pt-28 sm:pt-36 max-w-3xl'
+      }`}>
+        {!isZenMode && (
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-2.5">
             <button
-              onClick={() => handleOpenQuoteCard()}
-              className="flex items-center gap-1.5 font-sans text-[10px] sm:text-xs uppercase tracking-[0.2em] px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg border border-[#D5B06C]/40 bg-[#0F1216]/80 text-[#D5B06C] hover:bg-[#D5B06C]/15 transition-all cursor-pointer backdrop-blur-md shadow-sm"
-              title="Generate shareable Instagram/Twitter quote card"
+              onClick={handleReturnNav}
+              className="group flex items-center gap-2 font-sans text-[10px] sm:text-xs uppercase tracking-[0.2em] text-[#8A8177] hover:text-[#D5B06C] transition-colors cursor-pointer bg-[#0F1216]/80 border border-[#8A8177]/20 hover:border-[#D5B06C]/40 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg backdrop-blur-md shadow-sm"
             >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Quote Card</span>
+              <span className="group-hover:-translate-x-1 transition-transform">←</span>
+              <span>Return to {categoryLabel}</span>
             </button>
 
-            <button
-              onClick={() => handleUpdateSetting('focusSpotlight', !readerSettings.focusSpotlight)}
-              className={`flex items-center gap-1.5 font-sans text-[10px] sm:text-xs uppercase tracking-[0.2em] px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg border transition-all cursor-pointer backdrop-blur-md shadow-sm ${
-                readerSettings.focusSpotlight
-                  ? 'border-[#D5B06C]/60 bg-[#D5B06C]/10 text-[#D5B06C] shadow-[0_0_15px_rgba(213,176,108,0.2)]'
-                  : 'border-[#8A8177]/20 bg-[#0F1216]/80 text-[#8A8177] hover:text-[#FEEFFF]'
-              }`}
-              title="Focus Spotlight dims background stanzas to focus on the active paragraph"
-            >
-              <Eye className="w-3.5 h-3.5" />
-              <span>Focus Spotlight: {readerSettings.focusSpotlight ? 'ON' : 'OFF'}</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={toggleZenMode}
+                className="flex items-center gap-1.5 font-sans text-[10px] sm:text-xs uppercase tracking-[0.2em] px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg border border-[#D5B06C]/40 bg-[#D5B06C]/10 text-[#D5B06C] hover:bg-[#D5B06C] hover:text-[#080A06] transition-all cursor-pointer backdrop-blur-md shadow-sm font-medium"
+                title="Enter Fullscreen Zen Mode (Press F)"
+              >
+                <Maximize2 className="w-3.5 h-3.5" />
+                <span>Zen Mode</span>
+                <kbd className="hidden md:inline-block px-1.5 py-0.5 text-[8px] bg-black/40 rounded border border-[#D5B06C]/30 text-[#D5B06C]">
+                  F
+                </kbd>
+              </button>
 
-            <button
-              onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-              className={`flex items-center gap-1.5 font-sans text-[10px] sm:text-xs uppercase tracking-[0.2em] px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg border transition-all cursor-pointer backdrop-blur-md shadow-sm ${
-                isSettingsOpen
-                  ? `${activeTheme.border} ${activeTheme.cardBg} ${activeTheme.accent}`
-                  : 'border-[#8A8177]/20 bg-[#0F1216]/80 text-[#8A8177] hover:text-[#D5B06C]'
-              }`}
-            >
-              <Sliders className="w-3.5 h-3.5" />
-              <span>Theme & Font</span>
-            </button>
+              <button
+                onClick={() => handleOpenQuoteCard()}
+                className="flex items-center gap-1.5 font-sans text-[10px] sm:text-xs uppercase tracking-[0.2em] px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg border border-[#D5B06C]/40 bg-[#0F1216]/80 text-[#D5B06C] hover:bg-[#D5B06C]/15 transition-all cursor-pointer backdrop-blur-md shadow-sm"
+                title="Generate shareable Instagram/Twitter quote card"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Quote Card</span>
+              </button>
+
+              <button
+                onClick={() => handleUpdateSetting('focusSpotlight', !readerSettings.focusSpotlight)}
+                className={`flex items-center gap-1.5 font-sans text-[10px] sm:text-xs uppercase tracking-[0.2em] px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg border transition-all cursor-pointer backdrop-blur-md shadow-sm ${
+                  readerSettings.focusSpotlight
+                    ? 'border-[#D5B06C]/60 bg-[#D5B06C]/10 text-[#D5B06C] shadow-[0_0_15px_rgba(213,176,108,0.2)]'
+                    : 'border-[#8A8177]/20 bg-[#0F1216]/80 text-[#8A8177] hover:text-[#FEEFFF]'
+                }`}
+                title="Focus Spotlight dims background stanzas to focus on the active paragraph"
+              >
+                <Eye className="w-3.5 h-3.5" />
+                <span>Focus Spotlight: {readerSettings.focusSpotlight ? 'ON' : 'OFF'}</span>
+              </button>
+
+              <button
+                onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+                className={`flex items-center gap-1.5 font-sans text-[10px] sm:text-xs uppercase tracking-[0.2em] px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg border transition-all cursor-pointer backdrop-blur-md shadow-sm ${
+                  isSettingsOpen
+                    ? `${activeTheme.border} ${activeTheme.cardBg} ${activeTheme.accent}`
+                    : 'border-[#8A8177]/20 bg-[#0F1216]/80 text-[#8A8177] hover:text-[#D5B06C]'
+                }`}
+              >
+                <Sliders className="w-3.5 h-3.5" />
+                <span>Theme & Font</span>
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         <AnimatePresence>
           {isSettingsOpen && (
@@ -772,14 +954,59 @@ export const ReaderView = () => {
               {renderParagraphs(work.body)}
             </div>
 
-            <AnonymousComments
-              comments={comments}
-              onAddComment={(text) => {
-                addComment(text);
-                readerProgressService.incrementCommentCount();
-              }}
-              onDeleteComment={isCurator ? deleteComment : null}
-            />
+            {/* Continuous Inscription Navigation (Next & Previous) */}
+            <div className="pt-8 border-t border-white/10 mt-10 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {prevWork ? (
+                <button
+                  onClick={() => navigate(`/read/${prevWork.slug}`)}
+                  className="group p-4 rounded-xl bg-white/[0.03] border border-white/10 hover:border-[#D5B06C]/60 hover:bg-[#D5B06C]/[0.04] transition-all text-left flex items-center gap-3 cursor-pointer shadow-sm"
+                >
+                  <ChevronLeft className="w-5 h-5 text-[#8A8177] group-hover:text-[#D5B06C] group-hover:-translate-x-1 transition-transform shrink-0" />
+                  <div className="min-w-0">
+                    <span className="block font-sans text-[9px] uppercase tracking-widest text-[#8A8177]">
+                      Previous Inscription
+                    </span>
+                    <span className="font-serif text-sm text-[#FEEFFF] group-hover:text-[#D5B06C] transition-colors truncate block">
+                      {prevWork.title}
+                    </span>
+                  </div>
+                </button>
+              ) : (
+                <div className="hidden sm:block" />
+              )}
+
+              {nextWork ? (
+                <button
+                  onClick={() => navigate(`/read/${nextWork.slug}`)}
+                  className="group p-4 rounded-xl bg-white/[0.03] border border-white/10 hover:border-[#D5B06C]/60 hover:bg-[#D5B06C]/[0.04] transition-all text-right flex items-center justify-end gap-3 cursor-pointer shadow-sm sm:ml-auto w-full"
+                >
+                  <div className="min-w-0">
+                    <span className="block font-sans text-[9px] uppercase tracking-widest text-[#8A8177]">
+                      Next Inscription
+                    </span>
+                    <span className="font-serif text-sm text-[#FEEFFF] group-hover:text-[#D5B06C] transition-colors truncate block">
+                      {nextWork.title}
+                    </span>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-[#8A8177] group-hover:text-[#D5B06C] group-hover:translate-x-1 transition-transform shrink-0" />
+                </button>
+              ) : (
+                <div className="hidden sm:block" />
+              )}
+            </div>
+
+            {!isZenMode && (
+              <div className="mt-12 pt-8 border-t border-white/10">
+                <AnonymousComments
+                  comments={comments}
+                  onAddComment={(text) => {
+                    addComment(text);
+                    readerProgressService.incrementCommentCount();
+                  }}
+                  onDeleteComment={isCurator ? deleteComment : null}
+                />
+              </div>
+            )}
           </div>
         )}
       </main>

@@ -49,23 +49,36 @@ export const MagicStardustTrail = () => {
       }
     };
 
+    let isRunning = false;
+
+    const startLoop = () => {
+      if (!isRunning) {
+        isRunning = true;
+        animationFrameId = requestAnimationFrame(render);
+      }
+    };
+
     const handleMouseMove = (e) => {
       const dx = e.clientX - lastMousePos.x;
       const dy = e.clientY - lastMousePos.y;
       const dist = Math.hypot(dx, dy);
 
-      if (dist > 4) {
+      if (dist > 8) {
         spawnParticles(e.clientX, e.clientY);
         lastMousePos = { x: e.clientX, y: e.clientY };
+        startLoop();
       }
-
-      clearTimeout(idleTimer);
-      idleTimer = setTimeout(() => {}, 150);
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
 
     const render = () => {
+      if (particles.length === 0) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        isRunning = false;
+        return;
+      }
+
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       for (let i = particles.length - 1; i >= 0; i--) {
@@ -85,7 +98,7 @@ export const MagicStardustTrail = () => {
         ctx.save();
         ctx.globalAlpha = opacity;
         ctx.shadowColor = p.color;
-        ctx.shadowBlur = 6;
+        ctx.shadowBlur = 4;
         ctx.fillStyle = p.color;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size * (1 - progress * 0.4), 0, Math.PI * 2);
@@ -96,13 +109,10 @@ export const MagicStardustTrail = () => {
       animationFrameId = requestAnimationFrame(render);
     };
 
-    render();
-
     return () => {
       window.removeEventListener('resize', resizeCanvas);
       window.removeEventListener('mousemove', handleMouseMove);
       cancelAnimationFrame(animationFrameId);
-      clearTimeout(idleTimer);
     };
   }, []);
 

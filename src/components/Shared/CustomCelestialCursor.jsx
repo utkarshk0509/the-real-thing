@@ -1,82 +1,112 @@
-import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useEffect, useRef } from 'react';
 
 export const CustomCelestialCursor = () => {
-  const [pos, setPos] = useState({ x: -100, y: -100 });
-  const [isHovered, setIsHovered] = useState(false);
-  const [isClicking, setIsClicking] = useState(false);
-  const [isTextInput, setIsTextInput] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const cursorRef = useRef(null);
 
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
+    // Disable on touch / mobile devices
+    if (window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 768) {
+      return;
+    }
 
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
+    const cursorEl = cursorRef.current;
+    if (!cursorEl) return;
+
+    let mouseX = -100;
+    let mouseY = -100;
+    let currentX = -100;
+    let currentY = -100;
+    let isHovered = false;
+    let isClicking = false;
+    let isTextInput = false;
+    let animId;
 
     const handleMouseMove = (e) => {
-      setPos({ x: e.clientX, y: e.clientY });
-
-      const element = e.target && e.target.nodeType === 1 ? e.target : e.target?.parentElement;
-      const isInput = element && (
-        element.tagName === 'TEXTAREA' ||
-        element.tagName === 'INPUT' ||
-        element.isContentEditable ||
-        (typeof element.closest === 'function' && element.closest('textarea, input, [contenteditable="true"]'))
-      );
-      setIsTextInput(!!isInput);
-
-      const isInteractive = element && (
-        element.tagName === 'BUTTON' ||
-        element.tagName === 'A' ||
-        element.onclick !== null ||
-        element.getAttribute?.('role') === 'button' ||
-        (typeof element.closest === 'function' && element.closest('button, a, [role="button"], .cursor-pointer'))
-      );
-      setIsHovered(!!isInteractive && !isInput);
+      mouseX = e.clientX;
+      mouseY = e.clientY;
     };
 
-    const handleMouseDown = () => setIsClicking(true);
-    const handleMouseUp = () => setIsClicking(false);
+    const handleMouseDown = () => {
+      isClicking = true;
+    };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mousedown', handleMouseDown);
-    window.addEventListener('mouseup', handleMouseUp);
+    const handleMouseUp = () => {
+      isClicking = false;
+    };
+
+    const handleMouseOver = (e) => {
+      const target = e.target;
+      if (!target || target.nodeType !== 1) return;
+
+      const isText = target.tagName === 'TEXTAREA' ||
+        target.tagName === 'INPUT' ||
+        target.isContentEditable ||
+        target.closest?.('textarea, input, [contenteditable="true"]');
+
+      isTextInput = !!isText;
+
+      if (!isTextInput) {
+        const isClickable = target.tagName === 'BUTTON' ||
+          target.tagName === 'A' ||
+          target.getAttribute?.('role') === 'button' ||
+          target.closest?.('button, a, [role="button"], .cursor-pointer');
+        isHovered = !!isClickable;
+      } else {
+        isHovered = false;
+      }
+    };
+
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    window.addEventListener('mousedown', handleMouseDown, { passive: true });
+    window.addEventListener('mouseup', handleMouseUp, { passive: true });
+    document.addEventListener('mouseover', handleMouseOver, { passive: true });
+
+    // Smooth RAF animation loop without React state re-renders
+    const render = () => {
+      if (isTextInput) {
+        cursorEl.style.opacity = '0';
+      } else {
+        cursorEl.style.opacity = '1';
+        // Gentle lerp for celestial trailing feel
+        currentX += (mouseX - currentX) * 0.28;
+        currentY += (mouseY - currentY) * 0.28;
+
+        const size = isHovered ? 36 : 24;
+        const scale = isClicking ? 0.75 : isHovered ? 1.25 : 1;
+        const borderColor = isHovered ? '#FFE8A3' : 'rgba(213, 176, 108, 0.45)';
+        const bg = isHovered
+          ? 'rgba(213, 176, 108, 0.16)'
+          : isClicking
+          ? 'rgba(213, 176, 108, 0.25)'
+          : 'rgba(213, 176, 108, 0.04)';
+
+        cursorEl.style.transform = `translate3d(${currentX - size / 2}px, ${currentY - size / 2}px, 0) scale(${scale})`;
+        cursorEl.style.width = `${size}px`;
+        cursorEl.style.height = `${size}px`;
+        cursorEl.style.borderColor = borderColor;
+        cursorEl.style.backgroundColor = bg;
+      }
+
+      animId = requestAnimationFrame(render);
+    };
+
+    animId = requestAnimationFrame(render);
 
     return () => {
-      window.removeEventListener('resize', checkMobile);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mousedown', handleMouseDown);
       window.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('mouseover', handleMouseOver);
+      cancelAnimationFrame(animId);
     };
   }, []);
 
-  if (isMobile || isTextInput) return null;
-
   return (
     <div className="pointer-events-none fixed inset-0 z-[9999] overflow-hidden">
-      {/* Smooth Trailing Starlight Halo Ring */}
-      <motion.div
-        animate={{
-          x: pos.x - (isHovered ? 18 : 12),
-          y: pos.y - (isHovered ? 18 : 12),
-          scale: isClicking ? 0.75 : isHovered ? 1.4 : 1,
-          borderColor: isHovered ? '#FFE8A3' : 'rgba(213, 176, 108, 0.45)',
-          backgroundColor: isHovered
-            ? 'rgba(213, 176, 108, 0.16)'
-            : isClicking
-              ? 'rgba(213, 176, 108, 0.25)'
-              : 'rgba(213, 176, 108, 0.04)',
-        }}
-        transition={{
-          type: 'spring',
-          damping: 24,
-          stiffness: 300,
-          mass: 0.4,
-        }}
-        className="fixed top-0 left-0 w-8 h-8 rounded-full border shadow-[0_0_15px_rgba(213,176,108,0.35)] backdrop-blur-[0.5px] pointer-events-none"
+      <div
+        ref={cursorRef}
+        style={{ willChange: 'transform, opacity' }}
+        className="fixed top-0 left-0 rounded-full border shadow-[0_0_15px_rgba(213,176,108,0.35)] backdrop-blur-[0.5px] pointer-events-none opacity-0 transition-[border-color,background-color] duration-150"
       />
     </div>
   );

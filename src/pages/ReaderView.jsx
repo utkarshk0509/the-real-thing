@@ -31,7 +31,7 @@ export const ReaderView = () => {
   const [readerSettings, setReaderSettings] = useState(() => {
     const saved = readerProgressService.getReaderSettings();
     return {
-      focusSpotlight: true,
+      focusSpotlight: false,
       ...saved,
     };
   });
@@ -59,7 +59,7 @@ export const ReaderView = () => {
       setIsClosingBook(true);
       setTimeout(() => {
         navigate(categoryRoute, { replace: true });
-      }, 1800);
+      }, 250);
     } else {
       navigate(categoryRoute, { replace: true });
     }
@@ -109,7 +109,7 @@ export const ReaderView = () => {
         setIsClosingBook(true);
         setTimeout(() => {
           navigate(targetCategoryRoute, { replace: true });
-        }, 1800);
+        }, 250);
       } else {
         navigate(targetCategoryRoute, { replace: true });
       }

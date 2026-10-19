@@ -60,7 +60,7 @@ export default function Landing() {
         initial={{ opacity: 0, y: -15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1, delay: 0.4 }}
-        className="absolute top-8 md:top-10 w-full flex justify-center items-center gap-6 md:gap-10 text-[#8A8177] font-sans text-[11px] uppercase tracking-[0.35em] z-50 px-4"
+        className="absolute top-6 sm:top-8 md:top-10 w-full flex flex-wrap justify-center items-center gap-3 sm:gap-6 md:gap-10 text-[#8A8177] font-sans text-[10px] sm:text-[11px] uppercase tracking-[0.25em] sm:tracking-[0.35em] z-50 px-4"
       >
         <span
           onClick={() => navigate('/hub')}

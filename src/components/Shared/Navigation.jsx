@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Compass, Sparkles } from 'lucide-react';
+import { Search, Compass, Sparkles, Menu, X, BookOpen, Feather, User } from 'lucide-react';
 import useAuth from '../../hooks/useAuth';
 import { CACHE_KEYS } from '../../config/constants';
 import readerProgressService from '../../services/readerProgressService';
@@ -16,6 +16,7 @@ export const Navigation = ({ readingPercent, scrollLinePercent, readingWork }) =
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isSerendipityNavOpen, setIsSerendipityNavOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const [drawerTab, setDrawerTab] = useState('library');
   const [libraryFilter, setLibraryFilter] = useState('Reading');
@@ -24,6 +25,10 @@ export const Navigation = ({ readingPercent, scrollLinePercent, readingWork }) =
   const [favoriteQuotes, setFavoriteQuotes] = useState([]);
   const [libraryStatuses, setLibraryStatuses] = useState({});
   const [globalSettings, setGlobalSettings] = useState(null);
+
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -81,7 +86,7 @@ export const Navigation = ({ readingPercent, scrollLinePercent, readingWork }) =
   return (
     <>
       {globalSettings?.announcementEnabled && globalSettings?.announcementText && (
-        <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-[#D5B06C]/10 via-[#D5B06C]/25 to-[#D5B06C]/10 backdrop-blur-md border-b border-[#D5B06C]/30 py-1.5 px-4 text-center">
+        <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-[#D5B06C]/15 via-[#D5B06C]/25 to-[#D5B06C]/15 backdrop-blur-md border-b border-[#D5B06C]/30 py-1.5 px-4 text-center">
           <Link
             to={globalSettings.announcementLink || '/hub'}
             className="inline-flex items-center gap-2 text-[10px] sm:text-xs font-sans uppercase tracking-[0.2em] text-[#D5B06C] hover:text-[#FEEFFF] transition-colors font-medium"
@@ -97,23 +102,24 @@ export const Navigation = ({ readingPercent, scrollLinePercent, readingWork }) =
         style={{ transform: 'none' }}
         className={`fixed ${
           globalSettings?.announcementEnabled && globalSettings?.announcementText ? 'top-8 sm:top-7' : 'top-0'
-        } left-0 right-0 z-50 bg-[#080A06]/95 backdrop-blur-xl border-b border-[#8A8177]/20 px-4 md:px-6 py-3 flex items-center justify-between shadow-2xl transition-all duration-300`}
+        } left-0 right-0 z-50 bg-[#080A06]/85 backdrop-blur-xl border-b border-white/[0.08] px-4 md:px-8 py-3.5 flex items-center justify-between shadow-2xl transition-all duration-300`}
       >
         <div className="flex items-center gap-3">
-          <Link to="/" className="font-serif text-base md:text-xl tracking-wider text-[#FEEFFF] hover:text-[#D5B06C] transition-colors whitespace-nowrap cursor-pointer">
-            The Real Thing
+          <Link to="/" className="font-serif text-lg md:text-xl tracking-wider text-[#FEEFFF] hover:text-[#D5B06C] transition-colors whitespace-nowrap cursor-pointer flex items-center gap-2">
+            <span>The Real Thing</span>
           </Link>
           {readingWork && (
-            <span className="hidden md:inline-block font-sans text-[10px] uppercase tracking-widest text-[#D5B06C] border-l border-[#8A8177]/30 pl-3">
+            <span className="hidden lg:inline-block font-sans text-[10px] uppercase tracking-widest text-[#D5B06C] border-l border-white/10 pl-3">
               Reading • {readingWork.title}
             </span>
           )}
         </div>
 
-        <div className="flex items-center gap-3 md:gap-5">
+        {/* Desktop Navigation Links */}
+        <div className="hidden md:flex items-center gap-6">
           <button
             onClick={() => handleCategoryNav('/hub')}
-            className={`relative py-1 font-sans text-[11px] md:text-xs uppercase tracking-widest transition-colors cursor-pointer ${
+            className={`relative py-1 font-sans text-xs uppercase tracking-[0.2em] transition-colors cursor-pointer ${
               location.pathname === '/hub' ? 'text-[#D5B06C] font-semibold' : 'text-[#8A8177] hover:text-[#D5B06C]'
             }`}
           >
@@ -129,7 +135,7 @@ export const Navigation = ({ readingPercent, scrollLinePercent, readingWork }) =
 
           <button
             onClick={() => handleCategoryNav('/poems')}
-            className={`relative py-1 font-sans text-[11px] md:text-xs uppercase tracking-widest transition-colors cursor-pointer ${
+            className={`relative py-1 font-sans text-xs uppercase tracking-[0.2em] transition-colors cursor-pointer ${
               location.pathname === '/poems' ? 'text-[#D5B06C] font-semibold' : 'text-[#8A8177] hover:text-[#D5B06C]'
             }`}
           >
@@ -145,7 +151,7 @@ export const Navigation = ({ readingPercent, scrollLinePercent, readingWork }) =
 
           <button
             onClick={() => handleCategoryNav('/stories')}
-            className={`relative py-1 font-sans text-[11px] md:text-xs uppercase tracking-widest transition-colors cursor-pointer ${
+            className={`relative py-1 font-sans text-xs uppercase tracking-[0.2em] transition-colors cursor-pointer ${
               location.pathname === '/stories' ? 'text-[#7CB9E8] font-semibold' : 'text-[#8A8177] hover:text-[#7CB9E8]'
             }`}
           >
@@ -161,7 +167,7 @@ export const Navigation = ({ readingPercent, scrollLinePercent, readingWork }) =
 
           <button
             onClick={() => handleCategoryNav('/about')}
-            className={`hidden sm:inline-block relative py-1 font-sans text-xs uppercase tracking-widest transition-colors cursor-pointer ${
+            className={`relative py-1 font-sans text-xs uppercase tracking-[0.2em] transition-colors cursor-pointer ${
               location.pathname === '/about' ? 'text-[#C9A9FF] font-semibold' : 'text-[#8A8177] hover:text-[#C9A9FF]'
             }`}
           >
@@ -174,16 +180,19 @@ export const Navigation = ({ readingPercent, scrollLinePercent, readingWork }) =
               />
             )}
           </button>
+        </div>
 
+        {/* Actions & Utilities */}
+        <div className="flex items-center gap-2.5 sm:gap-3.5">
           {/* Quick Search Button (⌘K) */}
           <button
             onClick={() => setIsSearchOpen(true)}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-[#8A8177]/30 bg-[#0F1216]/80 text-[#8A8177] hover:text-[#D5B06C] hover:border-[#D5B06C]/50 transition-all cursor-pointer text-[10px] font-sans uppercase tracking-wider"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/10 bg-white/[0.03] text-[#8A8177] hover:text-[#D5B06C] hover:border-[#D5B06C]/50 transition-all cursor-pointer text-[10px] font-sans uppercase tracking-wider shadow-sm"
             title="Search Inscriptions (Ctrl+K / ⌘K)"
           >
-            <Search className="w-3 h-3 text-[#D5B06C]" />
-            <span className="hidden lg:inline">Search</span>
-            <kbd className="hidden sm:inline-block px-1 py-0.5 text-[8px] bg-white/5 rounded border border-white/10 text-[#8A8177]">
+            <Search className="w-3.5 h-3.5 text-[#D5B06C]" />
+            <span className="hidden sm:inline">Search</span>
+            <kbd className="hidden md:inline-block px-1.5 py-0.5 text-[8px] bg-white/5 rounded border border-white/10 text-[#8A8177]">
               ⌘K
             </kbd>
           </button>
@@ -191,15 +200,15 @@ export const Navigation = ({ readingPercent, scrollLinePercent, readingWork }) =
           {/* Serendipity Oracle Button */}
           <button
             onClick={() => setIsSerendipityNavOpen(true)}
-            className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-full border border-[#D5B06C]/30 bg-[#D5B06C]/10 text-[#D5B06C] hover:bg-[#D5B06C] hover:text-[#080A06] transition-all cursor-pointer text-[10px] font-sans uppercase tracking-wider"
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#D5B06C]/30 bg-[#D5B06C]/10 text-[#D5B06C] hover:bg-[#D5B06C] hover:text-[#080A06] transition-all cursor-pointer text-[10px] font-sans uppercase tracking-wider font-medium shadow-sm"
             title="Consult the Constellation Oracle"
           >
-            <Compass className="w-3 h-3" />
+            <Compass className="w-3.5 h-3.5" />
             <span className="hidden md:inline">Oracle</span>
           </button>
 
           {readingPercent !== undefined && (
-            <div className="flex items-center gap-1 bg-[#0F1216] border border-[#D5B06C]/50 px-2.5 py-1 rounded-full text-[#D5B06C] font-sans text-[10px] uppercase tracking-widest font-semibold shadow-[0_0_12px_rgba(213,176,108,0.25)]">
+            <div className="hidden sm:flex items-center gap-1 bg-[#0F1216] border border-[#D5B06C]/50 px-2.5 py-1 rounded-full text-[#D5B06C] font-sans text-[10px] uppercase tracking-widest font-semibold shadow-[0_0_12px_rgba(213,176,108,0.25)]">
               <span>{readingPercent}% READ</span>
             </div>
           )}
@@ -210,7 +219,7 @@ export const Navigation = ({ readingPercent, scrollLinePercent, readingWork }) =
                 sessionStorage.setItem(CACHE_KEYS.AUTHOR_AUTH, 'true');
                 navigate('/portal');
               }}
-              className="px-2.5 py-1 rounded border border-[#D5B06C]/40 text-[#D5B06C] font-sans text-[9px] md:text-[10px] uppercase tracking-widest hover:bg-[#D5B06C] hover:text-[#080A06] transition-colors cursor-pointer"
+              className="px-3 py-1.5 rounded-full border border-[#D5B06C]/40 text-[#D5B06C] font-sans text-[10px] uppercase tracking-widest hover:bg-[#D5B06C] hover:text-[#080A06] transition-colors cursor-pointer"
             >
               Portal
             </button>
@@ -224,28 +233,133 @@ export const Navigation = ({ readingPercent, scrollLinePercent, readingWork }) =
               <img
                 src={user.user_metadata?.avatar_url || 'https://via.placeholder.com/32'}
                 alt="Avatar"
-                className="w-6 h-6 md:w-7 md:h-7 rounded-full object-cover"
+                className="w-7 h-7 rounded-full object-cover"
               />
             </button>
           ) : (
             <button
               onClick={handleGoogleLogin}
-              className="px-3 py-1.5 rounded border border-[#8A8177]/30 text-[#FEEFFF] font-sans text-[10px] md:text-xs uppercase tracking-widest hover:border-[#D5B06C] hover:text-[#D5B06C] transition-colors cursor-pointer"
+              className="hidden sm:inline-flex px-3.5 py-1.5 rounded-full border border-white/15 text-[#FEEFFF] font-sans text-xs uppercase tracking-widest hover:border-[#D5B06C] hover:text-[#D5B06C] transition-colors cursor-pointer"
             >
               Sign In
             </button>
           )}
+
+          {/* Mobile Hamburger Toggle */}
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="md:hidden p-2 rounded-xl border border-white/10 bg-white/[0.04] text-[#FEEFFF] hover:text-[#D5B06C] hover:border-[#D5B06C]/40 transition-colors cursor-pointer"
+            aria-label="Toggle navigation menu"
+          >
+            {isMobileMenuOpen ? <X className="w-5 h-5 text-[#D5B06C]" /> : <Menu className="w-5 h-5" />}
+          </button>
         </div>
 
+        {/* Global Reading / Scroll Progress Bar */}
         {(scrollLinePercent !== undefined || readingPercent !== undefined) && (
-          <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#8A8177]/20 overflow-hidden">
+          <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-white/5 overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-amber-600 via-[#D5B06C] to-amber-400 transition-all duration-150 shadow-[0_0_10px_rgba(213,176,108,0.8)]"
+              className="h-full bg-gradient-to-r from-amber-600 via-[#D5B06C] to-amber-300 transition-all duration-150 shadow-[0_0_10px_rgba(213,176,108,0.8)]"
               style={{ width: `${scrollLinePercent !== undefined ? scrollLinePercent : readingPercent}%` }}
             />
           </div>
         )}
       </nav>
+
+      {/* Mobile Drawer Overlay */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.22, ease: 'easeOut' }}
+            className={`md:hidden fixed ${
+              globalSettings?.announcementEnabled && globalSettings?.announcementText ? 'top-20' : 'top-14'
+            } left-0 right-0 z-40 bg-[#080A06]/95 backdrop-blur-2xl border-b border-white/10 p-5 shadow-2xl space-y-4`}
+          >
+            <div className="flex flex-col space-y-1">
+              <button
+                onClick={() => {
+                  handleCategoryNav('/hub');
+                  setIsMobileMenuOpen(false);
+                }}
+                className={`flex items-center justify-between p-3 rounded-xl transition-all font-sans text-xs uppercase tracking-[0.2em] cursor-pointer ${
+                  location.pathname === '/hub' ? 'bg-[#D5B06C]/15 text-[#D5B06C] font-semibold' : 'text-[#A7ADB4] hover:bg-white/5'
+                }`}
+              >
+                <span>Hub & Constellation</span>
+                <span className="text-[#D5B06C]">✦</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  handleCategoryNav('/poems');
+                  setIsMobileMenuOpen(false);
+                }}
+                className={`flex items-center justify-between p-3 rounded-xl transition-all font-sans text-xs uppercase tracking-[0.2em] cursor-pointer ${
+                  location.pathname === '/poems' ? 'bg-[#D5B06C]/15 text-[#D5B06C] font-semibold' : 'text-[#A7ADB4] hover:bg-white/5'
+                }`}
+              >
+                <span>Poetry Archive</span>
+                <span className="text-[#D5B06C]">✦</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  handleCategoryNav('/stories');
+                  setIsMobileMenuOpen(false);
+                }}
+                className={`flex items-center justify-between p-3 rounded-xl transition-all font-sans text-xs uppercase tracking-[0.2em] cursor-pointer ${
+                  location.pathname === '/stories' ? 'bg-[#7CB9E8]/15 text-[#7CB9E8] font-semibold' : 'text-[#A7ADB4] hover:bg-white/5'
+                }`}
+              >
+                <span>Stories & Prose</span>
+                <span className="text-[#7CB9E8]">◈</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  handleCategoryNav('/about');
+                  setIsMobileMenuOpen(false);
+                }}
+                className={`flex items-center justify-between p-3 rounded-xl transition-all font-sans text-xs uppercase tracking-[0.2em] cursor-pointer ${
+                  location.pathname === '/about' ? 'bg-[#C9A9FF]/15 text-[#C9A9FF] font-semibold' : 'text-[#A7ADB4] hover:bg-white/5'
+                }`}
+              >
+                <span>About Author</span>
+                <span className="text-[#C9A9FF]">⊹</span>
+              </button>
+            </div>
+
+            <div className="pt-3 border-t border-white/10 flex items-center justify-between gap-3">
+              <button
+                onClick={() => {
+                  setIsSerendipityNavOpen(true);
+                  setIsMobileMenuOpen(false);
+                }}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-[#D5B06C]/30 bg-[#D5B06C]/10 text-[#D5B06C] font-sans text-xs uppercase tracking-wider cursor-pointer"
+              >
+                <Compass className="w-4 h-4" />
+                <span>Oracle</span>
+              </button>
+
+              {!user && (
+                <button
+                  onClick={() => {
+                    handleGoogleLogin();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-white/20 text-[#FEEFFF] font-sans text-xs uppercase tracking-wider cursor-pointer hover:border-[#D5B06C]"
+                >
+                  <User className="w-4 h-4 text-[#D5B06C]" />
+                  <span>Sign In</span>
+                </button>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {isProfileOpen && (

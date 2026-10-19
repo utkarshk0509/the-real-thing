@@ -11,13 +11,23 @@ const Hub = lazy(() => import('./pages/Hub'));
 const ReaderView = lazy(() => import('./pages/ReaderView'));
 const AuthorPortal = lazy(() => import('./pages/AuthorPortal'));
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  React.useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+}
+
 function PageTransitionWrapper({ children }) {
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -6 }}
+      transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
     >
       {children}
     </motion.div>
@@ -29,6 +39,7 @@ function AnimatedRoutes() {
 
   return (
     <Suspense fallback={<div className="min-h-screen bg-[#080A06]" />}>
+      <ScrollToTop />
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={<PageTransitionWrapper><Landing /></PageTransitionWrapper>} />

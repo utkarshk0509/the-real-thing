@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState, useCallback } from 'react';
 
 export const GlowingCard = ({ 
   children, 
@@ -9,28 +9,41 @@ export const GlowingCard = ({
   cropPosY = 50,
   onClick 
 }) => {
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [tilt, setTilt] = useState({ rotateX: 0, rotateY: 0 });
+  const cardRef = useRef(null);
+  const glowRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
 
-  const handleMouseMove = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
+  const handleMouseMove = useCallback((e) => {
+    const card = cardRef.current;
+    if (!card) return;
+
+    const rect = card.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    setMousePosition({ x, y });
 
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
-    const rotateX = ((y - centerY) / centerY) * -9;
-    const rotateY = ((x - centerX) / centerX) * 9;
+    const rotateX = ((y - centerY) / centerY) * -7;
+    const rotateY = ((x - centerX) / centerX) * 7;
 
-    setTilt({ rotateX, rotateY });
-  };
+    card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
 
-  const handleMouseLeave = () => {
+    if (glowRef.current) {
+      glowRef.current.style.background = `radial-gradient(450px circle at ${x}px ${y}px, rgba(213, 176, 108, 0.18), transparent 50%)`;
+    }
+  }, []);
+
+  const handleMouseEnter = useCallback(() => {
+    setIsHovered(true);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
     setIsHovered(false);
-    setTilt({ rotateX: 0, rotateY: 0 });
-  };
+    const card = cardRef.current;
+    if (card) {
+      card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+    }
+  }, []);
 
   const posX = cropPosX ?? 50;
   const posY = cropPosY ?? 50;
@@ -38,24 +51,23 @@ export const GlowingCard = ({
   return (
     <div style={{ perspective: 1200 }} className="h-full">
       <div
+        ref={cardRef}
         onClick={onClick}
         onMouseMove={handleMouseMove}
-        onMouseEnter={() => setIsHovered(true)}
+        onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         style={{
           transformStyle: 'preserve-3d',
-          transform: isHovered
-            ? `rotateX(${tilt.rotateX}deg) rotateY(${tilt.rotateY}deg) scale3d(1.025, 1.025, 1.025)`
-            : 'rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)',
-          transition: isHovered ? 'transform 0.12s cubic-bezier(0.16, 1, 0.3, 1)' : 'transform 0.5s ease-out',
+          transition: isHovered ? 'transform 0.08s ease-out' : 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+          willChange: 'transform',
         }}
-        className={`group relative overflow-hidden rounded-2xl border border-[#8A8177]/25 bg-[#0F1216] p-6 transition-all duration-300 hover:border-[#D5B06C]/60 cursor-pointer shadow-xl ${className}`}
+        className={`group relative overflow-hidden rounded-2xl border border-[#8A8177]/25 bg-[#0F1216] p-6 transition-colors duration-300 hover:border-[#D5B06C]/60 cursor-pointer shadow-xl ${className}`}
       >
         <div
+          ref={glowRef}
           className="pointer-events-none absolute -inset-px transition-opacity duration-300 z-10 rounded-2xl"
           style={{
             opacity: isHovered ? 1 : 0,
-            background: `radial-gradient(500px circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(213, 176, 108, 0.18), transparent 45%)`,
           }}
         />
 
